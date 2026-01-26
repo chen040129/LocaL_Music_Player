@@ -1,11 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../constants/app_icons.dart';
 
 class PlaylistArea extends StatelessWidget {
-  static const IconData repeatIcon = Icons.repeat;
-  static const IconData musicNoteIcon = Icons.music_note;
-  static const IconData playCircleFilledIcon = Icons.play_circle_filled;
-  static const IconData playCircleOutlineIcon = Icons.play_circle_outline;
 
   final bool isSidebarExpanded;
   final int currentPlayingIndex;
@@ -24,14 +22,14 @@ class PlaylistArea extends StatelessWidget {
     final List<Map<String, dynamic>> songs = [];
 
     return Container(
-      color: Colors.grey[100],
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           // 顶部播放控制相关功能
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -42,12 +40,12 @@ class PlaylistArea extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(repeatIcon, color: Colors.grey),
+                Icon(AppIcons.repeat, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   '循环播放',
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -67,7 +65,9 @@ class PlaylistArea extends StatelessWidget {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   elevation: isPlaying ? 3 : 1,
-                  color: isPlaying ? Colors.blue[50] : Colors.white,
+                  color: isPlaying 
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1) 
+                      : Theme.of(context).colorScheme.surface,
                   child: InkWell(
                     onTap: () => onSongTap(index),
                     borderRadius: BorderRadius.circular(12),
@@ -81,13 +81,13 @@ class PlaylistArea extends StatelessWidget {
                             height: 56,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
-                              color: Colors.grey[300],
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Icon(
-                                musicNoteIcon,
-                                color: Colors.grey[600],
+                                AppIcons.musicNote,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                 size: 32,
                               ),
                             ),
@@ -103,7 +103,9 @@ class PlaylistArea extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
-                                    color: isPlaying ? Colors.blue[700] : Colors.black87,
+                                    color: isPlaying 
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -113,7 +115,7 @@ class PlaylistArea extends StatelessWidget {
                                       song['artist'],
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -121,7 +123,7 @@ class PlaylistArea extends StatelessWidget {
                                       '·',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -129,7 +131,7 @@ class PlaylistArea extends StatelessWidget {
                                       song['album'],
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                       ),
                                     ),
                                   ],
@@ -161,8 +163,10 @@ class PlaylistArea extends StatelessWidget {
                           const SizedBox(width: 12),
                           // 播放状态图标
                           Icon(
-                            isPlaying ? playCircleFilledIcon : playCircleOutlineIcon,
-                            color: isPlaying ? Colors.blue : Colors.grey[400],
+                            AppIcons.playCircle,
+                            color: isPlaying 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.4),
                             size: 32,
                           ),
                         ],

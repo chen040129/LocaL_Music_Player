@@ -1,13 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../constants/app_icons.dart';
 
 class PlayerControlBar extends StatelessWidget {
-  static const IconData skipPreviousIcon = Icons.skip_previous;
-  static const IconData playArrowIcon = Icons.play_arrow;
-  static const IconData pauseIcon = Icons.pause;
-  static const IconData skipNextIcon = Icons.skip_next;
-  static const IconData playlistPlayIcon = Icons.playlist_play;
-  static const IconData musicNoteIcon = Icons.music_note;
 
   final bool isPlaying;
   final VoidCallback onPlayPauseToggle;
@@ -23,7 +19,7 @@ class PlayerControlBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -40,13 +36,13 @@ class PlayerControlBar extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
-              color: Colors.grey[300],
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Icon(
-                musicNoteIcon,
-                color: Colors.grey[600],
+                AppIcons.musicNote,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 size: 28,
               ),
             ),
@@ -58,12 +54,12 @@ class PlayerControlBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   '',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -71,7 +67,7 @@ class PlayerControlBar extends StatelessWidget {
                   '',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -81,17 +77,17 @@ class PlayerControlBar extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(skipPreviousIcon),
-                color: Colors.grey[700],
+                icon: const Icon(AppIcons.skipPrevious),
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                 onPressed: () {},
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -99,15 +95,15 @@ class PlayerControlBar extends StatelessWidget {
                 ),
                 child: IconButton(
                   icon: Icon(
-                    isPlaying ? pauseIcon : playArrowIcon,
-                    color: Colors.white,
+                    isPlaying ? AppIcons.pause : AppIcons.playArrow,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                   onPressed: onPlayPauseToggle,
                 ),
               ),
               IconButton(
-                icon: const Icon(skipNextIcon),
-                color: Colors.grey[700],
+                icon: const Icon(AppIcons.skipNext),
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                 onPressed: () {},
               ),
             ],
@@ -115,8 +111,8 @@ class PlayerControlBar extends StatelessWidget {
           const SizedBox(width: 16),
           // 播放列表按钮
           IconButton(
-            icon: const Icon(playlistPlayIcon),
-            color: Colors.grey[700],
+            icon: const Icon(AppIcons.playlist),
+            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
             onPressed: () {},
           ),
         ],

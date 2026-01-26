@@ -2,6 +2,7 @@ name: flutter_music_player
 description: A cross-platform local music player with advanced audio features.
 publish_to: 'none'
 version: 1.0.0+1
+uses-material-design: true
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -26,9 +27,8 @@ dependencies:
   path: ^1.8.3
 
   dio: ^5.4.0
-  http: ^1.1.2
 
-  get: ^4.6.6
+  window_manager: ^0.3.7
 
   shared_preferences: ^2.2.2
   hive: ^2.2.3
@@ -41,8 +41,7 @@ dependencies:
   intl: ^0.18.1
   palette_generator: ^0.3.3+3
 
-  # 关键修改：使用支持空安全的 upnp 分支
-  upnped: ^1.1.2 # 请检查并更新为最新稳定版本
+  upnped: ^1.1.2
   screen_brightness: ^0.2.2+1
 
 dev_dependencies:
