@@ -17,6 +17,10 @@ class MusicInfo {
   final Uint8List? coverArt;
   final Duration duration;
   final String? quality;
+  final int trackNumber;
+  final int year;
+  final int fileSize;
+  int playCount;
 
   MusicInfo({
     required this.id,
@@ -27,6 +31,10 @@ class MusicInfo {
     this.coverArt,
     required this.duration,
     this.quality,
+    this.trackNumber = 0,
+    this.year = 0,
+    this.fileSize = 0,
+    this.playCount = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -39,6 +47,10 @@ class MusicInfo {
       'coverArt': coverArt != null ? _bytesToBase64(coverArt!) : null,
       'duration': duration.inMilliseconds,
       'quality': quality,
+      'trackNumber': trackNumber,
+      'year': year,
+      'fileSize': fileSize,
+      'playCount': playCount,
     };
   }
 
@@ -56,6 +68,10 @@ class MusicInfo {
       coverArt: json['coverArt'] != null ? _base64ToBytes(json['coverArt']) : null,
       duration: Duration(milliseconds: json['duration']),
       quality: json['quality'],
+      trackNumber: json['trackNumber'] ?? 0,
+      year: json['year'] ?? 0,
+      fileSize: json['fileSize'] ?? 0,
+      playCount: json['playCount'] ?? 0,
     );
   }
 
@@ -154,7 +170,9 @@ class MusicScannerService {
       // 判断音质
       final quality = _determineQuality(filePath, duration);
 
-      // 创建音乐信息对象
+      // 获取文件大小
+      final fileSize = file.lengthSync();
+      
       final musicInfo = MusicInfo(
         id: DateTime.now().millisecondsSinceEpoch.toString() + filePath.hashCode.toString(),
         filePath: filePath,
@@ -164,6 +182,10 @@ class MusicScannerService {
         coverArt: coverArt,
         duration: duration,
         quality: quality,
+        trackNumber: metadata.trackNumber != null ? int.tryParse(metadata.trackNumber.toString()) ?? 0 : 0,
+        year: metadata.year != null ? int.tryParse(metadata.year.toString()) ?? 0 : 0,
+        fileSize: fileSize,
+        playCount: 0,
       );
 
       _scannedMusic.add(musicInfo);

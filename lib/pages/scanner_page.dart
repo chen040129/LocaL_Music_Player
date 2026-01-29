@@ -1,7 +1,9 @@
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:lpinyin/lpinyin.dart';
 import '../constants/app_icons.dart';
 import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
@@ -15,6 +17,10 @@ class ScannerPage extends StatefulWidget {
 
 class _ScannerPageState extends State<ScannerPage> {
   final MusicScannerService _musicScannerService = MusicScannerService();
+  
+  // 排序方式
+  String _sortBy = 'custom'; // custom, title, filename, album, artist, size, year, folder, playCount
+  bool _isAscending = true;
 
   @override
   Widget build(BuildContext context) {
@@ -197,19 +203,273 @@ class _ScannerPageState extends State<ScannerPage> {
                   const SizedBox(height: 24),
 
                   // 扫描到的歌曲列表
-                  Text(
-                    '扫描到的歌曲',
-                    style: TextStyle(
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '扫描到的歌曲',
+                        style: TextStyle(
+                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      // 排序按钮
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          AppIcons.sort,
+                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        ),
+                        tooltip: '排序方式',
+                        onSelected: (String value) {
+                          setState(() {
+                            if (value == 'asc' || value == 'desc') {
+                              _isAscending = value == 'asc';
+                            } else {
+                              _sortBy = value;
+                            }
+                          });
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'custom',
+                            child: Text(
+                              '自定义排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'title',
+                            child: Text(
+                              '按标题排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'filename',
+                            child: Text(
+                              '按文件名排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'album',
+                            child: Text(
+                              '按专辑（音轨）排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'artist',
+                            child: Text(
+                              '按艺术家（专辑）排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'size',
+                            child: Text(
+                              '按大小排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'year',
+                            child: Text(
+                              '按年份排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'folder',
+                            child: Text(
+                              '按文件夹（标题）排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'playCount',
+                            child: Text(
+                              '按播放次数排序',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            value: 'asc',
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_upward, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '升序',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'desc',
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_downward, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '降序',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Expanded(
                     child: Consumer<MusicProvider>(
                       builder: (context, musicProvider, child) {
-                        final musicList = musicProvider.musicList;
+                        List<MusicInfo> musicList = List.from(musicProvider.musicList);
+
+                        // 根据排序方式对音乐列表进行排序
+                        switch (_sortBy) {
+                          case 'title':
+                            musicList.sort((a, b) {
+                              final aPinyin = PinyinHelper.getPinyinE(a.title, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              final bPinyin = PinyinHelper.getPinyinE(b.title, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              return _isAscending
+                                  ? aPinyin.compareTo(bPinyin)
+                                  : bPinyin.compareTo(aPinyin);
+                            });
+                            break;
+                          case 'filename':
+                            musicList.sort((a, b) {
+                              final aFilename = File(a.filePath).uri.pathSegments.last;
+                              final bFilename = File(b.filePath).uri.pathSegments.last;
+                              return _isAscending
+                                  ? aFilename.compareTo(bFilename)
+                                  : bFilename.compareTo(aFilename);
+                            });
+                            break;
+                          case 'album':
+                            musicList.sort((a, b) {
+                              final aPinyin = PinyinHelper.getPinyinE(a.album, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              final bPinyin = PinyinHelper.getPinyinE(b.album, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              int result = _isAscending
+                                  ? aPinyin.compareTo(bPinyin)
+                                  : bPinyin.compareTo(aPinyin);
+                              
+                              // 如果专辑相同，则按音轨号排序
+                              if (result == 0) {
+                                result = _isAscending
+                                    ? a.trackNumber.compareTo(b.trackNumber)
+                                    : b.trackNumber.compareTo(a.trackNumber);
+                              }
+                              return result;
+                            });
+                            break;
+                          case 'artist':
+                            musicList.sort((a, b) {
+                              final aPinyin = PinyinHelper.getPinyinE(a.artist, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              final bPinyin = PinyinHelper.getPinyinE(b.artist, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                              int result = _isAscending
+                                  ? aPinyin.compareTo(bPinyin)
+                                  : bPinyin.compareTo(aPinyin);
+                              
+                              // 如果艺术家相同，则按专辑排序
+                              if (result == 0) {
+                                final aAlbumPinyin = PinyinHelper.getPinyinE(a.album, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                final bAlbumPinyin = PinyinHelper.getPinyinE(b.album, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                result = _isAscending
+                                    ? aAlbumPinyin.compareTo(bAlbumPinyin)
+                                    : bAlbumPinyin.compareTo(aAlbumPinyin);
+                              }
+                              return result;
+                            });
+                            break;
+                          case 'size':
+                            musicList.sort((a, b) => _isAscending
+                                ? a.fileSize.compareTo(b.fileSize)
+                                : b.fileSize.compareTo(a.fileSize));
+                            break;
+                          case 'year':
+                            musicList.sort((a, b) => _isAscending
+                                ? a.year.compareTo(b.year)
+                                : b.year.compareTo(a.year));
+                            break;
+                          case 'folder':
+                            musicList.sort((a, b) {
+                              final aFolder = File(a.filePath).parent.path;
+                              final bFolder = File(b.filePath).parent.path;
+                              int result = _isAscending
+                                  ? aFolder.compareTo(bFolder)
+                                  : bFolder.compareTo(aFolder);
+                              
+                              // 如果文件夹相同，则按标题排序
+                              if (result == 0) {
+                                final aPinyin = PinyinHelper.getPinyinE(a.title, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                final bPinyin = PinyinHelper.getPinyinE(b.title, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                result = _isAscending
+                                    ? aPinyin.compareTo(bPinyin)
+                                    : bPinyin.compareTo(aPinyin);
+                              }
+                              return result;
+                            });
+                            break;
+                          case 'playCount':
+                            musicList.sort((a, b) => _isAscending
+                                ? a.playCount.compareTo(b.playCount)
+                                : b.playCount.compareTo(a.playCount));
+                            break;
+                          case 'custom':
+                          default:
+                            // 自定义排序，不做处理
+                            break;
+                        }
 
                         if (musicList.isEmpty) {
                           return Center(

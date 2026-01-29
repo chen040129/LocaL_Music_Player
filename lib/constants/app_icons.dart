@@ -50,6 +50,7 @@ class AppIcons {
   static const IconData qualityHigh = CupertinoIcons.music_note_2;
   static const IconData qualityUltra = CupertinoIcons.music_note_list;
   static const IconData arrowDown = CupertinoIcons.chevron_down;
+  static const IconData sort = CupertinoIcons.arrow_up_arrow_down;
 
   // 私有构造函数，防止实例化
   AppIcons._();
