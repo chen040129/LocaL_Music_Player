@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/theme_toggle_button.dart';
+import '../constants/app_icons.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -74,7 +75,7 @@ class HomePage extends StatelessWidget {
             },
             tooltip: '切换主题',
             child: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              themeProvider.isDarkMode ? AppIcons.lightMode : AppIcons.darkMode,
             ),
           ),
         );

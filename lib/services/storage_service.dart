@@ -1,0 +1,129 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'music_scanner_service.dart';
+
+/// 本地存储服务，用于保存和加载音乐数据
+class StorageService {
+  static const String _musicDataFileName = 'music_data.json';
+  static const String _foldersFileName = 'scanned_folders.json';
+
+  /// 保存音乐列表到本地
+  Future<void> saveMusicList(List<MusicInfo> musicList) async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_musicDataFileName');
+
+      // 转换为JSON并保存
+      final jsonData = jsonEncode(
+        musicList.map((music) => music.toJson()).toList(),
+      );
+      await file.writeAsString(jsonData);
+
+      debugPrint('音乐列表已保存到本地');
+    } catch (e) {
+      debugPrint('保存音乐列表失败: $e');
+    }
+  }
+
+  /// 从本地加载音乐列表
+  Future<List<MusicInfo>> loadMusicList() async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_musicDataFileName');
+
+      if (!await file.exists()) {
+        debugPrint('未找到本地音乐数据文件');
+        return [];
+      }
+
+      // 读取并解析JSON
+      final jsonData = await file.readAsString();
+      final List<dynamic> jsonList = jsonDecode(jsonData);
+
+      final musicList = jsonList
+          .map((json) => MusicInfo.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      debugPrint('已从本地加载 ${musicList.length} 首音乐');
+      return musicList;
+    } catch (e) {
+      debugPrint('加载音乐列表失败: $e');
+      return [];
+    }
+  }
+
+  /// 保存已扫描的文件夹列表
+  Future<void> saveScannedFolders(List<String> folders) async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_foldersFileName');
+
+      final jsonData = jsonEncode(folders);
+      await file.writeAsString(jsonData);
+
+      debugPrint('已扫描文件夹列表已保存到本地');
+    } catch (e) {
+      debugPrint('保存已扫描文件夹列表失败: $e');
+    }
+  }
+
+  /// 从本地加载已扫描的文件夹列表
+  Future<List<String>> loadScannedFolders() async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_foldersFileName');
+
+      if (!await file.exists()) {
+        debugPrint('未找到本地已扫描文件夹数据文件');
+        return [];
+      }
+
+      final jsonData = await file.readAsString();
+      final List<dynamic> jsonList = jsonDecode(jsonData);
+
+      final folders = jsonList.cast<String>();
+      debugPrint('已从本地加载 ${folders.length} 个已扫描文件夹');
+      return folders;
+    } catch (e) {
+      debugPrint('加载已扫描文件夹列表失败: $e');
+      return [];
+    }
+  }
+
+  /// 清除所有本地数据
+  Future<void> clearAllData() async {
+    try {
+      final directory = await _getAppDirectory();
+      final musicFile = File('${directory.path}/$_musicDataFileName');
+      final foldersFile = File('${directory.path}/$_foldersFileName');
+
+      if (await musicFile.exists()) {
+        await musicFile.delete();
+      }
+      if (await foldersFile.exists()) {
+        await foldersFile.delete();
+      }
+
+      debugPrint('已清除所有本地数据');
+    } catch (e) {
+      debugPrint('清除本地数据失败: $e');
+    }
+  }
+
+  /// 获取应用数据目录
+  Future<Directory> _getAppDirectory() async {
+    if (kIsWeb) {
+      // Web平台使用临时目录
+      return Directory.systemTemp;
+    }
+
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      return await getApplicationSupportDirectory();
+    }
+
+    // 移动平台使用应用文档目录
+    return await getApplicationDocumentsDirectory();
+  }
+}

@@ -37,6 +37,19 @@ class AppIcons {
   static const IconData info = CupertinoIcons.info;
   static const IconData chart = CupertinoIcons.chart_bar;
   static const IconData repeat = CupertinoIcons.repeat;
+  static const IconData search = CupertinoIcons.search;
+  static const IconData add = CupertinoIcons.add;
+  static const IconData delete = CupertinoIcons.delete;
+  static const IconData lightMode = CupertinoIcons.sun_max;
+  static const IconData darkMode = CupertinoIcons.moon;
+  static const IconData refresh = CupertinoIcons.refresh;
+  static const IconData sync = CupertinoIcons.refresh;
+  static const IconData checkCircle = CupertinoIcons.check_mark_circled;
+  static const IconData deleteOutline = CupertinoIcons.delete_simple;
+  static const IconData qualityStandard = CupertinoIcons.music_note;
+  static const IconData qualityHigh = CupertinoIcons.music_note_2;
+  static const IconData qualityUltra = CupertinoIcons.music_note_list;
+  static const IconData arrowDown = CupertinoIcons.chevron_down;
 
   // 私有构造函数，防止实例化
   AppIcons._();

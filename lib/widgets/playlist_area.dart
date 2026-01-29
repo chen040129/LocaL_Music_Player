@@ -4,22 +4,21 @@ import 'package:flutter/cupertino.dart';
 import '../constants/app_icons.dart';
 
 class PlaylistArea extends StatelessWidget {
-
   final bool isSidebarExpanded;
   final int currentPlayingIndex;
   final Function(int) onSongTap;
+  final List<Map<String, dynamic>> songs;
 
   const PlaylistArea({
     Key? key,
     required this.isSidebarExpanded,
     required this.currentPlayingIndex,
     required this.onSongTap,
+    this.songs = const [],
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // 空的歌曲列表
-    final List<Map<String, dynamic>> songs = [];
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
