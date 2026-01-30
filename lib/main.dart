@@ -8,6 +8,9 @@ import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
 import 'models/playlist_model.dart';
+import 'package:flutter_music_player/pages/artists_page.dart';
+import 'package:flutter_music_player/pages/albums_page.dart';
+import 'providers/navigation_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +46,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => MusicProvider()),
         ChangeNotifierProvider(create: (context) => PlaylistService()),
+        ChangeNotifierProvider(create: (context) => NavigationProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -53,6 +57,16 @@ class MyApp extends StatelessWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             home: const HomeScreen(),
+            routes: {
+              '/artists': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                return ArtistsPage(navigateToArtist: args?['artist'] as String?);
+              },
+              '/albums': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                return AlbumsPage(navigateToAlbum: args?['album'] as String?);
+              },
+            },
           );
         },
       ),

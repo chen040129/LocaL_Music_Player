@@ -1,14 +1,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
 import '../models/playlist_model.dart';
+import '../services/music_scanner_service.dart';
+import '../providers/navigation_provider.dart';
 
 class AlbumsPage extends StatefulWidget {
-  const AlbumsPage({Key? key}) : super(key: key);
+  final String? navigateToAlbum;
+
+  const AlbumsPage({Key? key, this.navigateToAlbum}) : super(key: key);
 
   @override
   State<AlbumsPage> createState() => _AlbumsPageState();
@@ -28,10 +33,41 @@ class _AlbumsPageState extends State<AlbumsPage> {
   
   // 展开的专辑
   final Set<String> _expandedAlbums = <String>{};
+
+  // 悬停和点击状态
+  int _hoveredIndex = -1;
+  int _touchedIndex = -1;
   
   // 搜索状态
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // 如果有导航参数，延迟滚动到对应专辑
+    if (widget.navigateToAlbum != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAlbum(widget.navigateToAlbum!);
+      });
+    }
+  }
+
+  /// 获取主题色的相反颜色
+  Color _getThemeOppositeColor(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    
+    // 计算相反颜色
+    return Color.fromARGB(
+      primaryColor.alpha,
+      255 - primaryColor.red,
+      255 - primaryColor.green,
+      255 - primaryColor.blue,
+    );
+  }
+
+  @override
   
   /// 滚动到指定索引
   void _scrollToIndex(int index) {
@@ -41,6 +77,51 @@ class _AlbumsPageState extends State<AlbumsPage> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+    }
+  }
+
+  /// 滚动到指定专辑
+  void _scrollToAlbum(String albumName) {
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+    final albums = musicProvider.albums;
+
+    // 对专辑进行排序
+    List<String> sortedAlbums = List.from(albums);
+    switch (_sortBy) {
+      case 'name':
+        sortedAlbums.sort((a, b) {
+          final aPinyin = PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+          final bPinyin = PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+          return _isAscending ? aPinyin.compareTo(bPinyin) : bPinyin.compareTo(aPinyin);
+        });
+        break;
+      case 'count':
+        sortedAlbums.sort((a, b) {
+          final aCount = musicProvider.getMusicByAlbum(a).length;
+          final bCount = musicProvider.getMusicByAlbum(b).length;
+          return _isAscending ? aCount.compareTo(bCount) : bCount.compareTo(aCount);
+        });
+        break;
+      default:
+        break;
+    }
+
+    // 根据搜索查询过滤专辑列表
+    if (_searchQuery.isNotEmpty) {
+      final searchLower = _searchQuery.toLowerCase();
+      sortedAlbums = sortedAlbums.where((album) {
+        return album.toLowerCase().contains(searchLower);
+      }).toList();
+    }
+
+    // 查找目标专辑的索引
+    final targetIndex = sortedAlbums.indexOf(albumName);
+    if (targetIndex != -1) {
+      _scrollToIndex(targetIndex);
+      // 展开该专辑
+      setState(() {
+        _expandedAlbums.add(albumName);
+      });
     }
   }
   
@@ -56,6 +137,259 @@ class _AlbumsPageState extends State<AlbumsPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// 显示音乐详情对话框
+  void _showMusicDetailDialog(MusicInfo music) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 400,
+            constraints: const BoxConstraints(maxHeight: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 歌曲卡片
+                Card(
+                  margin: EdgeInsets.zero,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: music.coverArt != null
+                        ? Image.memory(
+                            music.coverArt!,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                CupertinoIcons.music_note,
+                                size: 56,
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              );
+                            },
+                          )
+                        : Icon(
+                            CupertinoIcons.music_note,
+                            size: 56,
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                          ),
+                    title: Text(
+                      music.title,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            // TODO: 跳转到艺术家页面
+                          },
+                          child: Text(
+                            music.artist,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          music.album,
+                          style: TextStyle(
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Text(
+                      _formatDuration(music.duration),
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                // 操作按钮
+                ListView(
+                  shrinkWrap: true,
+                  children: [
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.person,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      title: const Text('跳转到艺术家'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        // 使用NavigationProvider切换到艺术家页面
+                        final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                        navigationProvider.navigateToArtist(music.artist);
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.music_albums,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      title: const Text('跳转到专辑'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        // TODO: 跳转到专辑页面并定位到对应专辑
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.add_circled,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      title: const Text('添加到歌单'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showAddToPlaylistDialog(music.id);
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.play_circle,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      title: const Text('下一首播放'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        // TODO: 设置为下一首播放
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.music_note,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      title: const Text('歌曲信息'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showMusicInfoDialog(music);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 显示歌曲信息对话框
+  void _showMusicInfoDialog(MusicInfo music) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: GestureDetector(
+            onTap: () {
+              // 复制所有信息
+              String allInfo = '';
+              allInfo += '标题: ${music.title}\n';
+              allInfo += '艺术家: ${music.artist}\n';
+              allInfo += '专辑: ${music.album}\n';
+              allInfo += '时长: ${_formatDuration(music.duration)}\n';
+              if (music.quality != null) {
+                allInfo += '音质: ${music.quality!}\n';
+              }
+              allInfo += '文件路径: ${music.filePath}';
+
+              Clipboard.setData(ClipboardData(text: allInfo));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('已复制所有歌曲信息'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('歌曲信息'),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildCopyableInfoRow('标题', music.title),
+                _buildCopyableInfoRow('艺术家', music.artist),
+                _buildCopyableInfoRow('专辑', music.album),
+                _buildCopyableInfoRow('时长', _formatDuration(music.duration)),
+                if (music.quality != null) _buildCopyableInfoRow('音质', music.quality!),
+                _buildCopyableInfoRow('文件路径', music.filePath),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 构建可复制的信息行
+  Widget _buildCopyableInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                // 复制到剪贴板
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('已复制 $label'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.9),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 显示添加到歌单对话框
@@ -421,120 +755,185 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         final albumMusics = musicProvider.getMusicByAlbum(album);
                         final coverArt = albumMusics.isNotEmpty ? albumMusics.first.coverArt : null;
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: ExpansionTile(
-                            leading: coverArt != null
-                                ? Image.memory(
-                                    coverArt,
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(
+                        return MouseRegion(
+                          onEnter: (_) {
+                            setState(() {
+                              _hoveredIndex = index;
+                            });
+                          },
+                          onExit: (_) {
+                            setState(() {
+                              _hoveredIndex = -1;
+                            });
+                          },
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _touchedIndex = _touchedIndex == index ? -1 : index;
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _touchedIndex == index || _hoveredIndex == index
+                                    ? (albumMusics.isNotEmpty && albumMusics.first.coverColor != null
+                                        ? Color(albumMusics.first.coverColor!).withOpacity(0.1)
+                                        : Theme.of(context).colorScheme.primary.withOpacity(0.1))
+                                    : Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: _touchedIndex == index
+                                    ? Border.all(
+                                        color: albumMusics.isNotEmpty && albumMusics.first.coverColor != null
+                                            ? Color(albumMusics.first.coverColor!)
+                                            : Theme.of(context).colorScheme.primary,
+                                        width: 2,
+                                      )
+                                    : null,
+                                boxShadow: (_touchedIndex == index || _hoveredIndex == index)
+                                    ? [
+                                        BoxShadow(
+                                          color: albumMusics.isNotEmpty && albumMusics.first.coverColor != null
+                                              ? Color(albumMusics.first.coverColor!).withOpacity(0.2)
+                                              : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                leading: coverArt != null
+                                    ? Image.memory(
+                                        coverArt,
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            CupertinoIcons.music_albums,
+                                            size: 56,
+                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                          );
+                                        },
+                                      )
+                                    : Icon(
                                         CupertinoIcons.music_albums,
                                         size: 56,
                                         color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                      );
-                                    },
-                                  )
-                                : Icon(
-                                    CupertinoIcons.music_albums,
-                                    size: 56,
+                                      ),
+                                title: Text(
+                                  album,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${albumMusics.length} 首歌曲',
+                                  style: TextStyle(
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                  ),
+                                ),
+                                trailing: AnimatedRotation(
+                                  turns: _expandedAlbums.contains(album) ? 0.5 : 0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Icon(
+                                    CupertinoIcons.chevron_down,
                                     color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                                   ),
-                            title: Text(
-                              album,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    if (_expandedAlbums.contains(album)) {
+                                      _expandedAlbums.remove(album);
+                                    } else {
+                                      _expandedAlbums.add(album);
+                                    }
+                                    _touchedIndex = _expandedAlbums.contains(album) ? index : -1;
+                                  });
+                                },
                               ),
-                            ),
-                            subtitle: Text(
-                              '${albumMusics.length} 首歌曲',
-                              style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                              ),
-                            ),
-                            trailing: Icon(
-                              CupertinoIcons.chevron_down,
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                            ),
-                            onExpansionChanged: (isExpanded) {
-                              setState(() {
-                                if (isExpanded) {
-                                  _expandedAlbums.add(album);
-                                } else {
-                                  _expandedAlbums.remove(album);
-                                }
-                              });
-                            },
-                            initiallyExpanded: _expandedAlbums.contains(album),
-                            children: [
-                              // 显示专辑中的歌曲
-                              ...albumMusics.map((music) {
-                                return ListTile(
-                                  leading: music.coverArt != null
-                                      ? Image.memory(
-                                          music.coverArt!,
-                                          width: 48,
-                                          height: 48,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Icon(
-                                              CupertinoIcons.music_note,
-                                              size: 48,
-                                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                            );
-                                          },
-                                        )
-                                      : Icon(
-                                          CupertinoIcons.music_note,
-                                          size: 48,
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                        ),
-                                  title: Text(
-                                    music.title,
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    music.artist,
-                                    style: TextStyle(
-                                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                    ),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        _formatDuration(music.duration),
-                                        style: TextStyle(
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.playlist_add,
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                          size: 20,
-                                        ),
-                                        onPressed: () {
-                                          _showAddToPlaylistDialog(music.id);
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                height: _expandedAlbums.contains(album) ? albumMusics.length * 72.0 : 0,
+                                child: _expandedAlbums.contains(album)
+                                    ? ListView.builder(
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemCount: albumMusics.length,
+                                        itemBuilder: (context, musicIndex) {
+                                          final music = albumMusics[musicIndex];
+                                          return ListTile(
+                                            leading: music.coverArt != null
+                                                ? Image.memory(
+                                                    music.coverArt!,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Icon(
+                                                        CupertinoIcons.music_note,
+                                                        size: 48,
+                                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                      );
+                                                    },
+                                                  )
+                                                : Icon(
+                                                    CupertinoIcons.music_note,
+                                                    size: 48,
+                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                  ),
+                                            title: Text(
+                                              music.title,
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              music.artist,
+                                              style: TextStyle(
+                                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                              ),
+                                            ),
+                                            trailing: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  _formatDuration(music.duration),
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                IconButton(
+                                                  icon: Icon(
+                                                    CupertinoIcons.ellipsis,
+                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                    size: 20,
+                                                  ),
+                                                  onPressed: () {
+                                                    _showMusicDetailDialog(music);
+                                                  },
+                                                  tooltip: '详细信息',
+                                                ),
+                                              ],
+                                            ),
+                                            onTap: () {
+                                              // TODO: 播放音乐
+                                            },
+                                          );
                                         },
-                                        tooltip: '添加到歌单',
-                                      ),
-                                    ],
-                                  ),
-                                  onTap: () {
-                                    // TODO: 播放音乐
-                                  },
-                                );
-                              }).toList(),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
                             ],
+                          ),
+                            ),
                           ),
                         );
                       },
@@ -542,7 +941,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                     // 字母索引栏（只在按名称排序时显示）
                     if (_sortBy == 'name')
                       Positioned(
-                        right: 0,
+                        right: 10,
                         top: 0,
                         bottom: 0,
                         child: Container(

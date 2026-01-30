@@ -10,7 +10,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:palette_generator/palette_generator.dart';
 
-
 /// 音乐信息模型
 class MusicInfo {
   final String id;
@@ -102,7 +101,6 @@ class MusicScannerService {
   int _processedFiles = 0;
   final StreamController<double> _progressController = StreamController<double>.broadcast();
   final StreamController<String> _logController = StreamController<String>.broadcast();
-  final StreamController<Map<String, dynamic>> _coverColorController = StreamController<Map<String, dynamic>>.broadcast();
 
   /// 获取已扫描的音乐列表
   List<MusicInfo> get scannedMusic => List.unmodifiable(_scannedMusic);
@@ -116,24 +114,27 @@ class MusicScannerService {
   /// 获取日志流
   Stream<String> get logStream => _logController.stream;
 
-  /// 获取封面颜色更新流
-  Stream<Map<String, dynamic>> get coverColorStream => _coverColorController.stream;
-
   /// 添加日志
   void _addLog(String log) {
     final timestamp = DateTime.now().toString().substring(11, 19);
     _logController.add('[$timestamp] $log');
   }
 
-  /// 异步提取封面颜色
+  /// 提取封面图片的主要颜色（ARGB 格式）
   Future<int?> _extractCoverColor(Uint8List coverArt) async {
     try {
-      // 解码图片并缩小尺寸以提高性能
-      final codec = await ui.instantiateImageCodec(
-        coverArt,
-        targetWidth: 100, // 缩小到100px宽度
-        targetHeight: 100, // 缩小到100px高度
-      );
+      // 使用 compute 在后台线程解码图片并采样颜色
+      return await compute(_extractColorFromImage, coverArt);
+    } catch (e) {
+      debugPrint('提取封面颜色失败: $e');
+      return null;
+    }
+  }
+
+  /// 在后台线程解码图片并提取颜色
+  static int? _extractColorFromImage(Uint8List bytes) {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
@@ -145,44 +146,25 @@ class MusicScannerService {
       final width = image.width;
       final height = image.height;
 
-      // 采样图片多个区域的颜色
+      // 采样图片中心区域的颜色
+      final centerX = width ~/ 2;
+      final centerY = height ~/ 2;
+      final sampleSize = 10; // 采样区域大小
       final colorCounts = <int, int>{};
-      
-      // 定义采样点：中心、四角、四边中点
-      final samplePoints = [
-        // 中心点
-        (width ~/ 2, height ~/ 2),
-        // 四个角
-        (width ~/ 4, height ~/ 4),
-        (width * 3 ~/ 4, height ~/ 4),
-        (width ~/ 4, height * 3 ~/ 4),
-        (width * 3 ~/ 4, height * 3 ~/ 4),
-        // 四边中点
-        (width ~/ 2, height ~/ 4),
-        (width ~/ 2, height * 3 ~/ 4),
-        (width ~/ 4, height ~/ 2),
-        (width * 3 ~/ 4, height ~/ 2),
-      ];
-      
-      // 在每个采样点周围采样
-      const sampleRadius = 3; // 采样半径
-      for (final (centerX, centerY) in samplePoints) {
-        for (int y = centerY - sampleRadius; y <= centerY + sampleRadius; y++) {
-          for (int x = centerX - sampleRadius; x <= centerX + sampleRadius; x++) {
-            if (x >= 0 && x < width && y >= 0 && y < height) {
-              final index = (y * width + x) * 4;
-              final r = pixels[index];
-              final g = pixels[index + 1];
-              final b = pixels[index + 2];
-              final a = pixels[index + 3];
 
-              // 只采样不透明的像素
-              if (a > 128) {
-                // 将颜色转换为 ARGB 格式的整数
-                final argb = (a << 24) | (r << 16) | (g << 8) | b;
-                colorCounts[argb] = (colorCounts[argb] ?? 0) + 1;
-              }
-            }
+      // 从中心区域采样颜色
+      for (int y = centerY - sampleSize; y <= centerY + sampleSize; y++) {
+        for (int x = centerX - sampleSize; x <= centerX + sampleSize; x++) {
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            final index = (y * width + x) * 4;
+            final r = pixels[index];
+            final g = pixels[index + 1];
+            final b = pixels[index + 2];
+            final a = pixels[index + 3];
+
+            // 将颜色转换为 ARGB 格式的整数
+            final argb = (a << 24) | (r << 16) | (g << 8) | b;
+            colorCounts[argb] = (colorCounts[argb] ?? 0) + 1;
           }
         }
       }
@@ -201,75 +183,6 @@ class MusicScannerService {
       return null;
     }
   }
-
-
-
-/// 判断音乐音质
-String? _determineQuality(String filePath, Duration duration) {
-  try {
-    final file = File(filePath);
-    final fileSize = file.lengthSync();
-
-    // 简单判断音质：根据文件大小和时长计算比特率
-    if (duration.inSeconds > 0) {
-      final bitrate = (fileSize * 8) / (duration.inSeconds * 1000); // kbps
-
-      if (bitrate > 320) {
-        return 'HR'; // 高解析度
-      } else if (bitrate > 192) {
-        return 'HQ'; // 高质量
-      } else if (bitrate > 128) {
-        return 'SQ'; // 标准质量
-      }
-    }
-
-    return null;
-  } catch (e) {
-    debugPrint('判断音质失败: $e');
-    return null;
-  }
-}
-
-/// 后台处理音乐文件的函数
-Future<MusicInfo> _processMusicFileAsync(String filePath) async {
-  try {
-    final file = File(filePath);
-    final metadata = readMetadata(file, getImage: true);
-
-    // 提取封面
-    Uint8List? coverArt;
-    if (metadata.pictures != null && metadata.pictures!.isNotEmpty) {
-      coverArt = metadata.pictures!.first.bytes;
-    }
-
-    // 获取音乐时长
-    final duration = metadata.duration ?? Duration.zero;
-
-    // 判断音质
-    final quality = _determineQuality(filePath, duration);
-
-    // 获取文件大小
-    final fileSize = file.lengthSync();
-
-    return MusicInfo(
-      id: DateTime.now().millisecondsSinceEpoch.toString() + filePath.hashCode.toString(),
-      filePath: filePath,
-      title: metadata.title ?? path.basenameWithoutExtension(filePath),
-      artist: metadata.artist ?? '未知艺术家',
-      album: metadata.album ?? '未知专辑',
-      coverArt: coverArt,
-      duration: duration,
-      quality: quality,
-      trackNumber: metadata.trackNumber != null ? int.tryParse(metadata.trackNumber.toString()) ?? 0 : 0,
-      year: metadata.year != null ? int.tryParse(metadata.year.toString()) ?? 0 : 0,
-      fileSize: fileSize,
-      playCount: 0,
-    );
-  } catch (e) {
-    debugPrint('处理音乐文件失败: $filePath, 错误: $e');
-    rethrow;
-  }
-}
 
   /// 异步提取封面颜色并更新音乐信息
   Future<void> _extractCoverColorAsync(String musicId, Uint8List coverArt) async {
@@ -297,14 +210,6 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
           );
           _scannedMusic[index] = updatedMusic;
           debugPrint('成功提取封面颜色: ${updatedMusic.title}');
-          
-          // 通过流通知 MusicProvider 更新音乐封面颜色
-          if (!_coverColorController.isClosed) {
-            _coverColorController.add({
-              'musicId': musicId,
-              'coverColor': color,
-            });
-          }
         }
       }
     } catch (e) {
@@ -316,7 +221,6 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
   void dispose() {
     _progressController.close();
     _logController.close();
-    _coverColorController.close();
   }
 
   /// 扫描指定目录中的音乐文件
@@ -372,7 +276,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
       final entities = await dir.list().toList();
       final musicFiles = <File>[];
       final directories = <Directory>[];
-      
+
       // 先分类文件和目录
       for (final entity in entities) {
         if (entity is File) {
@@ -386,10 +290,10 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
           directories.add(entity);
         }
       }
-      
+
       // 批量处理音乐文件
       await _processMusicFilesBatch(musicFiles);
-      
+
       // 递归处理子目录
       for (final subDir in directories) {
         await _scanMusicFiles(subDir);
@@ -398,21 +302,21 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
       debugPrint('扫描目录失败: ${dir.path}, 错误: $e');
     }
   }
-  
+
   /// 批量处理音乐文件
   Future<void> _processMusicFilesBatch(List<File> musicFiles) async {
     const batchSize = 10; // 每批处理10个文件，提高导入速度
     for (int i = 0; i < musicFiles.length; i += batchSize) {
       final batch = musicFiles.skip(i).take(batchSize).toList();
-      
+
       // 并行处理当前批次
       await Future.wait(
         batch.map((file) => _processMusicFile(file.path)),
         eagerError: false, // 一个文件失败不影响其他文件
       );
-      
+
       _processedFiles += batch.length;
-      
+
       // 更新进度
       if (_totalFiles > 0) {
         final progress = _processedFiles / _totalFiles;
@@ -430,13 +334,9 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
       _addLog('处理文件: ${path.basename(filePath)}');
       debugPrint('处理音乐文件: $filePath');
 
-      // 直接处理音乐文件
-      final musicInfo = await _processMusicFileAsync(filePath);
+      // 使用 compute 在后台线程处理音乐文件
+      final musicInfo = await compute(_processMusicFileInBackground, filePath);
 
-
-
-
-      
       // 创建带有封面颜色的 MusicInfo
       final musicInfoWithColor = MusicInfo(
         id: musicInfo.id,
@@ -492,3 +392,69 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
   }
 }
 
+/// 判断音乐音质
+String? _determineQuality(String filePath, Duration duration) {
+  try {
+    final file = File(filePath);
+    final fileSize = file.lengthSync();
+
+    // 简单判断音质：根据文件大小和时长计算比特率
+    if (duration.inSeconds > 0) {
+      final bitrate = (fileSize * 8) / (duration.inSeconds * 1000); // kbps
+
+      if (bitrate > 320) {
+        return 'HR'; // 高解析度
+      } else if (bitrate > 192) {
+        return 'HQ'; // 高质量
+      } else if (bitrate > 128) {
+        return 'SQ'; // 标准质量
+      }
+    }
+
+    return null;
+  } catch (e) {
+    debugPrint('判断音质失败: $e');
+    return null;
+  }
+}
+
+/// 后台处理音乐文件的函数
+MusicInfo _processMusicFileInBackground(String filePath) {
+  try {
+    final file = File(filePath);
+    final metadata = readMetadata(file, getImage: true);
+
+    // 提取封面
+    Uint8List? coverArt;
+    if (metadata.pictures != null && metadata.pictures!.isNotEmpty) {
+      coverArt = metadata.pictures!.first.bytes;
+    }
+
+    // 获取音乐时长
+    final duration = metadata.duration ?? Duration.zero;
+
+    // 判断音质
+    final quality = _determineQuality(filePath, duration);
+
+    // 获取文件大小
+    final fileSize = file.lengthSync();
+
+    return MusicInfo(
+      id: DateTime.now().millisecondsSinceEpoch.toString() + filePath.hashCode.toString(),
+      filePath: filePath,
+      title: metadata.title ?? path.basenameWithoutExtension(filePath),
+      artist: metadata.artist ?? '未知艺术家',
+      album: metadata.album ?? '未知专辑',
+      coverArt: coverArt,
+      duration: duration,
+      quality: quality,
+      trackNumber: metadata.trackNumber != null ? int.tryParse(metadata.trackNumber.toString()) ?? 0 : 0,
+      year: metadata.year != null ? int.tryParse(metadata.year.toString()) ?? 0 : 0,
+      fileSize: fileSize,
+      playCount: 0,
+    );
+  } catch (e) {
+    debugPrint('处理音乐文件失败: $filePath, 错误: $e');
+    rethrow;
+  }
+}

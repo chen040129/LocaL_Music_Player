@@ -34,6 +34,14 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
     super.dispose();
   }
 
+  /// 格式化时长
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -245,15 +253,28 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                           ),
                         ),
-                        trailing: IconButton(
-                          icon: Icon(
-                            CupertinoIcons.delete,
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                          ),
-                          onPressed: () {
-                            playlistService.removeMusicFromPlaylist(playlist.id, music.id);
-                          },
-                          tooltip: '从歌单移除',
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatDuration(music.duration),
+                              style: TextStyle(
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(
+                                CupertinoIcons.delete,
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              ),
+                              onPressed: () {
+                                playlistService.removeMusicFromPlaylist(playlist.id, music.id);
+                              },
+                              tooltip: '从歌单移除',
+                            ),
+                          ],
                         ),
                         onTap: () {
                           // TODO: 播放音乐

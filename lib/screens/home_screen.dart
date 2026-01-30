@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_music_player/theme/theme_provider.dart';
 import 'package:flutter_music_player/services/music_scanner_service.dart';
 import 'package:flutter_music_player/providers/music_provider.dart';
+import 'package:flutter_music_player/providers/navigation_provider.dart';
 import 'package:flutter_music_player/constants/app_pages.dart';
 import 'package:flutter_music_player/pages/songs_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
@@ -36,7 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isPlaying = false;
   bool _isAlwaysOnTop = false;
   List<Map<String, dynamic>> _songs = [];
-  AppPage _currentPage = AppPage.songs;
 
   @override
   void initState() {
@@ -116,20 +116,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 切换页面
   void _changePage(AppPage page) {
-    setState(() {
-      _currentPage = page;
-    });
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    navigationProvider.changePage(page);
   }
 
   /// 根据当前页面返回不同的页面组件
   Widget _buildCurrentPage() {
-    switch (_currentPage) {
+    final navigationProvider = Provider.of<NavigationProvider>(context);
+    switch (navigationProvider.currentPage) {
       case AppPage.songs:
         return SongsPage();
       case AppPage.albums:
-        return AlbumsPage();
+        return AlbumsPage(navigateToAlbum: navigationProvider.navigateToAlbumName);
       case AppPage.artists:
-        return ArtistsPage();
+        return ArtistsPage(navigateToArtist: navigationProvider.navigateToArtistName);
       case AppPage.folders:
         return FoldersPage();
       case AppPage.playlists:
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   isExpanded: _isSidebarExpanded,
                   onToggle: _toggleSidebar,
                   onMusicScanned: _onMusicScanned,
-                  currentPage: _currentPage,
+                  currentPage: Provider.of<NavigationProvider>(context).currentPage,
                   onPageChanged: _changePage,
                 ),
                 // 右侧内容区域

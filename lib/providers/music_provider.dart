@@ -24,6 +24,7 @@ class MusicProvider with ChangeNotifier {
   String _currentScanLog = '';
   bool _isLoading = false;
   double _loadingProgress = 0.0;
+  StreamSubscription<Map<String, dynamic>>? _coverColorSubscription;
 
   MusicProvider() {
     debugPrint('MusicProvider初始化');
@@ -38,11 +39,19 @@ class MusicProvider with ChangeNotifier {
     _scannerService.logStream.listen((log) {
       _addScanLog(log);
     });
+
+    // 监听封面颜色更新流
+    _coverColorSubscription = _scannerService.coverColorStream.listen((data) {
+      final musicId = data['musicId'] as String;
+      final coverColor = data['coverColor'] as int?;
+      updateMusicCoverColor(musicId, coverColor);
+    });
   }
 
   @override
   void dispose() {
     _progressSubscription?.cancel();
+    _coverColorSubscription?.cancel();
     _pinyinCache.clear();
     super.dispose();
   }
@@ -278,6 +287,36 @@ class MusicProvider with ChangeNotifier {
       return _musicList.firstWhere((music) => music.id == id);
     } catch (e) {
       return null;
+    }
+  }
+
+  /// 更新音乐封面颜色
+  void updateMusicCoverColor(String musicId, int? coverColor) {
+    try {
+      final index = _musicList.indexWhere((music) => music.id == musicId);
+      if (index != -1) {
+        final updatedMusic = MusicInfo(
+          id: _musicList[index].id,
+          filePath: _musicList[index].filePath,
+          title: _musicList[index].title,
+          artist: _musicList[index].artist,
+          album: _musicList[index].album,
+          coverArt: _musicList[index].coverArt,
+          duration: _musicList[index].duration,
+          quality: _musicList[index].quality,
+          trackNumber: _musicList[index].trackNumber,
+          year: _musicList[index].year,
+          fileSize: _musicList[index].fileSize,
+          playCount: _musicList[index].playCount,
+          playHistory: _musicList[index].playHistory,
+          coverColor: coverColor,
+        );
+        _musicList[index] = updatedMusic;
+        notifyListeners();
+        debugPrint('成功更新音乐封面颜色: ${updatedMusic.title}');
+      }
+    } catch (e) {
+      debugPrint('更新音乐封面颜色失败: $e');
     }
   }
 
