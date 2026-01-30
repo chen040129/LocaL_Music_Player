@@ -97,6 +97,33 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       InvalidateRect(GetHandle(), NULL, TRUE);
       UpdateWindow(GetHandle());
       break;
+    case WM_SIZING: {
+      // Limit window minimum size
+      const int minWidth = 1600;
+      const int minHeight = 600;
+      RECT* rect = reinterpret_cast<RECT*>(lparam);
+      int width = rect->right - rect->left;
+      int height = rect->bottom - rect->top;
+
+      if (width < minWidth) {
+        width = minWidth;
+        if (wparam == WMSZ_TOPLEFT || wparam == WMSZ_LEFT || wparam == WMSZ_BOTTOMLEFT) {
+          rect->left = rect->right - minWidth;
+        } else {
+          rect->right = rect->left + minWidth;
+        }
+      }
+
+      if (height < minHeight) {
+        height = minHeight;
+        if (wparam == WMSZ_TOPLEFT || wparam == WMSZ_TOP || wparam == WMSZ_TOPRIGHT) {
+          rect->top = rect->bottom - minHeight;
+        } else {
+          rect->bottom = rect->top + minHeight;
+        }
+      }
+      return TRUE;
+    }
     case WM_NCHITTEST: {
       // Handle WM_NCHITTEST message to support window dragging
       POINT pt;

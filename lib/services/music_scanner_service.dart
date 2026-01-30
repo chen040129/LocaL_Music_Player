@@ -89,6 +89,7 @@ class MusicInfo {
   final int year;
   final int fileSize;
   int playCount;
+  Map<String, int> playHistory; // 记录每天的播放次数，格式：{'2024-01-15': 3}
 
   MusicInfo({
     required this.id,
@@ -103,7 +104,8 @@ class MusicInfo {
     this.year = 0,
     this.fileSize = 0,
     this.playCount = 0,
-  });
+    Map<String, int>? playHistory,
+  }) : playHistory = playHistory ?? {};
 
   Map<String, dynamic> toJson() {
     return {
@@ -119,6 +121,7 @@ class MusicInfo {
       'year': year,
       'fileSize': fileSize,
       'playCount': playCount,
+      'playHistory': playHistory,
     };
   }
 
@@ -140,6 +143,9 @@ class MusicInfo {
       year: json['year'] ?? 0,
       fileSize: json['fileSize'] ?? 0,
       playCount: json['playCount'] ?? 0,
+      playHistory: json['playHistory'] != null 
+          ? Map<String, int>.from(json['playHistory'])
+          : null,
     );
   }
 

@@ -78,6 +78,60 @@ class MusicProvider with ChangeNotifier {
     return artistList;
   }
 
+  /// 获取音质统计
+  Map<String, Map<String, int>> get qualityStats {
+    final stats = <String, Map<String, int>>{};
+    for (final music in _musicList) {
+      final quality = music.quality ?? '未知';
+      if (!stats.containsKey(quality)) {
+        stats[quality] = {'count': 0, 'size': 0};
+      }
+      stats[quality]!['count'] = (stats[quality]!['count'] ?? 0) + 1;
+      stats[quality]!['size'] = (stats[quality]!['size'] ?? 0) + music.fileSize;
+    }
+    return stats;
+  }
+
+  /// 获取总播放时长（秒）- 基于实际播放次数
+  int get totalDuration {
+    return _musicList.fold<int>(0, (sum, music) => sum + music.duration.inSeconds * music.playCount);
+  }
+
+  /// 获取总播放次数
+  int get totalPlayCount {
+    return _musicList.fold<int>(0, (sum, music) => sum + music.playCount);
+  }
+
+  /// 获取所有歌曲总时长（秒）
+  int get allSongsDuration {
+    return _musicList.fold<int>(0, (sum, music) => sum + music.duration.inSeconds);
+  }
+
+  /// 获取总文件大小
+  int get totalFileSize {
+    return _musicList.fold<int>(0, (sum, music) => sum + music.fileSize);
+  }
+
+  /// 获取年份统计
+  Map<int, int> get yearStats {
+    final stats = <int, int>{};
+    for (final music in _musicList) {
+      final year = music.year > 0 ? music.year : 0;
+      stats[year] = (stats[year] ?? 0) + 1;
+    }
+    return stats;
+  }
+
+  /// 获取格式统计
+  Map<String, int> get formatStats {
+    final stats = <String, int>{};
+    for (final music in _musicList) {
+      final extension = music.filePath.split('.').last.toLowerCase();
+      stats[extension] = (stats[extension] ?? 0) + 1;
+    }
+    return stats;
+  }
+
   /// 根据专辑获取音乐列表
   List<MusicInfo> getMusicByAlbum(String album) {
     return _musicList.where((music) => music.album == album).toList();
@@ -246,5 +300,141 @@ class MusicProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('清除本地数据失败: $e');
     }
+  }
+
+  /// 重置所有歌曲的播放时长（将duration设为0）
+  Future<void> resetTotalDuration() async {
+    for (final music in _musicList) {
+      music.playCount = 0;
+      music.playHistory.clear();
+    }
+    await saveData();
+    notifyListeners();
+    debugPrint('已重置所有歌曲的播放时长');
+  }
+
+  /// 记录歌曲播放
+  void recordPlay(MusicInfo music) {
+    final today = DateTime.now();
+    final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    music.playCount++;
+    music.playHistory[dateKey] = (music.playHistory[dateKey] ?? 0) + 1;
+
+    saveData();
+    notifyListeners();
+  }
+
+  /// 获取指定时间段的排行榜
+  List<MusicInfo> getTopList({
+    required Duration period,
+    int limit = 10,
+  }) {
+    final now = DateTime.now();
+    final startDate = now.subtract(period);
+
+    final entries = _musicList
+        .map((music) {
+          int count = 0;
+          music.playHistory.forEach((date, playCount) {
+            final parts = date.split('-');
+            if (parts.length == 3) {
+              final playDate = DateTime(
+                int.parse(parts[0]),
+                int.parse(parts[1]),
+                int.parse(parts[2]),
+              );
+              if (playDate.isAfter(startDate) || playDate.isAtSameMomentAs(startDate)) {
+                count += playCount;
+              }
+            }
+          });
+          return MapEntry(music, count);
+        })
+        .where((entry) => entry.value > 0)
+        .toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+    return entries.take(limit).map((e) => e.key).toList();
+  }
+
+  /// 获取今日排行榜
+  List<MusicInfo> getTodayTopList({int limit = 10}) {
+    return getTopList(period: const Duration(days: 1), limit: limit);
+  }
+
+  /// 获取本周排行榜
+  List<MusicInfo> getWeekTopList({int limit = 10}) {
+    return getTopList(period: const Duration(days: 7), limit: limit);
+  }
+
+  /// 获取本月排行榜
+  List<MusicInfo> getMonthTopList({int limit = 10}) {
+    return getTopList(period: const Duration(days: 30), limit: limit);
+  }
+
+  /// 获取本年排行榜
+  List<MusicInfo> getYearTopList({int limit = 10}) {
+    return getTopList(period: const Duration(days: 365), limit: limit);
+  }
+
+  /// 获取按作曲家分组的排行榜
+  List<MapEntry<String, int>> getArtistTopList({
+    required Duration period,
+    int limit = 10,
+  }) {
+    final now = DateTime.now();
+    final startDate = now.subtract(period);
+    final artistStats = <String, int>{};
+
+    for (final music in _musicList) {
+      music.playHistory.forEach((date, playCount) {
+        final parts = date.split('-');
+        if (parts.length == 3) {
+          final playDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+          if (playDate.isAfter(startDate) || playDate.isAtSameMomentAs(startDate)) {
+            artistStats[music.artist] = (artistStats[music.artist] ?? 0) + playCount;
+          }
+        }
+      });
+    }
+
+    return artistStats.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value))
+      ..take(limit);
+  }
+
+  /// 获取按专辑分组的排行榜
+  List<MapEntry<String, int>> getAlbumTopList({
+    required Duration period,
+    int limit = 10,
+  }) {
+    final now = DateTime.now();
+    final startDate = now.subtract(period);
+    final albumStats = <String, int>{};
+
+    for (final music in _musicList) {
+      music.playHistory.forEach((date, playCount) {
+        final parts = date.split('-');
+        if (parts.length == 3) {
+          final playDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+          if (playDate.isAtSameMomentAs(startDate) || playDate.isAfter(startDate)) {
+            albumStats[music.album] = (albumStats[music.album] ?? 0) + playCount;
+          }
+        }
+      });
+    }
+
+    return albumStats.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value))
+      ..take(limit);
   }
 }

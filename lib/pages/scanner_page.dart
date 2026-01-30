@@ -61,9 +61,10 @@ class _ScannerPageState extends State<ScannerPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // 扫描状态卡片
                   Card(
                     child: Padding(
@@ -395,7 +396,8 @@ class _ScannerPageState extends State<ScannerPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Expanded(
+                  Container(
+                    height: 300,
                     child: Consumer<MusicProvider>(
                       builder: (context, musicProvider, child) {
                         List<MusicInfo> musicList = List.from(musicProvider.musicList);
@@ -607,6 +609,7 @@ class _ScannerPageState extends State<ScannerPage> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),
