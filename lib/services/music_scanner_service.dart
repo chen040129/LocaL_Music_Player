@@ -238,33 +238,57 @@ class MusicScannerService {
   Future<void> _scanMusicFiles(Directory dir) async {
     try {
       final entities = await dir.list().toList();
-
+      final musicFiles = <File>[];
+      final directories = <Directory>[];
+      
+      // 先分类文件和目录
       for (final entity in entities) {
         if (entity is File) {
           final filePath = entity.path;
           final extension = path.extension(filePath).toLowerCase();
-
           // 支持的音乐格式
           if (['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'].contains(extension)) {
-            await _processMusicFile(filePath);
-            _processedFiles++;
-            // 更新进度
-            if (_totalFiles > 0) {
-              final progress = _processedFiles / _totalFiles;
-              debugPrint('扫描进度: ${(progress * 100).toStringAsFixed(1)}%, 已处理: $_processedFiles/$_totalFiles');
-              // 使用 Stream 发送进度更新
-              if (!_progressController.isClosed) {
-                _progressController.add(progress);
-              }
-            }
+            musicFiles.add(entity);
           }
         } else if (entity is Directory) {
-          // 递归扫描子目录
-          await _scanMusicFiles(entity);
+          directories.add(entity);
         }
+      }
+      
+      // 批量处理音乐文件
+      await _processMusicFilesBatch(musicFiles);
+      
+      // 递归处理子目录
+      for (final subDir in directories) {
+        await _scanMusicFiles(subDir);
       }
     } catch (e) {
       debugPrint('扫描目录失败: ${dir.path}, 错误: $e');
+    }
+  }
+  
+  /// 批量处理音乐文件
+  Future<void> _processMusicFilesBatch(List<File> musicFiles) async {
+    const batchSize = 5; // 每批处理5个文件
+    for (int i = 0; i < musicFiles.length; i += batchSize) {
+      final batch = musicFiles.skip(i).take(batchSize).toList();
+      
+      // 并行处理当前批次
+      await Future.wait(
+        batch.map((file) => _processMusicFile(file.path)),
+        eagerError: false, // 一个文件失败不影响其他文件
+      );
+      
+      _processedFiles += batch.length;
+      
+      // 更新进度
+      if (_totalFiles > 0) {
+        final progress = _processedFiles / _totalFiles;
+        debugPrint('扫描进度: ${(progress * 100).toStringAsFixed(1)}%, 已处理: $_processedFiles/$_totalFiles');
+        if (!_progressController.isClosed) {
+          _progressController.add(progress);
+        }
+      }
     }
   }
 

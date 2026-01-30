@@ -19,7 +19,11 @@ class StorageService {
       final jsonData = jsonEncode(
         musicList.map((music) => music.toJson()).toList(),
       );
-      await file.writeAsString(jsonData);
+      // 使用缓冲写入提高性能
+      final sink = file.openWrite();
+      sink.write(jsonData);
+      await sink.flush();
+      await sink.close();
 
       debugPrint('音乐列表已保存到本地');
     } catch (e) {
@@ -42,9 +46,8 @@ class StorageService {
       final jsonData = await file.readAsString();
       final List<dynamic> jsonList = jsonDecode(jsonData);
 
-      final musicList = jsonList
-          .map((json) => MusicInfo.fromJson(json as Map<String, dynamic>))
-          .toList();
+      // 使用compute在后台线程解析JSON，避免阻塞UI
+      final musicList = await compute(_parseMusicList, jsonList);
 
       debugPrint('已从本地加载 ${musicList.length} 首音乐');
       return musicList;
@@ -52,6 +55,13 @@ class StorageService {
       debugPrint('加载音乐列表失败: $e');
       return [];
     }
+  }
+  
+  /// 在后台线程解析音乐列表
+  static List<MusicInfo> _parseMusicList(List<dynamic> jsonList) {
+    return jsonList
+        .map((json) => MusicInfo.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   /// 保存已扫描的文件夹列表

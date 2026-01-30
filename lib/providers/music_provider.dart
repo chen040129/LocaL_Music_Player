@@ -10,6 +10,9 @@ class MusicProvider with ChangeNotifier {
   static final MusicScannerService _scannerService = MusicScannerService();
   final StorageService _storageService = StorageService();
   List<MusicInfo> _musicList = [];
+  
+  // 拼音缓存映射
+  final Map<String, String> _pinyinCache = {};
   bool _isScanning = false;
   String _scanStatus = '未开始扫描';
   int _scannedCount = 0;
@@ -19,6 +22,8 @@ class MusicProvider with ChangeNotifier {
   StreamSubscription<double>? _progressSubscription;
   final StreamController<String> _scanLogController = StreamController<String>.broadcast();
   String _currentScanLog = '';
+  bool _isLoading = false;
+  double _loadingProgress = 0.0;
 
   MusicProvider() {
     debugPrint('MusicProvider初始化');
@@ -38,7 +43,18 @@ class MusicProvider with ChangeNotifier {
   @override
   void dispose() {
     _progressSubscription?.cancel();
+    _pinyinCache.clear();
     super.dispose();
+  }
+  
+  /// 获取拼音（带缓存）
+  String _getPinyin(String text) {
+    if (_pinyinCache.containsKey(text)) {
+      return _pinyinCache[text]!;
+    }
+    final pinyin = PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+    _pinyinCache[text] = pinyin;
+    return pinyin;
   }
 
   /// 获取音乐列表
@@ -53,9 +69,10 @@ class MusicProvider with ChangeNotifier {
       }
     }
     final albumList = albumSet.toList();
+    // 使用缓存的拼音映射进行排序
     albumList.sort((a, b) {
-      final aPinyin = PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-      final bPinyin = PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+      final aPinyin = _getPinyin(a);
+      final bPinyin = _getPinyin(b);
       return aPinyin.compareTo(bPinyin);
     });
     return albumList;
@@ -70,9 +87,10 @@ class MusicProvider with ChangeNotifier {
       }
     }
     final artistList = artistSet.toList();
+    // 使用缓存的拼音映射进行排序
     artistList.sort((a, b) {
-      final aPinyin = PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-      final bPinyin = PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+      final aPinyin = _getPinyin(a);
+      final bPinyin = _getPinyin(b);
       return aPinyin.compareTo(bPinyin);
     });
     return artistList;
@@ -159,6 +177,12 @@ class MusicProvider with ChangeNotifier {
 
   /// 扫描日志流
   Stream<String> get scanLogStream => _scanLogController.stream;
+
+  /// 是否正在加载
+  bool get isLoading => _isLoading;
+
+  /// 加载进度
+  double get loadingProgress => _loadingProgress;
 
   /// 添加扫描日志
   void _addScanLog(String log) {
@@ -262,21 +286,41 @@ class MusicProvider with ChangeNotifier {
     if (_hasInitialized) return;
 
     try {
-      // 加载已扫描的文件夹列表
-      final folders = await _storageService.loadScannedFolders();
+      _isLoading = true;
+      _loadingProgress = 0.0;
+      notifyListeners();
+
+      // 使用Future.wait并行加载多个数据
+      _loadingProgress = 0.2;
+      notifyListeners();
+      
+      final results = await Future.wait([
+        _storageService.loadScannedFolders(),
+        _storageService.loadMusicList(),
+      ]);
+
+      _loadingProgress = 0.8;
+      notifyListeners();
+      
+      // 处理加载结果
+      final folders = results[0] as List<String>;
+      final musicList = results[1] as List<MusicInfo>;
+      
       _scannedFolders.clear();
       _scannedFolders.addAll(folders);
-
-      // 加载音乐列表
-      final musicList = await _storageService.loadMusicList();
+      
       _musicList.clear();
       _musicList.addAll(musicList);
 
+      _loadingProgress = 1.0;
+      _isLoading = false;
       _hasInitialized = true;
       notifyListeners();
 
       debugPrint('已从本地加载 ${_musicList.length} 首音乐');
     } catch (e) {
+      _isLoading = false;
+      notifyListeners();
       debugPrint('初始化失败: $e');
     }
   }

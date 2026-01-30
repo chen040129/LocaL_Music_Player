@@ -122,6 +122,9 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
           rect->bottom = rect->top + minHeight;
         }
       }
+      // Force redraw to prevent artifacts during rapid resizing
+      InvalidateRect(GetHandle(), NULL, TRUE);
+      UpdateWindow(GetHandle());
       return TRUE;
     }
     case WM_NCHITTEST: {

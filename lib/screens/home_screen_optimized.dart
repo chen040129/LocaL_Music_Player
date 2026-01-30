@@ -1,14 +1,13 @@
-
+// 优化后的主屏幕 - 减少不必要的重建
 import 'package:flutter/material.dart';
-import 'package:flutter_music_player/widgets/sidebar.dart';
-import 'package:flutter_music_player/widgets/playlist_area.dart';
-import 'package:flutter_music_player/widgets/player_control_bar.dart';
+import 'package:flutter_music_player/widgets/sidebar_optimized.dart';
+import 'package:flutter_music_player/widgets/playlist_area_optimized.dart';
+import 'package:flutter_music_player/widgets/player_control_bar_optimized.dart';
 import 'package:flutter_music_player/widgets/custom_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
 import 'package:flutter_music_player/theme/theme_provider.dart';
-import 'package:flutter_music_player/services/music_scanner_service.dart';
 import 'package:flutter_music_player/providers/music_provider.dart';
 import 'package:flutter_music_player/constants/app_pages.dart';
 import 'package:flutter_music_player/pages/songs_page.dart';
@@ -21,16 +20,15 @@ import 'package:flutter_music_player/pages/library_page.dart';
 import 'package:flutter_music_player/pages/statistics_page.dart';
 import 'package:flutter_music_player/pages/settings_page.dart';
 import 'package:flutter_music_player/pages/about_page.dart';
-import 'package:flutter_music_player/models/playlist_model.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomeScreenOptimized extends StatefulWidget {
+  const HomeScreenOptimized({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreenOptimized> createState() => _HomeScreenOptimizedState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenOptimizedState extends State<HomeScreenOptimized> {
   bool _isSidebarExpanded = true;
   int _currentPlayingIndex = 0;
   bool _isPlaying = false;
@@ -57,13 +55,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // 窗口控制功能
-  void _minimizeWindow() async {
+  Future<void> _minimizeWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.minimize();
     }
   }
 
-  void _maximizeWindow() async {
+  Future<void> _maximizeWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       bool isMaximized = await windowManager.isMaximized();
       if (isMaximized) {
@@ -74,13 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _closeWindow() async {
+  Future<void> _closeWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.close();
     }
   }
 
-  void _toggleAlwaysOnTop() async {
+  Future<void> _toggleAlwaysOnTop() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       setState(() {
         _isAlwaysOnTop = !_isAlwaysOnTop;
@@ -95,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _forceWindowRedraw() async {
+  Future<void> _forceWindowRedraw() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.setSize(await windowManager.getSize());
     }
@@ -125,27 +123,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCurrentPage() {
     switch (_currentPage) {
       case AppPage.songs:
-        return SongsPage();
+        return const SongsPage();
       case AppPage.albums:
-        return AlbumsPage();
+        return const AlbumsPage();
       case AppPage.artists:
-        return ArtistsPage();
+        return const ArtistsPage();
       case AppPage.folders:
-        return FoldersPage();
+        return const FoldersPage();
       case AppPage.playlists:
-        return PlaylistsPage();
+        return const PlaylistsPage();
       case AppPage.scanner:
-        return ScannerPage();
+        return const ScannerPage();
       case AppPage.library:
-        return LibraryPage();
+        return const LibraryPage();
       case AppPage.statistics:
-        return StatisticsPage();
+        return const StatisticsPage();
       case AppPage.settings:
-        return SettingsPage();
+        return const SettingsPage();
       case AppPage.about:
-        return AboutPage();
+        return const AboutPage();
       default:
-        return SongsPage();
+        return const SongsPage();
     }
   }
 
@@ -189,58 +187,13 @@ class _HomeScreenState extends State<HomeScreen> {
               isAlwaysOnTop: _isAlwaysOnTop,
             ),
           // 加载进度条（非模态，不遮挡界面）
-          Consumer<MusicProvider>(
-            builder: (context, musicProvider, child) {
-              if (!musicProvider.isLoading) {
-                return const SizedBox.shrink();
-              }
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(context).dividerColor,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '正在加载音乐库... ${(musicProvider.loadingProgress * 100).toInt()}%',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          LinearProgressIndicator(
-                            value: musicProvider.loadingProgress,
-                            minHeight: 3,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+          _LoadingIndicator(),
           // 主内容区域
           Expanded(
             child: Row(
               children: [
                 // 左侧导航栏
-                Sidebar(
+                SidebarOptimized(
                   isExpanded: _isSidebarExpanded,
                   onToggle: _toggleSidebar,
                   onMusicScanned: _onMusicScanned,
@@ -256,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _buildCurrentPage(),
                       ),
                       // 底部播放控制栏
-                      PlayerControlBar(
+                      PlayerControlBarOptimized(
                         isPlaying: _isPlaying,
                         onPlayPauseToggle: _togglePlay,
                       ),
@@ -268,6 +221,67 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 加载指示器组件 - 使用Selector减少重建
+class _LoadingIndicator extends StatelessWidget {
+  const _LoadingIndicator({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<MusicProvider, bool>(
+      selector: (context, musicProvider) => musicProvider.isLoading,
+      builder: (context, isLoading, child) {
+        if (!isLoading) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).dividerColor,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Selector<MusicProvider, double>(
+                  selector: (context, musicProvider) => musicProvider.loadingProgress,
+                  builder: (context, progress, child) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '正在加载音乐库... ${(progress * 100).toInt()}%',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 3,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
