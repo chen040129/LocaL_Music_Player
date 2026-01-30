@@ -218,15 +218,7 @@ class _SidebarState extends State<Sidebar> {
                   isSelected: widget.currentPage == AppPage.scanner,
                   onTap: () => widget.onPageChanged(AppPage.scanner),
                 ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.library,
-                  iconColor: Colors.teal,
-                  title: '音乐库',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.library,
-                  onTap: () => widget.onPageChanged(AppPage.library),
-                ),
+
                 _buildMenuItem(
                   context: context,
                   icon: AppIcons.chart,
