@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:lpinyin/lpinyin.dart';
 import '../services/music_scanner_service.dart';
@@ -6,7 +7,7 @@ import '../services/storage_service.dart';
 
 /// 音乐状态管理Provider
 class MusicProvider with ChangeNotifier {
-  final MusicScannerService _scannerService = MusicScannerService();
+  static final MusicScannerService _scannerService = MusicScannerService();
   final StorageService _storageService = StorageService();
   List<MusicInfo> _musicList = [];
   bool _isScanning = false;
@@ -14,6 +15,31 @@ class MusicProvider with ChangeNotifier {
   int _scannedCount = 0;
   List<String> _scannedFolders = [];
   bool _hasInitialized = false;
+  double _scanProgress = 0.0;
+  StreamSubscription<double>? _progressSubscription;
+  final StreamController<String> _scanLogController = StreamController<String>.broadcast();
+  String _currentScanLog = '';
+
+  MusicProvider() {
+    debugPrint('MusicProvider初始化');
+    // 监听扫描进度流
+    _progressSubscription = _scannerService.progressStream.listen((progress) {
+      debugPrint('MusicProvider收到进度更新: ${(progress * 100).toStringAsFixed(1)}%');
+      _scanProgress = progress;
+      notifyListeners();
+    });
+
+    // 监听扫描日志流
+    _scannerService.logStream.listen((log) {
+      _addScanLog(log);
+    });
+  }
+
+  @override
+  void dispose() {
+    _progressSubscription?.cancel();
+    super.dispose();
+  }
 
   /// 获取音乐列表
   List<MusicInfo> get musicList => List.unmodifiable(_musicList);
@@ -71,8 +97,23 @@ class MusicProvider with ChangeNotifier {
   /// 已扫描的歌曲数量
   int get scannedCount => _scannedCount;
 
+  /// 扫描进度
+  double get scanProgress => _scanProgress;
+
   /// 已扫描的文件夹列表
   List<String> get scannedFolders => List.unmodifiable(_scannedFolders);
+
+  /// 扫描日志流
+  Stream<String> get scanLogStream => _scanLogController.stream;
+
+  /// 添加扫描日志
+  void _addScanLog(String log) {
+    final timestamp = DateTime.now().toString().substring(11, 19);
+    _currentScanLog = '[$timestamp] $log\n$_currentScanLog';
+    if (!_scanLogController.isClosed) {
+      _scanLogController.add(_currentScanLog);
+    }
+  }
 
   /// 扫描指定目录中的音乐文件
   Future<void> scanDirectory(String directoryPath) async {
@@ -84,22 +125,39 @@ class MusicProvider with ChangeNotifier {
     try {
       _isScanning = true;
       _scanStatus = '正在扫描...';
+      _scanProgress = 0.0;
+      _addScanLog('开始扫描目录: $directoryPath');
       notifyListeners();
-
+      
+      // 开始扫描
+      debugPrint('开始扫描目录: $directoryPath');
       final scannedMusic = await _scannerService.scanDirectory(directoryPath);
 
-      _musicList.addAll(scannedMusic);
+      // 检查并添加不重复的音乐
+      int addedCount = 0;
+      for (final music in scannedMusic) {
+        if (!_musicList.any((m) => m.filePath == music.filePath)) {
+          _musicList.add(music);
+          addedCount++;
+          _addScanLog('添加音乐: ${music.title} - ${music.artist}');
+        }
+      }
+
       _isScanning = false;
       _scanStatus = '扫描完成';
-      _scannedCount = scannedMusic.length;
-      _scannedFolders.add(directoryPath);
+      _scannedCount = addedCount;
+      _addScanLog('扫描完成，共找到 ${scannedMusic.length} 首音乐，新增 $addedCount 首');
+      // 检查文件夹是否已存在，避免重复添加
+      if (!_scannedFolders.contains(directoryPath)) {
+        _scannedFolders.add(directoryPath);
+      }
 
       // 自动保存到本地
       await saveData();
 
       notifyListeners();
 
-      debugPrint('扫描完成，共找到 ${scannedMusic.length} 首音乐');
+      debugPrint('扫描完成，共找到 ${scannedMusic.length} 首音乐，新增 $addedCount 首');
     } catch (e) {
       _isScanning = false;
       _scanStatus = '扫描失败';

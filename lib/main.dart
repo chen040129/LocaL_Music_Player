@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
+import 'models/playlist_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => MusicProvider()),
+        ChangeNotifierProvider(create: (context) => PlaylistService()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

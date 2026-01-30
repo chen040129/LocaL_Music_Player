@@ -21,6 +21,7 @@ import 'package:flutter_music_player/pages/library_page.dart';
 import 'package:flutter_music_player/pages/statistics_page.dart';
 import 'package:flutter_music_player/pages/settings_page.dart';
 import 'package:flutter_music_player/pages/about_page.dart';
+import 'package:flutter_music_player/models/playlist_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -48,6 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
       // 初始化音乐数据，从本地加载
       final musicProvider = Provider.of<MusicProvider>(context, listen: false);
       musicProvider.initialize();
+
+      // 初始化歌单数据，从本地加载
+      final playlistService = Provider.of<PlaylistService>(context, listen: false);
+      playlistService.loadPlaylists();
     });
   }
 

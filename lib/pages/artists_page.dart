@@ -88,6 +88,17 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                Consumer<MusicProvider>(
+                  builder: (context, musicProvider, child) {
+                    return Text(
+                      ' ${musicProvider.artists.length}',
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        fontSize: 14,
+                      ),
+                    );
+                  },
+                ),
                 const Spacer(),
                 // 搜索框
                 Container(

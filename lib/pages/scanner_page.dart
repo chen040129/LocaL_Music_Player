@@ -1,6 +1,7 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
@@ -90,10 +91,34 @@ class _ScannerPageState extends State<ScannerPage> {
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              if (musicProvider.isScanning)
-                                LinearProgressIndicator(
-                                  backgroundColor: Theme.of(context).dividerColor.withOpacity(0.3),
+                              if (musicProvider.isScanning) ...[
+                                // 进度条
+                                Column(
+                                  children: [
+                                    LinearProgressIndicator(
+                                      value: musicProvider.scanProgress,
+                                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${(musicProvider.scanProgress * 100).toStringAsFixed(1)}%',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () => _showScanLogDialog(context),
+                                  icon: Icon(AppIcons.list),
+                                  label: Text('查看扫描日志'),
+                                ),
+                              ],
                               if (musicProvider.scannedCount > 0) ...[
                                 const SizedBox(height: 16),
                                 Text(
@@ -595,14 +620,40 @@ class _ScannerPageState extends State<ScannerPage> {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
     if (selectedDirectory != null) {
       try {
-        // 更新全局音乐列表
+        // 检查路径是否已经扫描过
         if (mounted) {
           final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+
+          if (musicProvider.scannedFolders.contains(selectedDirectory)) {
+            // 显示确认对话框
+            final shouldScan = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('确认重新扫描'),
+                content: Text('该文件夹已经扫描过了，是否要重新扫描？\n\n路径：$selectedDirectory'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('取消'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('重新扫描'),
+                  ),
+                ],
+              ),
+            );
+
+            if (shouldScan != true) {
+              return;
+            }
+          }
+
           await musicProvider.scanDirectory(selectedDirectory);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('扫描完成，共找到 ${musicProvider.musicList.length} 首歌曲'),
+              content: Text('扫描完成，共找到 ${musicProvider.scannedCount} 首新歌曲'),
               backgroundColor: Colors.green,
             ),
           );
@@ -618,6 +669,86 @@ class _ScannerPageState extends State<ScannerPage> {
         }
       }
     }
+  }
+
+  /// 显示扫描日志对话框
+  void _showScanLogDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 标题栏
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.list_bullet,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '扫描日志',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: Icon(
+                          CupertinoIcons.xmark,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                // 日志内容
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Consumer<MusicProvider>(
+                      builder: (context, musicProvider, child) {
+                        return StreamBuilder<String>(
+                          stream: musicProvider.scanLogStream,
+                          builder: (context, snapshot) {
+                            return SingleChildScrollView(
+                              child: Text(
+                                snapshot.data ?? '等待扫描...',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   /// 格式化时长

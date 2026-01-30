@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
+import '../models/playlist_model.dart';
 
 class AlbumsPage extends StatefulWidget {
   const AlbumsPage({Key? key}) : super(key: key);
@@ -56,6 +57,140 @@ class _AlbumsPageState extends State<AlbumsPage> {
     _searchController.dispose();
     super.dispose();
   }
+
+  /// 显示添加到歌单对话框
+  void _showAddToPlaylistDialog(String musicId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<PlaylistService>(
+          builder: (context, playlistService, child) {
+            final playlists = playlistService.playlists;
+
+            if (playlists.isEmpty) {
+              return AlertDialog(
+                title: const Text('添加到歌单'),
+                content: const Text('暂无歌单，请先创建歌单'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('取消'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showCreatePlaylistDialog(musicId);
+                    },
+                    child: const Text('创建歌单'),
+                  ),
+                ],
+              );
+            }
+
+            return AlertDialog(
+              title: const Text('添加到歌单'),
+              content: SizedBox(
+                width: 300,
+                height: 400,
+                child: ListView.builder(
+                  itemCount: playlists.length,
+                  itemBuilder: (context, index) {
+                    final playlist = playlists[index];
+                    final isMusicInPlaylist = playlist.musicIds.contains(musicId);
+                    return ListTile(
+                      title: Text(playlist.name),
+                      subtitle: Text('${playlist.musicIds.length} 首歌曲'),
+                      trailing: isMusicInPlaylist
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                      onTap: () async {
+                        if (isMusicInPlaylist) {
+                          await playlistService.removeMusicFromPlaylist(playlist.id, musicId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('已从 "${playlist.name}" 中移除'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        } else {
+                          await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('已添加到 "${playlist.name}"'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('取消'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 显示创建新歌单对话框
+  void _showCreatePlaylistDialog(String musicId) {
+    String playlistName = '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('创建新歌单'),
+          content: TextField(
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: '请输入歌单名称',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              playlistName = value;
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (playlistName.isNotEmpty) {
+                  final playlistService = Provider.of<PlaylistService>(context, listen: false);
+                  final playlist = await playlistService.createPlaylist(playlistName);
+                  await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('已创建歌单 "${playlistName}" 并添加歌曲'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: const Text('创建'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -87,6 +222,17 @@ class _AlbumsPageState extends State<AlbumsPage> {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                Consumer<MusicProvider>(
+                  builder: (context, musicProvider, child) {
+                    return Text(
+                      ' ${musicProvider.albums.length}',
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        fontSize: 14,
+                      ),
+                    );
+                  },
                 ),
                 const Spacer(),
                 // 搜索框
@@ -359,12 +505,29 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                       color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
                                   ),
-                                  trailing: Text(
-                                    _formatDuration(music.duration),
-                                    style: TextStyle(
-                                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                      fontSize: 12,
-                                    ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _formatDuration(music.duration),
+                                        style: TextStyle(
+                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.playlist_add,
+                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          _showAddToPlaylistDialog(music.id);
+                                        },
+                                        tooltip: '添加到歌单',
+                                      ),
+                                    ],
                                   ),
                                   onTap: () {
                                     // TODO: 播放音乐

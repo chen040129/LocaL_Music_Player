@@ -40,6 +40,7 @@ class AppIcons {
   static const IconData search = CupertinoIcons.search;
   static const IconData add = CupertinoIcons.add;
   static const IconData delete = CupertinoIcons.delete;
+  static const IconData list = CupertinoIcons.list_bullet;
   static const IconData lightMode = CupertinoIcons.sun_max;
   static const IconData darkMode = CupertinoIcons.moon;
   static const IconData refresh = CupertinoIcons.refresh;
