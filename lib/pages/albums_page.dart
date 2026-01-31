@@ -11,11 +11,13 @@ import '../services/music_scanner_service.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/mask_card.dart';
 import '../constants/app_icons.dart';
+import '../constants/app_pages.dart';
 
 class AlbumsPage extends StatefulWidget {
   final String? navigateToAlbum;
+  final VoidCallback? onSidebarToggle;
 
-  const AlbumsPage({Key? key, this.navigateToAlbum}) : super(key: key);
+  const AlbumsPage({Key? key, this.navigateToAlbum, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<AlbumsPage> createState() => _AlbumsPageState();
@@ -25,6 +27,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
   // 排序方式
   String _sortBy = 'name'; // name, count
   bool _isAscending = true;
+  // 标题悬停状态
+  bool _isTitleHovered = false;
   
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
@@ -549,14 +553,50 @@ class _AlbumsPageState extends State<AlbumsPage> {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.music_albums, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '专辑',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isTitleHovered = true),
+                  onExit: (_) => setState(() => _isTitleHovered = false),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 通知父组件展开侧边栏并导航到专辑页面
+                      final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                      navigationProvider.changePage(AppPage.albums);
+                      // 需要父组件实现展开侧边栏的逻辑
+                      if (widget.onSidebarToggle != null) {
+                        widget.onSidebarToggle!();
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.music_albums, 
+                            color: _isTitleHovered 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '专辑',
+                            style: TextStyle(
+                              color: _isTitleHovered 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 Consumer<MusicProvider>(

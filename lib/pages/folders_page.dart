@@ -4,7 +4,9 @@ import 'package:file_picker/file_picker.dart';
 import '../constants/app_icons.dart';
 
 class FoldersPage extends StatefulWidget {
-  const FoldersPage({Key? key}) : super(key: key);
+  final VoidCallback? onSidebarToggle;
+
+  const FoldersPage({Key? key, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<FoldersPage> createState() => _FoldersPageState();
@@ -12,6 +14,8 @@ class FoldersPage extends StatefulWidget {
 
 class _FoldersPageState extends State<FoldersPage> {
   List<String> _folders = [];
+  // 标题悬停状态
+  bool _isTitleHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +38,47 @@ class _FoldersPageState extends State<FoldersPage> {
             ),
             child: Row(
               children: [
-                Icon(AppIcons.folder, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '文件夹',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isTitleHovered = true),
+                  onExit: (_) => setState(() => _isTitleHovered = false),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 通知父组件展开侧边栏并导航到文件夹页面
+                      if (widget.onSidebarToggle != null) {
+                        widget.onSidebarToggle!();
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            AppIcons.folder, 
+                            color: _isTitleHovered 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '文件夹',
+                            style: TextStyle(
+                              color: _isTitleHovered 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 const Spacer(),

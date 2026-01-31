@@ -8,7 +8,9 @@ import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({Key? key}) : super(key: key);
+  final VoidCallback? onSidebarToggle;
+
+  const StatisticsPage({Key? key, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -17,6 +19,8 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage> {
   int _touchedIndex = -1;
   int _selectedYearIndex = -1;
+  // 标题悬停状态
+  bool _isTitleHovered = false;
   int _selectedFormatIndex = -1;
   int _hoveredIndex = -1;
   int _selectedRankingType = 0; // 0: 日榜, 1: 周榜, 2: 月榜, 3: 年榜
@@ -88,14 +92,47 @@ class _StatisticsPageState extends State<StatisticsPage> {
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.chart_bar, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-          const SizedBox(width: 8),
-          Text(
-            '统计',
-            style: TextStyle(
-              color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          MouseRegion(
+            onEnter: (_) => setState(() => _isTitleHovered = true),
+            onExit: (_) => setState(() => _isTitleHovered = false),
+            child: GestureDetector(
+              onTap: () {
+                // 通知父组件展开侧边栏
+                if (widget.onSidebarToggle != null) {
+                  widget.onSidebarToggle!();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _isTitleHovered 
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.chart_bar, 
+                      color: _isTitleHovered 
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '统计',
+                      style: TextStyle(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const Spacer(),

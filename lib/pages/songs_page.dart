@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../constants/app_icons.dart';
+import '../constants/app_pages.dart';
 import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
 import '../models/playlist_model.dart';
@@ -13,7 +14,9 @@ import '../providers/navigation_provider.dart';
 import '../widgets/mask_card.dart';
 
 class SongsPage extends StatefulWidget {
-  const SongsPage({Key? key}) : super(key: key);
+  final VoidCallback? onSidebarToggle;
+
+  const SongsPage({Key? key, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<SongsPage> createState() => _SongsPageState();
@@ -23,6 +26,8 @@ class _SongsPageState extends State<SongsPage> {
   // 排序方式
   String _sortBy = 'default'; // default, title, artist, album, duration
   bool _isAscending = true;
+  // 标题悬停状态
+  bool _isTitleHovered = false;
   final ItemScrollController _scrollController = ItemScrollController();
   final List<String> _alphabet = [
     '0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -57,14 +62,50 @@ class _SongsPageState extends State<SongsPage> {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.music_note, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '歌曲',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isTitleHovered = true),
+                  onExit: (_) => setState(() => _isTitleHovered = false),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 通知父组件展开侧边栏并导航到歌曲页面
+                      final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                      navigationProvider.changePage(AppPage.songs);
+                      // 需要父组件实现展开侧边栏的逻辑
+                      if (widget.onSidebarToggle != null) {
+                        widget.onSidebarToggle!();
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.music_note, 
+                            color: _isTitleHovered 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '歌曲',
+                            style: TextStyle(
+                              color: _isTitleHovered 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 Consumer<MusicProvider>(

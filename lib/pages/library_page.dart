@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 import '../constants/app_icons.dart';
 
 class LibraryPage extends StatefulWidget {
-  const LibraryPage({Key? key}) : super(key: key);
+  final VoidCallback? onSidebarToggle;
+
+  const LibraryPage({Key? key, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
 }
 
 class _LibraryPageState extends State<LibraryPage> {
+  // 标题悬停状态
+  bool _isTitleHovered = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -31,14 +36,47 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
             child: Row(
               children: [
-                Icon(AppIcons.library, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '音乐库',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isTitleHovered = true),
+                  onExit: (_) => setState(() => _isTitleHovered = false),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 通知父组件展开侧边栏
+                      if (widget.onSidebarToggle != null) {
+                        widget.onSidebarToggle!();
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            AppIcons.library, 
+                            color: _isTitleHovered 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '音乐库',
+                            style: TextStyle(
+                              color: _isTitleHovered 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 const Spacer(),

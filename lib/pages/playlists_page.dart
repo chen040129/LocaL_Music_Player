@@ -8,7 +8,9 @@ import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
 
 class PlaylistsPage extends StatefulWidget {
-  const PlaylistsPage({Key? key}) : super(key: key);
+  final VoidCallback? onSidebarToggle;
+
+  const PlaylistsPage({Key? key, this.onSidebarToggle}) : super(key: key);
 
   @override
   State<PlaylistsPage> createState() => _PlaylistsPageState();
@@ -18,6 +20,8 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   PlaylistModel? _selectedPlaylist;
+  // 标题悬停状态
+  bool _isTitleHovered = false;
   
   // 悬停和点击状态
   int _hoveredIndex = -1;
@@ -84,14 +88,47 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     },
                     tooltip: '返回',
                   ),
-                Icon(AppIcons.playlist, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  _selectedPlaylist != null ? _selectedPlaylist!.name : '歌单',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isTitleHovered = true),
+                  onExit: (_) => setState(() => _isTitleHovered = false),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 通知父组件展开侧边栏并导航到歌单页面
+                      if (widget.onSidebarToggle != null) {
+                        widget.onSidebarToggle!();
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _isTitleHovered 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            AppIcons.playlist, 
+                            color: _isTitleHovered 
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _selectedPlaylist != null ? _selectedPlaylist!.name : '歌单',
+                            style: TextStyle(
+                              color: _isTitleHovered 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 const Spacer(),

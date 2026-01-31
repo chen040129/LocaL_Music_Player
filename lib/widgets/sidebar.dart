@@ -104,7 +104,7 @@ class _SidebarState extends State<Sidebar> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOutCubic,
-      width: widget.isExpanded ? 220 : 80,
+      width: widget.isExpanded ? 220 : 0,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
       ),
@@ -151,23 +151,16 @@ class _SidebarState extends State<Sidebar> {
                     );
                   },
                 ),
-                // 侧边栏切换按钮
+                // 音质设置按钮
                 IconButton(
-                  icon: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    transitionBuilder: (child, animation) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      );
-                    },
-                    child: Icon(
-                      widget.isExpanded ? AppIcons.sidebarLeft : AppIcons.sidebarRight,
-                      key: ValueKey<bool>(widget.isExpanded),
-                      color: Theme.of(context).iconTheme.color,
-                    ),
+                  icon: Icon(
+                    AppIcons.qualityHigh,
+                    color: Theme.of(context).iconTheme.color,
                   ),
-                  onPressed: widget.onToggle,
+                  onPressed: () {
+                    // TODO: 实现音质设置功能
+                  },
+                  tooltip: '音质设置',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 32,

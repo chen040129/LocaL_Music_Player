@@ -125,27 +125,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final navigationProvider = Provider.of<NavigationProvider>(context);
     switch (navigationProvider.currentPage) {
       case AppPage.songs:
-        return SongsPage();
+        return SongsPage(onSidebarToggle: _toggleSidebar);
       case AppPage.albums:
-        return AlbumsPage(navigateToAlbum: navigationProvider.navigateToAlbumName);
+        return AlbumsPage(navigateToAlbum: navigationProvider.navigateToAlbumName, onSidebarToggle: _toggleSidebar);
       case AppPage.artists:
-        return ArtistsPage(navigateToArtist: navigationProvider.navigateToArtistName);
+        return ArtistsPage(navigateToArtist: navigationProvider.navigateToArtistName, onSidebarToggle: _toggleSidebar);
       case AppPage.folders:
-        return FoldersPage();
+        return FoldersPage(onSidebarToggle: _toggleSidebar);
       case AppPage.playlists:
-        return PlaylistsPage();
+        return PlaylistsPage(onSidebarToggle: _toggleSidebar);
       case AppPage.scanner:
-        return ScannerPage();
+        return ScannerPage(onSidebarToggle: _toggleSidebar);
       case AppPage.library:
-        return LibraryPage();
+        return LibraryPage(onSidebarToggle: _toggleSidebar);
       case AppPage.statistics:
-        return StatisticsPage();
+        return StatisticsPage(onSidebarToggle: _toggleSidebar);
       case AppPage.settings:
-        return SettingsPage();
+        return SettingsPage(onSidebarToggle: _toggleSidebar);
       case AppPage.about:
-        return AboutPage();
+        return AboutPage(onSidebarToggle: _toggleSidebar);
       default:
-        return SongsPage();
+        return SongsPage(onSidebarToggle: _toggleSidebar);
     }
   }
 
@@ -239,14 +239,15 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Row(
               children: [
-                // 左侧导航栏
-                Sidebar(
-                  isExpanded: _isSidebarExpanded,
-                  onToggle: _toggleSidebar,
-                  onMusicScanned: _onMusicScanned,
-                  currentPage: Provider.of<NavigationProvider>(context).currentPage,
-                  onPageChanged: _changePage,
-                ),
+                // 左侧导航栏 - 只在展开时显示
+                if (_isSidebarExpanded)
+                  Sidebar(
+                    isExpanded: _isSidebarExpanded,
+                    onToggle: _toggleSidebar,
+                    onMusicScanned: _onMusicScanned,
+                    currentPage: Provider.of<NavigationProvider>(context).currentPage,
+                    onPageChanged: _changePage,
+                  ),
                 // 右侧内容区域
                 Expanded(
                   child: Column(
