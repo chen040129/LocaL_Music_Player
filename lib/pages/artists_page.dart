@@ -9,6 +9,8 @@ import '../providers/music_provider.dart';
 import '../models/playlist_model.dart';
 import '../services/music_scanner_service.dart';
 import '../providers/navigation_provider.dart';
+import '../widgets/mask_card.dart';
+import '../constants/app_icons.dart';
 
 class ArtistsPage extends StatefulWidget {
   final String? navigateToArtist;
@@ -251,7 +253,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ),
                     ListTile(
                       leading: Icon(
-                        CupertinoIcons.add_circled,
+                        AppIcons.addCircled,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('添加到歌单'),
@@ -262,7 +264,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ),
                     ListTile(
                       leading: Icon(
-                        CupertinoIcons.play_circle,
+                        AppIcons.playCircle,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('下一首播放'),
@@ -435,7 +437,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
                       trailing: isMusicInPlaylist
-                          ? const Icon(Icons.check, color: Colors.green)
+                          ? Icon(AppIcons.check, color: Colors.green)
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
@@ -579,7 +581,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                   child: Row(
                     children: [
                       Icon(
-                        CupertinoIcons.search,
+                        AppIcons.search,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         size: 18,
                       ),
@@ -617,7 +619,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -629,7 +631,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                 // 排序按钮
                 PopupMenuButton<String>(
                   icon: Icon(
-                    CupertinoIcons.arrow_up_arrow_down,
+                    AppIcons.sort,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                   ),
                   tooltip: '排序方式',
@@ -656,7 +658,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                       value: 'asc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_up, size: 16),
+                          Icon(AppIcons.arrowUpward, size: 16),
                           const SizedBox(width: 8),
                           const Text('升序'),
                         ],
@@ -666,7 +668,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                       value: 'desc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_down, size: 16),
+                          Icon(AppIcons.arrowDownward, size: 16),
                           const SizedBox(width: 8),
                           const Text('降序'),
                         ],
@@ -772,36 +774,12 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                 _touchedIndex = _touchedIndex == index ? -1 : index;
                               });
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: _touchedIndex == index || _hoveredIndex == index
-                                    ? (artistMusics.isNotEmpty && artistMusics.first.coverColor != null
-                                        ? Color(artistMusics.first.coverColor!).withOpacity(0.1)
-                                        : Theme.of(context).colorScheme.primary.withOpacity(0.1))
-                                    : Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: _touchedIndex == index
-                                    ? Border.all(
-                                        color: artistMusics.isNotEmpty && artistMusics.first.coverColor != null
-                                            ? Color(artistMusics.first.coverColor!)
-                                            : Theme.of(context).colorScheme.primary,
-                                        width: 2,
-                                      )
-                                    : null,
-                                boxShadow: (_touchedIndex == index || _hoveredIndex == index)
-                                    ? [
-                                        BoxShadow(
-                                          color: artistMusics.isNotEmpty && artistMusics.first.coverColor != null
-                                              ? Color(artistMusics.first.coverColor!).withOpacity(0.2)
-                                              : Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
+                            child: MaskCard(
+                              isSelected: _touchedIndex == index,
+                              isHovered: _hoveredIndex == index,
+                              accentColor: artistMusics.isNotEmpty && artistMusics.first.coverColor != null
+                                  ? Color(artistMusics.first.coverColor!)
+                                  : null,
                               child: Column(
                                 children: [
                                   ListTile(

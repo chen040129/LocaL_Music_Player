@@ -387,13 +387,19 @@ class MusicProvider with ChangeNotifier {
 
   /// 重置所有歌曲的播放时长（将duration设为0）
   Future<void> resetTotalDuration() async {
-    for (final music in _musicList) {
-      music.playCount = 0;
-      music.playHistory.clear();
-    }
+    // 使用compute在后台线程执行重置操作
+    await compute(_resetMusicListData, _musicList);
     await saveData();
     notifyListeners();
     debugPrint('已重置所有歌曲的播放时长');
+  }
+
+  /// 静态方法，用于在后台线程重置音乐数据
+  static void _resetMusicListData(List<MusicInfo> musicList) {
+    for (final music in musicList) {
+      music.playCount = 0;
+      music.playHistory.clear();
+    }
   }
 
   /// 记录歌曲播放

@@ -10,6 +10,7 @@ import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
 import '../models/playlist_model.dart';
 import '../providers/navigation_provider.dart';
+import '../widgets/mask_card.dart';
 
 class SongsPage extends StatefulWidget {
   const SongsPage({Key? key}) : super(key: key);
@@ -81,7 +82,7 @@ class _SongsPageState extends State<SongsPage> {
                 // 随机播放按钮
                 IconButton(
                   icon: Icon(
-                    CupertinoIcons.shuffle,
+                    AppIcons.shuffle,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                   ),
                   onPressed: () {
@@ -141,7 +142,7 @@ class _SongsPageState extends State<SongsPage> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -335,30 +336,10 @@ class _SongsPageState extends State<SongsPage> {
                                 _touchedIndex = isTouched ? -1 : index;
                               });
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isTouched || isHovered
-                                    ? animationColor.withOpacity(0.1)
-                                    : Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: isTouched
-                                    ? Border.all(
-                                        color: animationColor,
-                                        width: 2,
-                                      )
-                                    : null,
-                                boxShadow: (isTouched || isHovered)
-                                    ? [
-                                        BoxShadow(
-                                          color: animationColor.withOpacity(0.2),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
+                            child: MaskCard(
+                              isSelected: isTouched,
+                              isHovered: isHovered,
+                              accentColor: animationColor,
                               child: ListTile(
                             leading: music.coverArt != null
                                 ? Image.memory(
@@ -656,7 +637,7 @@ class _SongsPageState extends State<SongsPage> {
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
                       trailing: isMusicInPlaylist
-                          ? const Icon(Icons.check, color: Colors.green)
+                          ? Icon(AppIcons.check, color: Colors.green)
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
@@ -869,7 +850,7 @@ class _SongsPageState extends State<SongsPage> {
                     ),
                     ListTile(
                       leading: Icon(
-                        CupertinoIcons.add_circled,
+                        AppIcons.addCircled,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('添加到歌单'),

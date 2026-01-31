@@ -21,6 +21,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   int _hoveredIndex = -1;
   int _selectedRankingType = 0; // 0: 日榜, 1: 周榜, 2: 月榜, 3: 年榜
   int _selectedSortType = 0; // 0: 按歌曲, 1: 按作曲家, 2: 按专辑
+  int _hoveredCardIndex = -1; // 用于统计卡片的悬停状态
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +175,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           provider.musicList.length.toString(),
           CupertinoIcons.music_note,
           Colors.green,
+          0,
         ),
         _buildStatCard(
           context,
@@ -181,6 +183,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           provider.albums.length.toString(),
           CupertinoIcons.music_albums,
           Colors.red,
+          1,
         ),
         _buildStatCard(
           context,
@@ -188,6 +191,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           provider.artists.length.toString(),
           CupertinoIcons.person,
           Colors.yellow,
+          2,
         ),
         GestureDetector(
           onDoubleTap: () {
@@ -196,7 +200,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('确认重置'),
-                content: const Text('确定要将所有歌曲的播放次数归零吗？'),
+                content: const Text('确定要将播放时间归零吗？'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
@@ -220,6 +224,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             '$hours小时$minutes分钟',
             CupertinoIcons.time,
             Colors.blue,
+            3,
           ),
         ),
         _buildStatCard(
@@ -228,6 +233,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           _formatFileSize(totalSize),
           CupertinoIcons.folder,
           Colors.purple,
+          4,
         ),
         _buildStatCard(
           context,
@@ -237,6 +243,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               : '0:00',
           CupertinoIcons.time_solid,
           Colors.orange,
+          5,
         ),
         _buildStatCard(
           context,
@@ -244,6 +251,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           provider.totalPlayCount.toString(),
           CupertinoIcons.play_circle,
           Colors.teal,
+          6,
         ),
         _buildStatCard(
           context,
@@ -251,6 +259,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           '$allSongsHours小时$allSongsMinutes分钟',
           CupertinoIcons.music_note_2,
           Colors.pink,
+          7,
         ),
       ],
     );
@@ -941,56 +950,99 @@ class _StatisticsPageState extends State<StatisticsPage> {
     String value,
     IconData icon,
     Color color,
+    int index,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.3),
+    final isHovered = _hoveredCardIndex == index;
+
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() {
+          _hoveredCardIndex = index;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          _hoveredCardIndex = -1;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 80,
+        decoration: BoxDecoration(
+          color: isHovered 
+              ? color.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isHovered 
+                ? color.withOpacity(0.6) 
+                : Theme.of(context).dividerColor.withOpacity(0.3),
+            width: isHovered ? 2 : 1,
+          ),
+          boxShadow: isHovered
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.2),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 12,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(isHovered ? 0.3 : 0.2),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 20,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      child: SizedBox(
+                        height: isHovered ? 24 : 0,
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

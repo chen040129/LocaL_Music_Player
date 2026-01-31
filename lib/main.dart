@@ -11,6 +11,7 @@ import 'models/playlist_model.dart';
 import 'package:flutter_music_player/pages/artists_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
 import 'providers/navigation_provider.dart';
+import 'widgets/animated_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,7 +57,10 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const HomeScreen(),
+            home: ThemeTransition(
+              themeMode: themeProvider.themeMode,
+              child: const HomeScreen(),
+            ),
             routes: {
               '/artists': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;

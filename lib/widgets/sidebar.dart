@@ -101,8 +101,10 @@ class _SidebarState extends State<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.isExpanded ? 240 : 80,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+      width: widget.isExpanded ? 220 : 80,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
       ),
@@ -122,7 +124,13 @@ class _SidebarState extends State<Sidebar> {
                   builder: (context, themeProvider, child) {
                     return IconButton(
                       icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 400),
+                        transitionBuilder: (child, animation) {
+                          return ScaleTransition(
+                            scale: animation,
+                            child: child,
+                          );
+                        },
                         child: Icon(
                           themeProvider.isDarkMode
                               ? AppIcons.sun
@@ -145,9 +153,19 @@ class _SidebarState extends State<Sidebar> {
                 ),
                 // 侧边栏切换按钮
                 IconButton(
-                  icon: Icon(
-                    widget.isExpanded ? AppIcons.sidebarLeft : AppIcons.sidebarRight,
-                    color: Theme.of(context).iconTheme.color,
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      );
+                    },
+                    child: Icon(
+                      widget.isExpanded ? AppIcons.sidebarLeft : AppIcons.sidebarRight,
+                      key: ValueKey<bool>(widget.isExpanded),
+                      color: Theme.of(context).iconTheme.color,
+                    ),
                   ),
                   onPressed: widget.onToggle,
                   padding: EdgeInsets.zero,
@@ -264,7 +282,7 @@ class _SidebarState extends State<Sidebar> {
     bool isSelected = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: isExpanded ? 8 : 4, vertical: 4),
       child: Material(
         color: isSelected
             ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
@@ -273,8 +291,9 @@ class _SidebarState extends State<Sidebar> {
           onTap: onTap ?? () {},
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            padding: EdgeInsets.symmetric(vertical: 12, horizontal: isExpanded ? 12 : 8),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
@@ -286,15 +305,30 @@ class _SidebarState extends State<Sidebar> {
                   size: 24,
                 ),
                 if (isExpanded) ...[
-                  const SizedBox(width: 16),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).textTheme.bodyMedium?.color,
-                      fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  SizedBox(width: isExpanded ? 16 : 0),
+                  Flexible(
+                    child: ClipRect(
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOutCubic,
+                        child: AnimatedOpacity(
+                          opacity: isExpanded ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOutCubic,
+                          child: Text(
+                            title,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).textTheme.bodyMedium?.color,
+                              fontSize: 15,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],

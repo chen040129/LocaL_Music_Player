@@ -90,7 +90,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     child: Row(
                       children: [
                         Icon(
-                          CupertinoIcons.search,
+                          AppIcons.search,
                           color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                           size: 18,
                         ),
@@ -128,7 +128,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                               });
                             },
                             child: Icon(
-                              CupertinoIcons.clear_circled_solid,
+                              AppIcons.clearCircledSolid,
                               color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                               size: 18,
                             ),
@@ -311,7 +311,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          CupertinoIcons.search,
+                          AppIcons.search,
                           size: 64,
                           color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
                         ),
@@ -572,7 +572,7 @@ class _AddMusicToPlaylistDialogState extends State<AddMusicToPlaylistDialog> {
                     child: const Text('添加'),
                   ),
                   IconButton(
-                    icon: const Icon(CupertinoIcons.clear),
+                    icon: const Icon(AppIcons.clear),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
@@ -587,10 +587,10 @@ class _AddMusicToPlaylistDialogState extends State<AddMusicToPlaylistDialog> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: '搜索音乐',
-                  prefixIcon: const Icon(CupertinoIcons.search),
+                  prefixIcon: const Icon(AppIcons.search),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(CupertinoIcons.clear_circled_solid),
+                          icon: const Icon(AppIcons.clearCircledSolid),
                           onPressed: () {
                             setState(() {
                               _searchQuery = '';

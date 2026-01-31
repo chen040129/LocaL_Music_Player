@@ -361,7 +361,7 @@ class _ScannerPageState extends State<ScannerPage> {
                             value: 'asc',
                             child: Row(
                               children: [
-                                Icon(Icons.arrow_upward, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                                Icon(AppIcons.arrowUpward, size: 16, color: Theme.of(context).colorScheme.onSurface),
                                 const SizedBox(width: 8),
                                 Text(
                                   '升序',
@@ -378,7 +378,7 @@ class _ScannerPageState extends State<ScannerPage> {
                             value: 'desc',
                             child: Row(
                               children: [
-                                Icon(Icons.arrow_downward, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                                Icon(AppIcons.arrowDownward, size: 16, color: Theme.of(context).colorScheme.onSurface),
                                 const SizedBox(width: 8),
                                 Text(
                                   '降序',

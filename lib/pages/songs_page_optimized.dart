@@ -140,7 +140,7 @@ class _SongsPageOptimizedState extends State<SongsPageOptimized> {
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
                       trailing: isMusicInPlaylist
-                          ? const Icon(Icons.check, color: Colors.green)
+                          ? Icon(AppIcons.check, color: Colors.green)
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
@@ -275,7 +275,7 @@ class _SongsPageOptimizedState extends State<SongsPageOptimized> {
                 // 随机播放按钮
                 IconButton(
                   icon: Icon(
-                    CupertinoIcons.shuffle,
+                    AppIcons.shuffle,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                   ),
                   onPressed: () {
@@ -340,7 +340,7 @@ class _SongsPageOptimizedState extends State<SongsPageOptimized> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -530,6 +530,9 @@ class _SongsPageOptimizedState extends State<SongsPageOptimized> {
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
                       itemCount: sortedSongs.length,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemBuilder: (context, index) {
                         final music = sortedSongs[index];
 
@@ -600,7 +603,7 @@ class _SongsPageOptimizedState extends State<SongsPageOptimized> {
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: Icon(
-                                  Icons.playlist_add,
+                                  AppIcons.playlistAdd,
                                   color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                                   size: 20,
                                 ),

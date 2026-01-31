@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
+import '../constants/app_icons.dart';
 
 /// 音质饼状图组件
 class QualityPieChartWidget extends StatelessWidget {
@@ -31,7 +33,7 @@ class QualityPieChartWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.pie_chart,
+                AppIcons.pieChart,
                 size: 64,
                 color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
               ),

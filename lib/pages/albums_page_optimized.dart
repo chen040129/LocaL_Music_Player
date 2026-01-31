@@ -6,6 +6,7 @@ import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
 import '../models/playlist_model.dart';
+import '../constants/app_icons.dart';
 
 class AlbumsPageOptimized extends StatefulWidget {
   const AlbumsPageOptimized({Key? key}) : super(key: key);
@@ -133,7 +134,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
                       trailing: isMusicInPlaylist
-                          ? const Icon(Icons.check, color: Colors.green)
+                          ? Icon(AppIcons.check, color: Colors.green)
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
@@ -277,7 +278,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                   child: Row(
                     children: [
                       Icon(
-                        CupertinoIcons.search,
+                        AppIcons.search,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         size: 18,
                       ),
@@ -319,7 +320,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -331,7 +332,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                 // 排序按钮
                 PopupMenuButton<String>(
                   icon: Icon(
-                    CupertinoIcons.arrow_up_arrow_down,
+                    AppIcons.sort,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                   ),
                   tooltip: '排序方式',
@@ -360,7 +361,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       value: 'asc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_up, size: 16),
+                          Icon(AppIcons.arrowUpward, size: 16),
                           const SizedBox(width: 8),
                           const Text('升序'),
                         ],
@@ -370,7 +371,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       value: 'desc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_down, size: 16),
+                          Icon(AppIcons.arrowDownward, size: 16),
                           const SizedBox(width: 8),
                           const Text('降序'),
                         ],
@@ -473,6 +474,9 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
                       itemCount: sortedAlbums.length,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemBuilder: (context, index) {
                         final album = sortedAlbums[index];
                         // 使用缓存获取专辑音乐
@@ -578,7 +582,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                       const SizedBox(width: 8),
                                       IconButton(
                                         icon: Icon(
-                                          Icons.playlist_add,
+                                          AppIcons.playlistAdd,
                                           color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                                           size: 20,
                                         ),

@@ -1,4 +1,5 @@
 // 优化后的艺术家页面 - 添加缓存机制减少重复计算
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,10 @@ class ArtistsPageOptimized extends StatefulWidget {
   State<ArtistsPageOptimized> createState() => _ArtistsPageOptimizedState();
 }
 
-class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
+class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   // 排序方式
   String _sortBy = 'name'; // name, count
   bool _isAscending = true;
@@ -47,12 +51,16 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
   // 字母索引缓存
   final Map<String, int> _alphabetIndexCache = {};
 
+  // 图片缓存键
+  final Map<String, Uint8List> _imageCache = {};
+
   @override
   void dispose() {
     _searchController.dispose();
     _pinyinCache.clear();
     _artistMusicCache.clear();
     _alphabetIndexCache.clear();
+    _imageCache.clear();
     super.dispose();
   }
 
@@ -72,6 +80,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
     _artistMusicCache.clear();
     _cachedSortedArtists = null;
     _alphabetIndexCache.clear();
+    _imageCache.clear();
   }
 
   /// 滚动到指定索引
@@ -95,6 +104,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持AutomaticKeepAliveClientMixin
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Column(
@@ -148,7 +158,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                   child: Row(
                     children: [
                       Icon(
-                        CupertinoIcons.search,
+                        AppIcons.search,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         size: 18,
                       ),
@@ -190,7 +200,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -202,7 +212,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                 // 排序按钮
                 PopupMenuButton<String>(
                   icon: Icon(
-                    CupertinoIcons.arrow_up_arrow_down,
+                    AppIcons.sort,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                   ),
                   tooltip: '排序方式',
@@ -232,7 +242,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                       value: 'asc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_up, size: 16),
+                          Icon(AppIcons.arrowUpward, size: 16),
                           const SizedBox(width: 8),
                           const Text('升序'),
                         ],
@@ -242,7 +252,7 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                       value: 'desc',
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.arrow_down, size: 16),
+                          Icon(AppIcons.arrowDownward, size: 16),
                           const SizedBox(width: 8),
                           const Text('降序'),
                         ],
@@ -270,6 +280,14 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                   sortedArtists = _cachedSortedArtists!;
                 } else {
                   sortedArtists = List.from(artists);
+
+                  // 预加载所有艺术家的音乐列表
+                  for (var artist in sortedArtists) {
+                    if (!_artistMusicCache.containsKey(artist)) {
+                      _artistMusicCache[artist] = musicProvider.getMusicByArtist(artist);
+                    }
+                  }
+
                   switch (_sortBy) {
                     case 'name':
                       sortedArtists.sort((a, b) {
@@ -345,6 +363,9 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
                       itemCount: sortedArtists.length,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemBuilder: (context, index) {
                         final artist = sortedArtists[index];
                         // 使用缓存获取艺术家音乐
@@ -396,52 +417,79 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                             },
                             initiallyExpanded: _expandedArtists.contains(artist),
                             children: [
-                              // 显示艺术家的歌曲
-                              ...artistMusics.map((music) {
-                                return ListTile(
-                                  leading: music.coverArt != null
-                                      ? Image.memory(
-                                          music.coverArt!,
-                                          width: 48,
-                                          height: 48,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Icon(
-                                              CupertinoIcons.music_note,
-                                              size: 48,
-                                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                            );
-                                          },
-                                        )
-                                      : Icon(
-                                          CupertinoIcons.music_note,
-                                          size: 48,
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              // 使用Builder延迟构建歌曲列表
+                              Builder(
+                                builder: (context) {
+                                  return Column(
+                                    children: artistMusics.map((music) {
+                                      // 使用缓存键
+                                      final cacheKey = '${music.title}_${music.album}';
+
+                                      return ListTile(
+                                        leading: music.coverArt != null
+                                            ? _imageCache.containsKey(cacheKey)
+                                                ? Image.memory(
+                                                    _imageCache[cacheKey]!,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Image.memory(
+                                                    music.coverArt!,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Icon(
+                                                        CupertinoIcons.music_note,
+                                                        size: 48,
+                                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                      );
+                                                    },
+                                                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                                      if (wasSynchronouslyLoaded) {
+                                                        return child;
+                                                      }
+                                                      return AnimatedOpacity(
+                                                        child: child,
+                                                        opacity: frame == null ? 0 : 1,
+                                                        duration: const Duration(milliseconds: 300),
+                                                        curve: Curves.easeOut,
+                                                      );
+                                                    },
+                                                  )
+                                            : Icon(
+                                                CupertinoIcons.music_note,
+                                                size: 48,
+                                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                              ),
+                                        title: Text(
+                                          music.title,
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
                                         ),
-                                  title: Text(
-                                    music.title,
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    music.album,
-                                    style: TextStyle(
-                                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                    ),
-                                  ),
-                                  trailing: Text(
-                                    _formatDuration(music.duration),
-                                    style: TextStyle(
-                                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    // TODO: 播放音乐
-                                  },
-                                );
-                              }).toList(),
+                                        subtitle: Text(
+                                          music.album,
+                                          style: TextStyle(
+                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                          ),
+                                        ),
+                                        trailing: Text(
+                                          _formatDuration(music.duration),
+                                          style: TextStyle(
+                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          // TODO: 播放音乐
+                                        },
+                                      );
+                                    }).toList(),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         );
@@ -468,36 +516,50 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> {
                               // 使用缓存检查是否有以该字母开头的艺术家
                               final hasArtists = _alphabetIndexCache.containsKey(letter)
                                   ? _alphabetIndexCache[letter]! > 0
-                                  : _alphabetIndexCache[letter] = sortedArtists.where((artist) {
-                                      final pinyin = _getPinyin(artist);
-                                      if (letter == '0') {
-                                        return RegExp(r'^[0-9]').hasMatch(artist);
-                                      } else if (letter == '#') {
-                                        return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
-                                      } else {
-                                        return pinyin.startsWith(letter);
+                                  : (() {
+                                      // 一次性计算所有字母的索引
+                                      for (var l in _alphabet) {
+                                        if (!_alphabetIndexCache.containsKey(l)) {
+                                          _alphabetIndexCache[l] = sortedArtists.where((artist) {
+                                            final pinyin = _getPinyin(artist);
+                                            if (l == '0') {
+                                              return RegExp(r'^[0-9]').hasMatch(artist);
+                                            } else if (l == '#') {
+                                              return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                            } else {
+                                              return pinyin.startsWith(l);
+                                            }
+                                          }).length;
+                                        }
                                       }
-                                    }).length;
+                                      return _alphabetIndexCache[letter]!;
+                                    })();
 
                               return GestureDetector(
                                 onTap: () {
                                   // 使用缓存滚动到对应字母的位置
                                   int? targetIndex = _alphabetIndexCache['${letter}_index'];
                                   if (targetIndex == null) {
-                                    targetIndex = sortedArtists.indexWhere((artist) {
-                                      final pinyin = _getPinyin(artist);
-                                      if (letter == '0') {
-                                        return RegExp(r'^[0-9]').hasMatch(artist);
-                                      } else if (letter == '#') {
-                                        return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
-                                      } else {
-                                        return pinyin.startsWith(letter);
+                                    // 一次性计算所有字母的索引位置
+                                    for (var l in _alphabet) {
+                                      if (!_alphabetIndexCache.containsKey('${l}_index')) {
+                                        final idx = sortedArtists.indexWhere((artist) {
+                                          final pinyin = _getPinyin(artist);
+                                          if (l == '0') {
+                                            return RegExp(r'^[0-9]').hasMatch(artist);
+                                          } else if (l == '#') {
+                                            return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                          } else {
+                                            return pinyin.startsWith(l);
+                                          }
+                                        });
+                                        _alphabetIndexCache['${l}_index'] = idx;
                                       }
-                                    });
-                                    _alphabetIndexCache['${letter}_index'] = targetIndex;
+                                    }
+                                    targetIndex = _alphabetIndexCache['${letter}_index'];
                                   }
 
-                                  if (targetIndex != -1) {
+                                  if (targetIndex != null && targetIndex != -1) {
                                     _scrollToIndex(targetIndex);
                                   }
                                 },

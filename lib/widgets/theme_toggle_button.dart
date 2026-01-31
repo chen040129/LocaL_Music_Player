@@ -1,7 +1,9 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';
+import '../constants/app_icons.dart';
 
 class ThemeToggleButton extends StatelessWidget {
   const ThemeToggleButton({Key? key}) : super(key: key);
@@ -12,7 +14,7 @@ class ThemeToggleButton extends StatelessWidget {
 
     return PopupMenuButton<ThemeMode>(
       icon: Icon(
-        themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+        themeProvider.isDarkMode ? AppIcons.darkMode : AppIcons.lightMode,
         color: Theme.of(context).iconTheme.color,
       ),
       tooltip: '切换主题',
@@ -24,7 +26,7 @@ class ThemeToggleButton extends StatelessWidget {
           value: ThemeMode.light,
           child: Row(
             children: [
-              Icon(Icons.light_mode, color: Colors.amber),
+              Icon(AppIcons.lightMode, color: Colors.amber),
               const SizedBox(width: 8),
               Text('浅色主题'),
             ],
@@ -34,7 +36,7 @@ class ThemeToggleButton extends StatelessWidget {
           value: ThemeMode.dark,
           child: Row(
             children: [
-              Icon(Icons.dark_mode, color: Colors.indigo),
+              Icon(AppIcons.darkMode, color: Colors.indigo),
               const SizedBox(width: 8),
               Text('深色主题'),
             ],
@@ -44,7 +46,7 @@ class ThemeToggleButton extends StatelessWidget {
           value: ThemeMode.system,
           child: Row(
             children: [
-              Icon(Icons.settings_brightness, color: Colors.grey),
+              Icon(AppIcons.settingsBrightness, color: Colors.grey),
               const SizedBox(width: 8),
               Text('跟随系统'),
             ],
@@ -67,7 +69,7 @@ class SimpleThemeToggleButton extends StatelessWidget {
       icon: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: Icon(
-          themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+          themeProvider.isDarkMode ? AppIcons.darkMode : AppIcons.lightMode,
           key: ValueKey<bool>(themeProvider.isDarkMode),
           color: Theme.of(context).iconTheme.color,
         ),

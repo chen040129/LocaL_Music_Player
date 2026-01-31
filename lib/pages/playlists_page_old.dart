@@ -117,7 +117,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                             });
                           },
                           child: Icon(
-                            CupertinoIcons.clear_circled_solid,
+                            AppIcons.clearCircledSolid,
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                             size: 18,
                           ),
@@ -565,7 +565,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                 prefixIcon: const Icon(CupertinoIcons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(CupertinoIcons.clear_circled_solid),
+                        icon: const Icon(AppIcons.clearCircledSolid),
                         onPressed: () {
                           setState(() {
                             _searchQuery = '';
@@ -849,7 +849,7 @@ class _AddMusicToPlaylistPageState extends State<AddMusicToPlaylistPage> {
                 prefixIcon: const Icon(CupertinoIcons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(CupertinoIcons.clear_circled_solid),
+                        icon: const Icon(AppIcons.clearCircledSolid),
                         onPressed: () {
                           setState(() {
                             _searchQuery = '';
