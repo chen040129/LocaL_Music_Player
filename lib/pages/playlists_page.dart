@@ -18,6 +18,15 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   PlaylistModel? _selectedPlaylist;
+  
+  // 悬停和点击状态
+  int _hoveredIndex = -1;
+  int _touchedIndex = -1;
+
+  // 性能优化：缓存常用常量
+  static const _animationDuration = Duration(milliseconds: 200);
+  static const _itemMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+  static const _borderRadius = BorderRadius.all(Radius.circular(12));
 
   @override
   void initState() {
@@ -158,6 +167,17 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                 if (_selectedPlaylist != null)
                   IconButton(
                     icon: Icon(
+                      Icons.color_lens,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                    onPressed: () {
+                      _showColorPickerDialog();
+                    },
+                    tooltip: '选择歌单颜色',
+                  ),
+                if (_selectedPlaylist != null)
+                  IconButton(
+                    icon: Icon(
                       CupertinoIcons.add,
                       color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                     ),
@@ -218,68 +238,33 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                   }
 
                   return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
+                    ),
                     itemCount: playlistMusics.length,
                     itemBuilder: (context, index) {
                       final music = playlistMusics[index]!;
-                      return ListTile(
-                        leading: music.coverArt != null
-                            ? Image.memory(
-                                music.coverArt!,
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
-                                    CupertinoIcons.music_note,
-                                    size: 48,
-                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                  );
-                                },
-                              )
-                            : Icon(
-                                CupertinoIcons.music_note,
-                                size: 48,
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                              ),
-                        title: Text(
-                          music.title,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${music.artist} - ${music.album}',
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _formatDuration(music.duration),
-                              style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(
-                                CupertinoIcons.delete,
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                              ),
-                              onPressed: () {
-                                playlistService.removeMusicFromPlaylist(playlist.id, music.id);
-                              },
-                              tooltip: '从歌单移除',
-                            ),
-                          ],
-                        ),
+                      
+                      // 使用歌单颜色或歌曲封面颜色
+                      final animationColor = playlist.color != null
+                          ? Color(playlist.color!)
+                          : (music.coverColor != null
+                              ? Color(music.coverColor!)
+                              : Theme.of(context).colorScheme.primary);
+                      
+                      return _PlaylistMusicItem(
+                        music: music,
                         onTap: () {
+                          setState(() {
+                            _touchedIndex = index;
+                          });
                           // TODO: 播放音乐
                         },
+                        onDelete: () {
+                          playlistService.removeMusicFromPlaylist(playlist.id, music.id);
+                        },
                       );
+
                     },
                   );
                 }
@@ -351,60 +336,27 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
 
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
                   itemCount: filteredPlaylists.length,
                   itemBuilder: (context, index) {
                     final playlist = filteredPlaylists[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        leading: Icon(
-                          AppIcons.playlist,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        title: Text(
-                          playlist.name,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${playlist.musicIds.length} 首歌曲',
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                CupertinoIcons.pencil,
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                              ),
-                              onPressed: () {
-                                _renamePlaylist(playlist);
-                              },
-                              tooltip: '重命名',
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                CupertinoIcons.delete,
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                              ),
-                              onPressed: () {
-                                _deletePlaylist(playlist.id);
-                              },
-                              tooltip: '删除',
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _selectedPlaylist = playlist;
-                          });
-                        },
-                      ),
+
+                    // 使用歌单颜色或默认主题颜色
+                    final animationColor = playlist.color != null
+                        ? Color(playlist.color!)
+                        : Theme.of(context).colorScheme.primary;
+
+                    return _PlaylistItem(
+                      playlist: playlist,
+                      onTap: () {
+                        setState(() {
+                          _selectedPlaylist = playlist;
+                        });
+                      },
+                      onRename: () => _renamePlaylist(playlist),
+                      onDelete: () => _deletePlaylist(playlist.id),
                     );
                   },
                 );
@@ -421,36 +373,222 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
       context: context,
       builder: (BuildContext context) {
         String playlistName = '';
-        return AlertDialog(
-          title: const Text('创建新歌单'),
-          content: TextField(
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: '请输入歌单名称',
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              playlistName = value;
-            },
+        int? selectedColor;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('创建新歌单'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: '请输入歌单名称',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      playlistName = value;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('选择歌单颜色'),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildColorOption(null, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.red.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.orange.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.yellow.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.green.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.teal.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.blue.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.indigo.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.purple.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                      _buildColorOption(Colors.pink.value, selectedColor, (color) {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (playlistName.isNotEmpty) {
+                      final playlistService = Provider.of<PlaylistService>(context, listen: false);
+                      final playlist = PlaylistModel.create(playlistName, color: selectedColor);
+                      playlistService.createPlaylist(playlist.name, musicIds: playlist.musicIds);
+                      // 更新歌单颜色
+                      if (selectedColor != null) {
+                        playlistService.updatePlaylist(playlist.updateColor(selectedColor));
+                      }
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('创建'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 构建颜色选项
+  Widget _buildColorOption(int? colorValue, int? selectedColor, Function(int?) onSelected) {
+    return GestureDetector(
+      onTap: () {
+        onSelected(colorValue);
+      },
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: colorValue != null ? Color(colorValue) : Colors.grey,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selectedColor == colorValue ? Colors.black : Colors.transparent,
+            width: 2,
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (playlistName.isNotEmpty) {
-                  final playlistService = Provider.of<PlaylistService>(context, listen: false);
-                  playlistService.createPlaylist(playlistName);
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('创建'),
-            ),
-          ],
+        ),
+      ),
+    );
+  }
+
+  /// 显示颜色选择对话框
+  void _showColorPickerDialog() {
+    if (_selectedPlaylist == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int? selectedColor = _selectedPlaylist!.color;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('选择歌单颜色'),
+              content: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildColorOption(null, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.red.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.orange.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.yellow.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.green.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.teal.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.blue.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.indigo.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.purple.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                  _buildColorOption(Colors.pink.value, selectedColor, (color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  }),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final playlistService = Provider.of<PlaylistService>(context, listen: false);
+                    playlistService.updatePlaylist(_selectedPlaylist!.updateColor(selectedColor));
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -523,12 +661,6 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
         );
       },
     );
-  }
-
-  void _showPlaylistDetail(PlaylistModel playlist) {
-    setState(() {
-      _selectedPlaylist = playlist;
-    });
   }
 
   void _showAddMusicDialog() {
@@ -742,5 +874,240 @@ class _AddMusicToPlaylistDialogState extends State<AddMusicToPlaylistDialog> {
     for (final musicId in _selectedMusicIds) {
       playlistService.addMusicToPlaylist(widget.playlistId, musicId);
     }
+  }
+}
+
+/// 歌单列表项 - 独立Widget优化性能
+class _PlaylistItem extends StatefulWidget {
+  final PlaylistModel playlist;
+  final VoidCallback onTap;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+
+  const _PlaylistItem({
+    required this.playlist,
+    required this.onTap,
+    required this.onRename,
+    required this.onDelete,
+  });
+
+  @override
+  State<_PlaylistItem> createState() => _PlaylistItemState();
+}
+
+class _PlaylistItemState extends State<_PlaylistItem> {
+  bool _isHovered = false;
+  bool _isTouched = false;
+
+  static const _animationDuration = Duration(milliseconds: 200);
+  static const _itemMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+  static const _borderRadius = BorderRadius.all(Radius.circular(12));
+
+  @override
+  Widget build(BuildContext context) {
+    // 使用歌单颜色或默认主题颜色
+    final animationColor = widget.playlist.color != null
+        ? Color(widget.playlist.color!)
+        : Theme.of(context).colorScheme.primary;
+
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: AnimatedContainer(
+          duration: _animationDuration,
+          margin: _itemMargin,
+          decoration: BoxDecoration(
+            color: _isTouched || _isHovered
+                ? animationColor.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: _borderRadius,
+            border: _isTouched
+                ? Border.all(color: animationColor, width: 2)
+                : null,
+            boxShadow: (_isTouched || _isHovered)
+                ? [
+                    BoxShadow(
+                      color: animationColor.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: ListTile(
+            leading: Icon(
+              AppIcons.playlist,
+              color: animationColor,
+            ),
+            title: Text(
+              widget.playlist.name,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              '${widget.playlist.musicIds.length} 首歌曲',
+              style: TextStyle(
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+              ),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.pencil,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
+                  onPressed: widget.onRename,
+                  tooltip: '重命名',
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.delete,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
+                  onPressed: widget.onDelete,
+                  tooltip: '删除',
+                ),
+              ],
+            ),
+            onTap: () {
+              setState(() => _isTouched = !_isTouched);
+              widget.onTap();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 歌单音乐列表项 - 独立Widget优化性能
+class _PlaylistMusicItem extends StatefulWidget {
+  final MusicInfo music;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+
+  const _PlaylistMusicItem({
+    required this.music,
+    required this.onTap,
+    required this.onDelete,
+  });
+
+  @override
+  State<_PlaylistMusicItem> createState() => _PlaylistMusicItemState();
+}
+
+class _PlaylistMusicItemState extends State<_PlaylistMusicItem> {
+  bool _isHovered = false;
+  bool _isTouched = false;
+
+  static const _animationDuration = Duration(milliseconds: 200);
+  static const _itemMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+  static const _borderRadius = BorderRadius.all(Radius.circular(12));
+
+  @override
+  Widget build(BuildContext context) {
+    // 使用歌曲封面颜色或默认主题颜色
+    final animationColor = widget.music.coverColor != null
+        ? Color(widget.music.coverColor!)
+        : Theme.of(context).colorScheme.primary;
+
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: AnimatedContainer(
+          duration: _animationDuration,
+          margin: _itemMargin,
+          decoration: BoxDecoration(
+            color: _isTouched || _isHovered
+                ? animationColor.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: _borderRadius,
+            border: _isTouched
+                ? Border.all(color: animationColor, width: 2)
+                : null,
+            boxShadow: (_isTouched || _isHovered)
+                ? [
+                    BoxShadow(
+                      color: animationColor.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: ListTile(
+            leading: widget.music.coverArt != null
+                ? Image.memory(
+                    widget.music.coverArt!,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        CupertinoIcons.music_note,
+                        size: 48,
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                      );
+                    },
+                  )
+                : Icon(
+                    CupertinoIcons.music_note,
+                    size: 48,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
+            title: Text(
+              widget.music.title,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            subtitle: Text(
+              '${widget.music.artist} - ${widget.music.album}',
+              style: TextStyle(
+                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+              ),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatDuration(widget.music.duration),
+                  style: TextStyle(
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.delete,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
+                  onPressed: widget.onDelete,
+                  tooltip: '从歌单移除',
+                ),
+              ],
+            ),
+            onTap: () {
+              setState(() => _isTouched = !_isTouched);
+              widget.onTap();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 }

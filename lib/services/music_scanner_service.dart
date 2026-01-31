@@ -437,6 +437,12 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
 
 
       
+      // 同步提取封面颜色
+      int? coverColor;
+      if (musicInfo.coverArt != null) {
+        coverColor = await _extractCoverColor(musicInfo.coverArt!);
+      }
+
       // 创建带有封面颜色的 MusicInfo
       final musicInfoWithColor = MusicInfo(
         id: musicInfo.id,
@@ -452,16 +458,11 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
         fileSize: musicInfo.fileSize,
         playCount: musicInfo.playCount,
         playHistory: musicInfo.playHistory,
-        coverColor: null,
+        coverColor: coverColor,
       );
 
       _scannedMusic.add(musicInfoWithColor);
-      debugPrint('成功添加音乐: ${musicInfo.title}');
-
-      // 异步提取封面颜色，不阻塞导入流程
-      if (musicInfo.coverArt != null) {
-        _extractCoverColorAsync(musicInfo.id, musicInfo.coverArt!);
-      }
+      debugPrint('成功添加音乐: ${musicInfo.title} ${coverColor != null ? '(封面颜色: $coverColor)' : ''}');
     } catch (e) {
       debugPrint('处理音乐文件失败: $filePath, 错误: $e');
     }

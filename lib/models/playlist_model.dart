@@ -11,6 +11,7 @@ class PlaylistModel {
   final List<String> musicIds; // 存储音乐ID列表
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? color; // 歌单颜色，使用ARGB格式存储
 
   PlaylistModel({
     required this.id,
@@ -18,16 +19,18 @@ class PlaylistModel {
     required this.musicIds,
     required this.createdAt,
     required this.updatedAt,
+    this.color,
   });
 
   /// 创建歌单
-  factory PlaylistModel.create(String name, {List<String>? musicIds}) {
+  factory PlaylistModel.create(String name, {List<String>? musicIds, int? color}) {
     return PlaylistModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       musicIds: musicIds ?? [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      color: color,
     );
   }
 
@@ -39,6 +42,7 @@ class PlaylistModel {
       'musicIds': musicIds,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'color': color,
     };
   }
 
@@ -50,6 +54,7 @@ class PlaylistModel {
       musicIds: List<String>.from(json['musicIds'] ?? []),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      color: json['color'],
     );
   }
 
@@ -64,6 +69,7 @@ class PlaylistModel {
       musicIds: [...musicIds, musicId],
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      color: color,
     );
   }
 
@@ -75,6 +81,7 @@ class PlaylistModel {
       musicIds: musicIds.where((id) => id != musicId).toList(),
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      color: color,
     );
   }
 
@@ -86,6 +93,19 @@ class PlaylistModel {
       musicIds: musicIds,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      color: color,
+    );
+  }
+
+  /// 更新歌单颜色
+  PlaylistModel updateColor(int? newColor) {
+    return PlaylistModel(
+      id: id,
+      name: name,
+      musicIds: musicIds,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+      color: newColor,
     );
   }
 }
