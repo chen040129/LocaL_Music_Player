@@ -37,10 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isPlaying = false;
   bool _isAlwaysOnTop = false;
   List<Map<String, dynamic>> _songs = [];
+  Size? _windowSize;
 
   @override
   void initState() {
     super.initState();
+    _updateWindowSize();
     // 设置主题切换回调
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -54,6 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final playlistService = Provider.of<PlaylistService>(context, listen: false);
       playlistService.loadPlaylists();
     });
+  }
+
+  Future<void> _updateWindowSize() async {
+    _windowSize = await windowManager.getSize();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // 窗口控制功能
@@ -176,97 +185,218 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Column(
+      body: Stack(
         children: [
-          // 自定义标题栏
-          if (Platform.isWindows)
-            CustomTitleBar(
-              title: '音乐播放器',
-              onMinimize: _minimizeWindow,
-              onMaximize: _maximizeWindow,
-              onClose: _closeWindow,
-              onAlwaysOnTop: _toggleAlwaysOnTop,
-              isAlwaysOnTop: _isAlwaysOnTop,
-            ),
-          // 加载进度条（非模态，不遮挡界面）
-          Consumer<MusicProvider>(
-            builder: (context, musicProvider, child) {
-              if (!musicProvider.isLoading) {
-                return const SizedBox.shrink();
-              }
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(context).dividerColor,
-                      width: 1,
-                    ),
-                  ),
+          // 主内容
+          Column(
+            children: [
+              // 自定义标题栏
+              if (Platform.isWindows)
+                CustomTitleBar(
+                  title: '音乐播放器',
+                  onMinimize: _minimizeWindow,
+                  onMaximize: _maximizeWindow,
+                  onClose: _closeWindow,
+                  onAlwaysOnTop: _toggleAlwaysOnTop,
+                  isAlwaysOnTop: _isAlwaysOnTop,
+                  onToggleSidebar: _toggleSidebar,
                 ),
+              // 加载进度条（非模态，不遮挡界面）
+              Consumer<MusicProvider>(
+                builder: (context, musicProvider, child) {
+                  if (!musicProvider.isLoading) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '正在加载音乐库... ${(musicProvider.loadingProgress * 100).toInt()}%',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              LinearProgressIndicator(
+                                value: musicProvider.loadingProgress,
+                                minHeight: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              // 主内容区域
+              Expanded(
                 child: Row(
                   children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    const SizedBox(width: 12),
+                    // 左侧导航栏 - 只在展开时显示
+                    if (_isSidebarExpanded)
+                      Sidebar(
+                        isExpanded: _isSidebarExpanded,
+                        onToggle: _toggleSidebar,
+                        onMusicScanned: _onMusicScanned,
+                        currentPage: Provider.of<NavigationProvider>(context).currentPage,
+                        onPageChanged: _changePage,
+                      ),
+                    // 右侧内容区域
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            '正在加载音乐库... ${(musicProvider.loadingProgress * 100).toInt()}%',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          // 根据当前页面显示不同的内容
+                          Expanded(
+                            child: _buildCurrentPage(),
                           ),
-                          const SizedBox(height: 4),
-                          LinearProgressIndicator(
-                            value: musicProvider.loadingProgress,
-                            minHeight: 3,
-                          ),
+                          // 底部播放控制栏
+                          const PlayerControlBar(),
                         ],
                       ),
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ],
           ),
-          // 主内容区域
-          Expanded(
-            child: Row(
-              children: [
-                // 左侧导航栏 - 只在展开时显示
-                if (_isSidebarExpanded)
-                  Sidebar(
-                    isExpanded: _isSidebarExpanded,
-                    onToggle: _toggleSidebar,
-                    onMusicScanned: _onMusicScanned,
-                    currentPage: Provider.of<NavigationProvider>(context).currentPage,
-                    onPageChanged: _changePage,
-                  ),
-                // 右侧内容区域
-                Expanded(
-                  child: Column(
-                    children: [
-                      // 根据当前页面显示不同的内容
-                      Expanded(
-                        child: _buildCurrentPage(),
-                      ),
-                      // 底部播放控制栏
-                      PlayerControlBar(
-                        isPlaying: _isPlaying,
-                        onPlayPauseToggle: _togglePlay,
-                      ),
-                    ],
-                  ),
+          // 窗口边缘调整大小区域
+          if (Platform.isWindows) ...[
+            // 左边缘
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 5,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeLeft,
+                child: GestureDetector(
+                  onPanUpdate: (details) async {
+                    final size = _windowSize ?? await windowManager.getSize();
+                    windowManager.setAspectRatio(0.0);
+                    final newSize = Size(
+                      size.width + details.delta.dx,
+                      size.height,
+                    );
+                    await windowManager.setSize(newSize);
+                    _windowSize = newSize;
+                  },
+                  behavior: HitTestBehavior.translucent,
                 ),
-              ],
+              ),
             ),
-          ),
+            // 右边缘
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 5,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeRight,
+                child: GestureDetector(
+                  onPanUpdate: (details) async {
+                    final size = _windowSize ?? await windowManager.getSize();
+                    windowManager.setAspectRatio(0.0);
+                    final newSize = Size(
+                      size.width + details.delta.dx,
+                      size.height,
+                    );
+                    await windowManager.setSize(newSize);
+                    _windowSize = newSize;
+                  },
+                  behavior: HitTestBehavior.translucent,
+                ),
+              ),
+            ),
+            // 下边缘
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 5,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeDown,
+                child: GestureDetector(
+                  onPanUpdate: (details) async {
+                    final size = _windowSize ?? await windowManager.getSize();
+                    windowManager.setAspectRatio(0.0);
+                    final newSize = Size(
+                      size.width,
+                      size.height + details.delta.dy,
+                    );
+                    await windowManager.setSize(newSize);
+                    _windowSize = newSize;
+                  },
+                  behavior: HitTestBehavior.translucent,
+                ),
+              ),
+            ),
+            // 左下角
+            Positioned(
+              left: 0,
+              bottom: 0,
+              width: 10,
+              height: 10,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeDownLeft,
+                child: GestureDetector(
+                  onPanUpdate: (details) async {
+                    final size = _windowSize ?? await windowManager.getSize();
+                    windowManager.setAspectRatio(0.0);
+                    final newSize = Size(
+                      size.width + details.delta.dx,
+                      size.height + details.delta.dy,
+                    );
+                    await windowManager.setSize(newSize);
+                    _windowSize = newSize;
+                  },
+                  behavior: HitTestBehavior.translucent,
+                ),
+              ),
+            ),
+            // 右下角
+            Positioned(
+              right: 0,
+              bottom: 0,
+              width: 10,
+              height: 10,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeDownRight,
+                child: GestureDetector(
+                  onPanUpdate: (details) async {
+                    final size = _windowSize ?? await windowManager.getSize();
+                    windowManager.setAspectRatio(0.0);
+                    final newSize = Size(
+                      size.width + details.delta.dx,
+                      size.height + details.delta.dy,
+                    );
+                    await windowManager.setSize(newSize);
+                    _windowSize = newSize;
+                  },
+                  behavior: HitTestBehavior.translucent,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

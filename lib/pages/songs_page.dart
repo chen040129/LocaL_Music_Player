@@ -8,6 +8,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_pages.dart';
 import '../providers/music_provider.dart';
+import '../providers/player_provider.dart';
 import '../services/music_scanner_service.dart';
 import '../models/playlist_model.dart';
 import '../providers/navigation_provider.dart';
@@ -468,7 +469,18 @@ class _SongsPageState extends State<SongsPage> {
                               ],
                             ),
                             onTap: () {
-                              // TODO: 播放音乐
+                              // 播放选中的音乐
+                              final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+
+                              // 设置播放列表（使用当前排序后的列表）
+                              playerProvider.setPlaylist(
+                                musicList: musicList,
+                                source: PlaylistSource.all,
+                                startIndex: index,
+                              );
+
+                              // 播放指定索引的音乐
+                              playerProvider.playAtIndex(index);
                             },
                           ),
                           ),

@@ -236,7 +236,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                         CupertinoIcons.person,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到艺术家'),
+                      title: const Text('艺术家'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // TODO: 跳转到艺术家页面并定位到对应艺术家
@@ -247,7 +247,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                         CupertinoIcons.music_albums,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到专辑'),
+                      title: const Text('专辑'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // 使用NavigationProvider切换到专辑页面

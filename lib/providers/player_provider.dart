@@ -1,8 +1,11 @@
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../services/music_scanner_service.dart';
+import '../services/lyrics_service.dart';
+import 'package:path/path.dart' as path;
 
 /// 播放模式枚举
 enum PlayMode {
@@ -39,6 +42,9 @@ class PlayerProvider with ChangeNotifier {
 
   // 当前播放的音乐
   MusicInfo? _currentMusic;
+
+  // 当前歌词
+  String? _currentLyrics;
 
   // 订阅
   StreamSubscription? _playerStateSubscription;
@@ -104,6 +110,7 @@ class PlayerProvider with ChangeNotifier {
   PlaylistSource get playlistSource => _playlistSource;
   String? get sourceIdentifier => _sourceIdentifier;
   MusicInfo? get currentMusic => _currentMusic;
+  String? get currentLyrics => _currentLyrics;
 
   /// 获取播放进度百分比
   double get progressPercent {
@@ -154,12 +161,52 @@ class PlayerProvider with ChangeNotifier {
 
       debugPrint('播放命令已发送');
       _isPlaying = true;
+
+      // 加载歌词
+      _loadLyrics(music.filePath);
+
       notifyListeners();
     } catch (e) {
       debugPrint('=== 播放失败 ===');
       debugPrint('错误类型: ${e.runtimeType}');
       debugPrint('错误信息: $e');
       debugPrint('错误堆栈: ${StackTrace.current}');
+    }
+  }
+
+  /// 播放指定音乐（通过音乐对象）
+  Future<void> playMusic(MusicInfo music) async {
+    // 在当前播放列表中查找该音乐
+    final index = _playlist.indexWhere((m) => m.id == music.id);
+
+    if (index != -1) {
+      // 如果在播放列表中找到，直接播放
+      await playAtIndex(index);
+    } else {
+      // 如果不在播放列表中，添加到列表并播放
+      _playlist.add(music);
+      _currentIndex = _playlist.length - 1;
+      _currentMusic = music;
+
+      debugPrint('=== 开始播放（新添加） ===');
+      debugPrint('标题: ${music.title}');
+      debugPrint('艺术家: ${music.artist}');
+      debugPrint('专辑: ${music.album}');
+      debugPrint('文件路径: ${music.filePath}');
+      debugPrint('时长: ${music.duration.inSeconds}秒');
+
+      try {
+        final source = DeviceFileSource(music.filePath);
+        await _audioPlayer.play(source);
+        _isPlaying = true;
+
+        // 加载歌词
+        _loadLyrics(music.filePath);
+
+        notifyListeners();
+      } catch (e) {
+        debugPrint('播放失败: $e');
+      }
     }
   }
 
@@ -177,6 +224,13 @@ class PlayerProvider with ChangeNotifier {
     } else {
       await _audioPlayer.resume();
     }
+  }
+
+  /// 停止播放
+  Future<void> stop() async {
+    await _audioPlayer.stop();
+    _position = Duration.zero;
+    notifyListeners();
   }
 
   /// 下一首
@@ -315,6 +369,29 @@ class PlayerProvider with ChangeNotifier {
     }
   }
 
+  /// 移动播放列表中的歌曲
+  void moveInPlaylist(int fromIndex, int toIndex) {
+    if (fromIndex < 0 || fromIndex >= _playlist.length ||
+        toIndex < 0 || toIndex >= _playlist.length ||
+        fromIndex == toIndex) {
+      return;
+    }
+
+    final music = _playlist.removeAt(fromIndex);
+    _playlist.insert(toIndex, music);
+
+    // 更新当前播放索引
+    if (fromIndex == _currentIndex) {
+      _currentIndex = toIndex;
+    } else if (fromIndex < _currentIndex && toIndex >= _currentIndex) {
+      _currentIndex--;
+    } else if (fromIndex > _currentIndex && toIndex <= _currentIndex) {
+      _currentIndex++;
+    }
+
+    notifyListeners();
+  }
+
   /// 获取播放模式名称
   String getPlayModeName() {
     switch (_playMode) {
@@ -327,5 +404,36 @@ class PlayerProvider with ChangeNotifier {
       case PlayMode.listLoop:
         return '列表循环';
     }
+  }
+
+  /// 加载歌词
+  Future<void> _loadLyrics(String musicFilePath) async {
+    try {
+      final lyrics = await LyricsService.loadLyricsForMusic(musicFilePath);
+      if (lyrics != null && lyrics.hasLyrics) {
+        _currentLyrics = LyricsService.lyricsToLrc(lyrics);
+        debugPrint('歌词加载成功，共 ${lyrics.lines.length} 行');
+      } else {
+        _currentLyrics = LyricsService.getDefaultLyrics();
+        debugPrint('未找到歌词文件，使用默认歌词');
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('加载歌词失败: $e');
+      _currentLyrics = LyricsService.getDefaultLyrics();
+      notifyListeners();
+    }
+  }
+
+  /// 手动设置歌词
+  void setLyrics(String lyrics) {
+    _currentLyrics = lyrics;
+    notifyListeners();
+  }
+
+  /// 清除歌词
+  void clearLyrics() {
+    _currentLyrics = null;
+    notifyListeners();
   }
 }

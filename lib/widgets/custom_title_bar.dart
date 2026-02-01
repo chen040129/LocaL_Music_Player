@@ -11,6 +11,7 @@ class CustomTitleBar extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onAlwaysOnTop;
   final bool isAlwaysOnTop;
+  final VoidCallback? onToggleSidebar;
 
   const CustomTitleBar({
     Key? key,
@@ -20,6 +21,7 @@ class CustomTitleBar extends StatefulWidget {
     required this.onClose,
     required this.onAlwaysOnTop,
     this.isAlwaysOnTop = false,
+    this.onToggleSidebar,
   }) : super(key: key);
 
   @override
@@ -31,6 +33,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
   bool _isHoveringMinimize = false;
   bool _isHoveringMaximize = false;
   bool _isHoveringClose = false;
+  Size? _windowSize;
 
   // 缓存平台检查结果，避免每次build都检查
   static final bool _isDesktopPlatform = 
@@ -48,6 +51,19 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
   static const double _borderRadius = 4.0;
 
   @override
+  void initState() {
+    super.initState();
+    _updateWindowSize();
+  }
+
+  Future<void> _updateWindowSize() async {
+    _windowSize = await windowManager.getSize();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 提取Theme相关数据，避免重复调用Theme.of(context)
     final theme = Theme.of(context);
@@ -55,32 +71,64 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
     final iconColor = theme.iconTheme.color;
     final hoverBackgroundColor = colorScheme.surfaceContainerHighest.withOpacity(0.5);
 
-    return Container(
-      height: 32,
-      color: colorScheme.surface,
-      child: Row(
-        children: [
-          // 拖动区域
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onPanStart: _isDesktopPlatform ? (_) => windowManager.startDragging() : null,
-              child: Container(
-                color: colorScheme.surface,
+    return Stack(
+      children: [
+        // 窗口边缘调整大小区域
+        if (_isDesktopPlatform) ...[
+          // 上边缘
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 5,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.resizeUp,
+              child: GestureDetector(
+                onPanUpdate: (details) async {
+                  final size = _windowSize ?? await windowManager.getSize();
+                  windowManager.setAspectRatio(0.0);
+                  final newSize = Size(
+                    size.width,
+                    size.height - details.delta.dy,
+                  );
+                  await windowManager.setSize(newSize);
+                  _windowSize = newSize;
+                },
+                behavior: HitTestBehavior.translucent,
               ),
             ),
           ),
-          // 窗口控制按钮
-          Row(
+        ],
+        // 标题栏
+        Container(
+          height: 32,
+          color: colorScheme.surface,
+          child: Row(
             children: [
-              _buildPinButton(hoverBackgroundColor),
-              _buildMinimizeButton(hoverBackgroundColor, iconColor),
-              _buildMaximizeButton(iconColor),
-              _buildCloseButton(iconColor),
+              // 拖动区域
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onPanStart: _isDesktopPlatform ? (_) => windowManager.startDragging() : null,
+                  onTap: widget.onToggleSidebar,
+                  child: Container(
+                    color: colorScheme.surface,
+                  ),
+                ),
+              ),
+              // 窗口控制按钮
+              Row(
+                children: [
+                  _buildPinButton(hoverBackgroundColor),
+                  _buildMinimizeButton(hoverBackgroundColor, iconColor),
+                  _buildMaximizeButton(iconColor),
+                  _buildCloseButton(iconColor),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

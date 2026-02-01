@@ -27,9 +27,11 @@ class Sidebar extends StatefulWidget {
   State<Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<Sidebar> {
+class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
   final MusicScannerService _musicScannerService = MusicScannerService();
   bool _isScanning = false;
+  late AnimationController _widthController;
+  late Animation<double> _widthAnimation;
 
   /// 扫描音乐
   Future<void> _scanMusic() async {
@@ -100,168 +102,228 @@ class _SidebarState extends State<Sidebar> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
+  void initState() {
+    super.initState();
+    _widthController = AnimationController(
       duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOutCubic,
-      width: widget.isExpanded ? 220 : 0,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-      ),
-      child: Column(
-        children: [
-          // 顶部工具栏
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8.0,
-              vertical: 16.0,
+      vsync: this,
+    );
+    _widthAnimation = Tween<double>(begin: 220, end: 0).animate(
+      CurvedAnimation(parent: _widthController, curve: Curves.easeInOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _widthController.dispose();
+    super.dispose();
+  }
+
+  /// 导航栏动画
+  void _animateSidebar() {
+    // 空实现，移除缩放动画
+  }
+
+  /// 切换导航栏展开/收起
+  void _toggleSidebar() {
+    if (widget.isExpanded) {
+      _widthController.forward();
+    } else {
+      _widthController.reverse();
+    }
+    widget.onToggle();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _widthAnimation,
+      builder: (context, child) {
+          return Container(
+            width: _widthAnimation.value,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
               children: [
-                // 主题切换按钮
-                Consumer<ThemeProvider>(
-                  builder: (context, themeProvider, child) {
-                    return IconButton(
-                      icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 400),
-                        transitionBuilder: (child, animation) {
-                          return ScaleTransition(
-                            scale: animation,
-                            child: child,
-                          );
-                        },
-                        child: Icon(
-                          themeProvider.isDarkMode
-                              ? AppIcons.sun
-                              : AppIcons.moon,
-                          key: ValueKey<bool>(themeProvider.isDarkMode),
-                          color: Theme.of(context).iconTheme.color,
-                        ),
+                // 顶部工具栏
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 16.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                    // 主题切换按钮
+                    Consumer<ThemeProvider>(
+                      builder: (context, themeProvider, child) {
+                        return IconButton(
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                scale: animation,
+                                child: child,
+                              );
+                            },
+                            child: Icon(
+                              themeProvider.isDarkMode
+                                  ? AppIcons.sun
+                                  : AppIcons.moon,
+                              key: ValueKey<bool>(themeProvider.isDarkMode),
+                              color: Theme.of(context).iconTheme.color,
+                            ),
+                          ),
+                          onPressed: () {
+                            themeProvider.toggleTheme();
+                          },
+                          tooltip: themeProvider.isDarkMode ? '切换到浅色主题' : '切换到深色主题',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                        );
+                      },
+                    ),
+                    // 音质设置按钮
+                    IconButton(
+                      icon: Icon(
+                        AppIcons.qualityHigh,
+                        color: Theme.of(context).iconTheme.color,
                       ),
                       onPressed: () {
-                        themeProvider.toggleTheme();
+                        // TODO: 实现音质设置功能
                       },
-                      tooltip: themeProvider.isDarkMode ? '切换到浅色主题' : '切换到深色主题',
+                      tooltip: '音质设置',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 32,
                         minHeight: 32,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                // 音质设置按钮
-                IconButton(
-                  icon: Icon(
-                    AppIcons.qualityHigh,
-                    color: Theme.of(context).iconTheme.color,
-                  ),
-                  onPressed: () {
-                    // TODO: 实现音质设置功能
-                  },
-                  tooltip: '音质设置',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(
-            height: 1,
-            color: Theme.of(context).dividerColor,
-          ),
-          // 导航菜单项
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.musicNote,
-                  iconColor: Colors.green,
-                  title: '歌曲',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.songs,
-                  onTap: () => widget.onPageChanged(AppPage.songs),
-                ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.album,
-                  iconColor: Colors.red,
-                  title: '专辑',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.albums,
-                  onTap: () => widget.onPageChanged(AppPage.albums),
-                ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.mic,
-                  iconColor: Colors.yellow,
-                  title: '艺术家',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.artists,
-                  onTap: () => widget.onPageChanged(AppPage.artists),
-                ),
+              ),
+              Divider(
+                height: 1,
+                color: Theme.of(context).dividerColor,
+              ),
+              // 导航菜单项
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: [
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.musicNote,
+                      iconColor: Colors.green,
+                      title: '歌曲',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.songs,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.songs);
+                      },
+                    ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.album,
+                      iconColor: Colors.red,
+                      title: '专辑',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.albums,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.albums);
+                      },
+                    ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.mic,
+                      iconColor: Colors.yellow,
+                      title: '艺术家',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.artists,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.artists);
+                      },
+                    ),
 
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.playlist,
-                  iconColor: Colors.blue,
-                  title: '歌单',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.playlists,
-                  onTap: () => widget.onPageChanged(AppPage.playlists),
-                ),
-                Divider(
-                  height: 24,
-                  color: Theme.of(context).dividerColor,
-                ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.scanner,
-                  iconColor: Colors.orange,
-                  title: '扫描音乐',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.scanner,
-                  onTap: () => widget.onPageChanged(AppPage.scanner),
-                ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.playlist,
+                      iconColor: Colors.blue,
+                      title: '歌单',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.playlists,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.playlists);
+                      },
+                    ),
+                    Divider(
+                      height: 24,
+                      color: Theme.of(context).dividerColor,
+                    ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.scanner,
+                      iconColor: Colors.orange,
+                      title: '扫描音乐',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.scanner,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.scanner);
+                      },
+                    ),
 
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.chart,
-                  iconColor: Colors.indigo,
-                  title: '统计',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.statistics,
-                  onTap: () => widget.onPageChanged(AppPage.statistics),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.chart,
+                      iconColor: Colors.indigo,
+                      title: '统计',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.statistics,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.statistics);
+                      },
+                    ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.settings,
+                      iconColor: Colors.grey,
+                      title: '设置',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.settings,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.settings);
+                      },
+                    ),
+                    _buildMenuItem(
+                      context: context,
+                      icon: AppIcons.info,
+                      iconColor: Colors.cyan,
+                      title: '关于',
+                      isExpanded: widget.isExpanded,
+                      isSelected: widget.currentPage == AppPage.about,
+                      onTap: () {
+                        _animateSidebar();
+                        widget.onPageChanged(AppPage.about);
+                      },
+                    ),
+                  ],
                 ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.settings,
-                  iconColor: Colors.grey,
-                  title: '设置',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.settings,
-                  onTap: () => widget.onPageChanged(AppPage.settings),
-                ),
-                _buildMenuItem(
-                  context: context,
-                  icon: AppIcons.info,
-                  iconColor: Colors.cyan,
-                  title: '关于',
-                  isExpanded: widget.isExpanded,
-                  isSelected: widget.currentPage == AppPage.about,
-                  onTap: () => widget.onPageChanged(AppPage.about),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

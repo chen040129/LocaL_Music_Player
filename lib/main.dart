@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
+import 'providers/player_provider.dart';
 import 'models/playlist_model.dart';
 import 'package:flutter_music_player/pages/artists_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MusicProvider()),
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        ChangeNotifierProvider(create: (context) => PlayerProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
