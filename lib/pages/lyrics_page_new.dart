@@ -35,11 +35,6 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   double _coverDragOffset = 0.0; // 拖动偏移量，用于反馈
   int _currentPage = 0; // 0: 歌曲信息, 1: 播放列表
   bool _showVolumeControl = false;
-  int? _timerMinutes; // 用户设置的定时分钟数
-  int? _originalTimerMinutes; // 保存原始设置的分钟数，用于恢复
-  Timer? _timer;
-  DateTime? _timerStartTime;
-  int? _pausedRemainingSeconds;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -77,7 +72,6 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _timer?.cancel();
     _fadeController.dispose();
     _pageSwitchController.dispose();
     super.dispose();
@@ -466,15 +460,15 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                               ),
                                                               child: Slider(
                                                                 value: _isDragging
-                                                                    ? _dragPosition
-                                                                    : progress,
+                                                                    ? _dragPosition.clamp(0.0, 1.0)
+                                                                    : progress.clamp(0.0, 1.0),
                                                                 onChanged:
                                                                     (value) {
                                                                   setState(() {
                                                                     _isDragging =
                                                                         true;
                                                                     _dragPosition =
-                                                                        value;
+                                                                        value.clamp(0.0, 1.0);
                                                                   });
                                                                 },
                                                                 onChangeEnd:
@@ -485,7 +479,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                   });
                                                                   playerProvider
                                                                       .seekToPercent(
-                                                                          value);
+                                                                          value.clamp(0.0, 1.0));
                                                                 },
                                                               ),
                                                             ),
@@ -570,38 +564,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                   playerProvider.togglePlayPause();
 
                                                                   // 处理倒计时
-                                                                  if (_timerMinutes != null) {
+                                                                  if (playerProvider.timerMinutes != null) {
                                                                     if (wasPlaying) {
-                                                                      // 暂停播放时，保存剩余时间并暂停倒计时
-                                                                      setState(() {
-                                                                        if (_timerStartTime != null) {
-                                                                          final elapsed = DateTime.now().difference(_timerStartTime!).inSeconds;
-                                                                          final totalSeconds = _originalTimerMinutes! * 60;
-                                                                          _pausedRemainingSeconds = totalSeconds - elapsed;
-                                                                        }
-                                                                        _timerStartTime = null;
-                                                                        // 取消之前的定时器
-                                                                        _timer?.cancel();
-                                                                      });
+                                                                      // 暂停播放时，暂停倒计时
+                                                                      playerProvider.pauseTimer();
                                                                     } else {
                                                                       // 恢复播放时，恢复倒计时
-                                                                      setState(() {
-                                                                        _timerStartTime = DateTime.now();
-                                                                        // 重新设置定时器，使用剩余秒数
-                                                                        if (_pausedRemainingSeconds != null) {
-                                                                          _timer?.cancel();
-                                                                          _timer = Timer(Duration(seconds: _pausedRemainingSeconds!), () {
-                                                                            final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-                                                                            playerProvider.stop();
-                                                                            setState(() {
-                                                                              _timerMinutes = null;
-                                                                              _originalTimerMinutes = null;
-                                                                              _timerStartTime = null;
-                                                                              _pausedRemainingSeconds = null;
-                                                                            });
-                                                                          });
-                                                                        }
-                                                                      });
+                                                                      playerProvider.resumeTimer();
                                                                     }
                                                                   }
                                                                 },
@@ -644,154 +613,250 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                     .spaceBetween,
                                                             children: [
                                                               // 音量调节
-                                                              Listener(
-                                                                onPointerSignal: (pointerSignal) {
-                                                                  if (pointerSignal is PointerScrollEvent) {
-                                                                    setState(() {
-                                                                      _volume = (_volume - pointerSignal.scrollDelta.dy * 0.001).clamp(0.0, 1.0);
-                                                                    });
-                                                                    playerProvider.setVolume(_volume);
-                                                                  }
-                                                                },
-                                                                child: Focus(
-                                                                  onKeyEvent: (node, event) {
-                                                                    if (event is KeyDownEvent) {
-                                                                      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                                                                        setState(() {
-                                                                          _volume = (_volume - 0.05).clamp(0.0, 1.0);
-                                                                        });
-                                                                        playerProvider.setVolume(_volume);
-                                                                        return KeyEventResult.handled;
-                                                                      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                                                                        setState(() {
-                                                                          _volume = (_volume + 0.05).clamp(0.0, 1.0);
-                                                                        });
-                                                                        playerProvider.setVolume(_volume);
-                                                                        return KeyEventResult.handled;
-                                                                      }
+                                                              AnimatedContainer(
+                                                                duration: const Duration(milliseconds: 200),
+                                                                width: _showVolumeControl ? 220 : 24,
+                                                                child: Listener(
+                                                                  onPointerSignal: (pointerSignal) {
+                                                                    if (pointerSignal is PointerScrollEvent) {
+                                                                      // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                                      final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
+                                                                      final newVolume = (_volume - delta).clamp(0.0, 1.0);
+                                                                      setState(() {
+                                                                        _volume = newVolume;
+                                                                      });
+                                                                      playerProvider.setVolume(newVolume);
                                                                     }
-                                                                    return KeyEventResult.ignored;
                                                                   },
                                                                   child: MouseRegion(
-                                                                    onEnter: (_) => setState(() => _showVolumeControl = true),
-                                                                    onExit: (_) => setState(() => _showVolumeControl = false),
-                                                                    child: Row(
-                                                                      children: [
-                                                                        IconButton(
-                                                                          icon: Icon(
-                                                                            _volume > 0
-                                                                                ? CupertinoIcons.speaker_2_fill
-                                                                                : CupertinoIcons.speaker_slash,
-                                                                          ),
-                                                                          color: colorScheme.onSurface.withOpacity(0.7),
-                                                                          onPressed: () {
+                                                                    onEnter: (_) =>
+                                                                        setState(() =>
+                                                                            _showVolumeControl =
+                                                                                true),
+                                                                    onExit: (_) =>
+                                                                        setState(() =>
+                                                                            _showVolumeControl =
+                                                                                false),
+                                                                    child: Focus(
+                                                                      onKeyEvent: (node, event) {
+                                                                        if (event is KeyDownEvent) {
+                                                                          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
                                                                             setState(() {
-                                                                              _volume = _volume > 0 ? 0.0 : 0.7;
+                                                                              _volume = (_volume - 0.05).clamp(0.0, 1.0);
                                                                             });
                                                                             playerProvider.setVolume(_volume);
-                                                                          },
-                                                                          tooltip: '音量',
-                                                                          padding: EdgeInsets.zero,
-                                                                          constraints: const BoxConstraints(),
-                                                                        ),
-                                                                        AnimatedContainer(
-                                                                          duration: const Duration(milliseconds: 200),
-                                                                          width: _showVolumeControl ? 250 : 0,
-                                                                          child: _showVolumeControl
-                                                                              ? Padding(
-                                                                                  padding: const EdgeInsets.only(left: 8),
-                                                                                  child: SizedBox(
-                                                                                    width: 250,
-                                                                                    child: SliderTheme(
-                                                                                      data: SliderThemeData(
-                                                                                        trackHeight: 2,
-                                                                                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                                                                                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                                                                                        activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
-                                                                                        inactiveTrackColor: colorScheme.onSurface.withOpacity(0.2),
-                                                                                      ),
-                                                                                      child: Slider(
-                                                                                        value: _volume,
-                                                                                        onChanged: (value) {
-                                                                                          setState(() {
-                                                                                            _volume = value;
-                                                                                          });
-                                                                                          playerProvider.setVolume(value);
-                                                                                        },
+                                                                            return KeyEventResult.handled;
+                                                                          } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                                                                            setState(() {
+                                                                              _volume = (_volume + 0.05).clamp(0.0, 1.0);
+                                                                            });
+                                                                            playerProvider.setVolume(_volume);
+                                                                            return KeyEventResult.handled;
+                                                                          }
+                                                                        }
+                                                                        return KeyEventResult.ignored;
+                                                                      },
+                                                                      child: Container(
+                                                                        alignment: Alignment.center,
+                                                                        child: _showVolumeControl
+                                                                            ? Row(
+                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                mainAxisSize: MainAxisSize.min,
+                                                                                children: [
+                                                                                  IconButton(
+                                                                                    icon: Icon(
+                                                                                      _volume > 0
+                                                                                          ? CupertinoIcons.speaker_2_fill
+                                                                                          : CupertinoIcons.speaker_slash,
+                                                                                    ),
+                                                                                    color: colorScheme
+                                                                                        .onSurface
+                                                                                        .withOpacity(
+                                                                                            0.7),
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        _volume = _volume > 0 ? 0.0 : 0.7;
+                                                                                      });
+                                                                                      playerProvider.setVolume(_volume);
+                                                                                    },
+                                                                                    tooltip: '音量',
+                                                                                    padding: const EdgeInsets.all(6),
+                                                                                    constraints: const BoxConstraints(),
+                                                                                  ),
+                                                                                  const SizedBox(width: 2),
+                                                                                  Flexible(
+                                                                                    child: SizedBox(
+                                                                                      width: 140,
+                                                                                      child: SliderTheme(
+                                                                                        data: SliderThemeData(
+                                                                                          trackHeight: 2,
+                                                                                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                                                                                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                                          activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
+                                                                                          inactiveTrackColor: colorScheme.onSurface.withOpacity(0.2),
+                                                                                        ),
+                                                                                        child: Slider(
+                                                                                          value: _volume.clamp(0.0, 1.0),
+                                                                                          onChanged: (value) {
+                                                                                            setState(() {
+                                                                                              _volume = value.clamp(0.0, 1.0);
+                                                                                            });
+                                                                                            playerProvider.setVolume(value.clamp(0.0, 1.0));
+                                                                                          },
+                                                                                        ),
                                                                                       ),
                                                                                     ),
                                                                                   ),
-                                                                                )
-                                                                              : const SizedBox.shrink(),
-                                                                        ),
-                                                                      ],
+                                                                                ],
+                                                                              )
+                                                                            : IconButton(
+                                                                                icon: Icon(
+                                                                                  _volume > 0
+                                                                                      ? CupertinoIcons.speaker_2_fill
+                                                                                      : CupertinoIcons.speaker_slash,
+                                                                                ),
+                                                                                color: colorScheme
+                                                                                    .onSurface
+                                                                                    .withOpacity(
+                                                                                        0.7),
+                                                                                onPressed: () {
+                                                                                  setState(() {
+                                                                                    _volume = _volume > 0 ? 0.0 : 0.7;
+                                                                                  });
+                                                                                  playerProvider.setVolume(_volume);
+                                                                                },
+                                                                                tooltip: '音量',
+                                                                                padding: EdgeInsets.zero,
+                                                                                constraints: const BoxConstraints(),
+                                                                              ),
+                                                                      ),
                                                                     ),
                                                                   ),
                                                                 ),
                                                               ),
                                                               // 播放列表
-                                                              AnimatedOpacity(
-                                                                duration: const Duration(milliseconds: 200),
-                                                                opacity: _showVolumeControl ? 0.0 : 1.0,
-                                                                child: IconButton(
-                                                                  icon: const Icon(
-                                                                      CupertinoIcons
-                                                                          .list_bullet),
-                                                                  color: colorScheme
-                                                                      .onSurface
-                                                                      .withOpacity(
-                                                                          0.7),
-                                                                  onPressed: () {
-                                                                    _pageSwitchController
-                                                                        .forward(from: 0)
-                                                                        .then((_) {
-                                                                      setState(() {
-                                                                        _currentPage = 1;
-                                                                      });
+                                                              Offstage(
+                                                                offstage: _showVolumeControl,
+                                                                child: AnimatedOpacity(
+                                                                  duration: const Duration(milliseconds: 200),
+                                                                  opacity: _showVolumeControl ? 0.0 : 1.0,
+                                                                  child: IconButton(
+                                                                    icon: const Icon(
+                                                                        CupertinoIcons
+                                                                            .list_bullet),
+                                                                    color: colorScheme
+                                                                        .onSurface
+                                                                        .withOpacity(
+                                                                            0.7),
+                                                                    onPressed: () {
                                                                       _pageSwitchController
-                                                                          .reset();
-                                                                    });
-                                                                  },
-                                                                  tooltip: '播放列表',
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .zero,
-                                                                  constraints:
-                                                                      const BoxConstraints(),
+                                                                          .forward(from: 0)
+                                                                          .then((_) {
+                                                                        setState(() {
+                                                                          _currentPage = 1;
+                                                                        });
+                                                                        _pageSwitchController
+                                                                            .reset();
+                                                                      });
+                                                                    },
+                                                                    tooltip: '播放列表',
+                                                                    padding:
+                                                                        EdgeInsets
+                                                                            .zero,
+                                                                    constraints:
+                                                                        const BoxConstraints(),
+                                                                  ),
                                                                 ),
                                                               ),
                                                               // 定时播放
-                                                              AnimatedOpacity(
-                                                                duration: const Duration(milliseconds: 200),
-                                                                opacity: _showVolumeControl ? 0.0 : 1.0,
-                                                                child: _timerMinutes != null
-                                                                  ? StreamBuilder<int>(
-                                                                      stream: Stream.periodic(
-                                                                        const Duration(seconds: 1),
-                                                                        (count) => count,
-                                                                      ),
-                                                                      initialData: 0,
-                                                                      builder: (context, snapshot) {
-                                                                        // 计算剩余时间
-                                                                        int remaining;
-                                                                        if (_timerStartTime == null) {
-                                                                          // 暂停状态，显示保存的剩余时间
-                                                                          remaining = _pausedRemainingSeconds ?? (_originalTimerMinutes! * 60);
-                                                                        } else {
-                                                                          // 运行状态，计算实际剩余时间
-                                                                          final elapsed = DateTime.now().difference(_timerStartTime!).inSeconds;
-                                                                          final totalSeconds = _originalTimerMinutes! * 60;
-                                                                          remaining = totalSeconds - elapsed;
-                                                                        }
-                                                                        if (remaining <= 0) {
-                                                                          return IconButton(
-                                                                            icon: const Text(
-                                                                              '00:00',
-                                                                              style: TextStyle(
-                                                                                fontSize: 14,
-                                                                                fontWeight: FontWeight.bold,
-                                                                                color: CupertinoColors.systemGrey,
+                                                              Offstage(
+                                                                offstage: _showVolumeControl,
+                                                                child: AnimatedOpacity(
+                                                                  duration: const Duration(milliseconds: 200),
+                                                                  opacity: _showVolumeControl ? 0.0 : 1.0,
+                                                                  child: playerProvider.timerMinutes != null
+                                                                    ? StreamBuilder<int>(
+                                                                        stream: Stream.periodic(
+                                                                          const Duration(seconds: 1),
+                                                                          (count) => count,
+                                                                        ),
+                                                                        initialData: 0,
+                                                                        builder: (context, snapshot) {
+                                                                          // 计算剩余时间
+                                                                          int remaining;
+                                                                          double progress;
+                                                                          if (playerProvider.timerStartTime == null) {
+                                                                            // 暂停状态，显示保存的剩余时间
+                                                                            remaining = playerProvider.pausedRemainingSeconds ?? (playerProvider.originalTimerMinutes! * 60);
+                                                                            progress = remaining / (playerProvider.originalTimerMinutes! * 60);
+                                                                          } else {
+                                                                            // 运行状态，计算实际剩余时间
+                                                                            final elapsed = DateTime.now().difference(playerProvider.timerStartTime!).inSeconds;
+                                                                            final totalSeconds = playerProvider.originalTimerMinutes! * 60;
+                                                                            remaining = totalSeconds - elapsed;
+                                                                            progress = remaining / totalSeconds;
+                                                                          }
+                                                                          if (remaining <= 0) {
+                                                                            return IconButton(
+                                                                              icon: Column(
+                                                                                mainAxisSize: MainAxisSize.min,
+                                                                                children: [
+                                                                                  const Text(
+                                                                                    '00:00',
+                                                                                    style: TextStyle(
+                                                                                      fontSize: 14,
+                                                                                      fontWeight: FontWeight.bold,
+                                                                                      color: CupertinoColors.systemGrey,
+                                                                                    ),
+                                                                                  ),
+                                                                                  // 进度条
+                                                                                  SizedBox(
+                                                                                    width: 40,
+                                                                                    height: 3,
+                                                                                    child: LinearProgressIndicator(
+                                                                                      value: 0,
+                                                                                      backgroundColor: colorScheme.onSurface.withOpacity(0.2),
+                                                                                      valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
                                                                               ),
+                                                                              color: colorScheme.onSurface.withOpacity(0.7),
+                                                                              onPressed: () {
+                                                                                _showTimerDialog(context);
+                                                                              },
+                                                                              tooltip: '定时播放',
+                                                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                              constraints: const BoxConstraints(),
+                                                                            );
+                                                                          }
+                                                                          final minutes = remaining ~/ 60;
+                                                                          final seconds = remaining % 60;
+                                                                          return IconButton(
+                                                                            icon: Column(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: [
+                                                                                Text(
+                                                                                  '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                                                                  style: TextStyle(
+                                                                                    fontSize: 14,
+                                                                                    fontWeight: FontWeight.bold,
+                                                                                    color: progress < 0.2 ? Colors.red : colorScheme.primary,
+                                                                                  ),
+                                                                                ),
+                                                                                // 进度条
+                                                                                SizedBox(
+                                                                                  width: 40,
+                                                                                  height: 3,
+                                                                                  child: LinearProgressIndicator(
+                                                                                    value: progress,
+                                                                                    backgroundColor: colorScheme.onSurface.withOpacity(0.2),
+                                                                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                                                                      progress < 0.2 ? Colors.red : colorScheme.primary,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              ],
                                                                             ),
                                                                             color: colorScheme.onSurface.withOpacity(0.7),
                                                                             onPressed: () {
@@ -801,65 +866,49 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                             padding: const EdgeInsets.symmetric(horizontal: 8),
                                                                             constraints: const BoxConstraints(),
                                                                           );
-                                                                        }
-                                                                        final minutes = remaining ~/ 60;
-                                                                        final seconds = remaining % 60;
-                                                                        return IconButton(
-                                                                          icon: Text(
-                                                                            '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                                                                            style: TextStyle(
-                                                                              fontSize: 14,
-                                                                              fontWeight: FontWeight.bold,
-                                                                              color: colorScheme.primary,
-                                                                            ),
-                                                                          ),
-                                                                          color: colorScheme.onSurface.withOpacity(0.7),
-                                                                          onPressed: () {
-                                                                            _showTimerDialog(context);
-                                                                          },
-                                                                          tooltip: '定时播放',
-                                                                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                                          constraints: const BoxConstraints(),
-                                                                        );
-                                                                      },
-                                                                    )
-                                                                  : IconButton(
-                                                                      icon: const Icon(
-                                                                        CupertinoIcons.clock,
-                                                                        size: 24,
+                                                                        },
+                                                                      )
+                                                                    : IconButton(
+                                                                        icon: const Icon(
+                                                                          CupertinoIcons.clock,
+                                                                          size: 24,
+                                                                        ),
+                                                                        color: colorScheme.onSurface.withOpacity(0.7),
+                                                                        onPressed: () {
+                                                                          _showTimerDialog(context);
+                                                                        },
+                                                                        tooltip: '定时播放',
+                                                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                        constraints: const BoxConstraints(),
                                                                       ),
-                                                                      color: colorScheme.onSurface.withOpacity(0.7),
-                                                                      onPressed: () {
-                                                                        _showTimerDialog(context);
-                                                                      },
-                                                                      tooltip: '定时播放',
-                                                                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                                      constraints: const BoxConstraints(),
-                                                                    ),
+                                                                ),
                                                               ),
                                                               // 循环模式
-                                                              AnimatedOpacity(
-                                                                duration: const Duration(milliseconds: 200),
-                                                                opacity: _showVolumeControl ? 0.0 : 1.0,
-                                                                child: IconButton(
-                                                                  icon: Icon(
-                                                                      _getPlayModeIcon(
-                                                                          playMode)),
-                                                                  color: colorScheme
-                                                                      .onSurface
-                                                                      .withOpacity(
-                                                                          0.7),
-                                                                  onPressed: () =>
-                                                                      playerProvider
-                                                                          .togglePlayMode(),
-                                                                  tooltip:
-                                                                      _getPlayModeName(
-                                                                          playMode),
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .zero,
-                                                                  constraints:
-                                                                      const BoxConstraints(),
+                                                              Offstage(
+                                                                offstage: _showVolumeControl,
+                                                                child: AnimatedOpacity(
+                                                                  duration: const Duration(milliseconds: 200),
+                                                                  opacity: _showVolumeControl ? 0.0 : 1.0,
+                                                                  child: IconButton(
+                                                                    icon: Icon(
+                                                                        _getPlayModeIcon(
+                                                                            playMode)),
+                                                                    color: colorScheme
+                                                                        .onSurface
+                                                                        .withOpacity(
+                                                                            0.7),
+                                                                    onPressed: () =>
+                                                                        playerProvider
+                                                                            .togglePlayMode(),
+                                                                    tooltip:
+                                                                        _getPlayModeName(
+                                                                            playMode),
+                                                                    padding:
+                                                                        EdgeInsets
+                                                                            .zero,
+                                                                    constraints:
+                                                                        const BoxConstraints(),
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ],
@@ -1077,17 +1126,20 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   }
 
   void _showTimerDialog(BuildContext context) {
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+    
+    // 临时变量，用于存储用户在对话框中选择的分钟数
+    int? tempTimerMinutes = playerProvider.timerMinutes;
+    
     // 计算剩余时间（秒）
-    int remainingSeconds = _originalTimerMinutes != null ? _originalTimerMinutes! * 60 : 0;
+    int remainingSeconds = playerProvider.originalTimerMinutes != null ? playerProvider.originalTimerMinutes! * 60 : 0;
     // 暂停倒计时显示，保存剩余时间
-    final DateTime? pauseStartTime = _timerStartTime;
-    if (_timerStartTime != null && _originalTimerMinutes != null) {
-      final elapsed = DateTime.now().difference(_timerStartTime!).inSeconds;
-      final totalSeconds = _originalTimerMinutes! * 60;
-      _pausedRemainingSeconds = totalSeconds - elapsed;
-      remainingSeconds = _pausedRemainingSeconds!;
+    final DateTime? pauseStartTime = playerProvider.timerStartTime;
+    if (playerProvider.timerStartTime != null && playerProvider.originalTimerMinutes != null) {
+      final elapsed = DateTime.now().difference(playerProvider.timerStartTime!).inSeconds;
+      final totalSeconds = playerProvider.originalTimerMinutes! * 60;
+      remainingSeconds = totalSeconds - elapsed;
     }
-    _timerStartTime = null;
 
     showCupertinoDialog(
       context: context,
@@ -1107,99 +1159,115 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
 
           return CupertinoAlertDialog(
             title: const Text('定时播放'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('设置定时关闭时间（分钟）'),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CupertinoButton(
-                      padding: const EdgeInsets.all(8),
-                      onPressed: () {
-                        setDialogState(() {
-                          if (_timerMinutes != null && _timerMinutes! > 1) {
-                            _timerMinutes = _timerMinutes! - 1;
-                            remainingSeconds = _timerMinutes! * 60;
-                          }
-                        });
-                      },
-                      child: const Icon(CupertinoIcons.minus_circle),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        '${_timerMinutes ?? (_originalTimerMinutes ?? 30)} 分钟',
-                        style: const TextStyle(fontSize: 18),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('设置定时关闭时间（分钟）'),
+                  const SizedBox(height: 16),
+                  // 进度条控制
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('0'),
+                          Text(
+                            '${tempTimerMinutes ?? (playerProvider.originalTimerMinutes ?? 30)}',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const Text('180'),
+                        ],
                       ),
-                    ),
-                    CupertinoButton(
-                      padding: const EdgeInsets.all(8),
-                      onPressed: () {
-                        setDialogState(() {
-                          _timerMinutes = (_timerMinutes ?? (_originalTimerMinutes ?? 30)) + 1;
-                          remainingSeconds = _timerMinutes! * 60;
-                        });
-                      },
-                      child: const Icon(CupertinoIcons.plus_circle),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [15, 30, 45, 60, 90, 120].map((minutes) {
-                    return CupertinoButton(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      color: _timerMinutes == minutes
-                          ? CupertinoColors.activeBlue
-                          : CupertinoColors.systemGrey5,
-                      onPressed: () {
-                        setDialogState(() {
-                          _timerMinutes = minutes;
-                          remainingSeconds = _timerMinutes! * 60;
-                        });
-                      },
-                      child: Text(
-                        '$minutes 分钟',
-                        style: TextStyle(
-                          color: _timerMinutes == minutes
-                              ? CupertinoColors.white
-                              : CupertinoColors.label,
+                      CupertinoSlider(
+                        value: (tempTimerMinutes ?? (playerProvider.originalTimerMinutes ?? 30)).toDouble(),
+                        min: 0,
+                        max: 180,
+                        divisions: 180,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            tempTimerMinutes = value.round();
+                            remainingSeconds = tempTimerMinutes! * 60;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // 快速选择按钮
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [15, 30, 45, 60, 90, 120].map((minutes) {
+                      return CupertinoButton(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        color: tempTimerMinutes == minutes
+                            ? CupertinoColors.activeBlue
+                            : CupertinoColors.systemGrey5,
+                        onPressed: () {
+                          setDialogState(() {
+                            tempTimerMinutes = minutes;
+                            remainingSeconds = tempTimerMinutes! * 60;
+                          });
+                        },
+                        child: Text(
+                          '$minutes 分钟',
+                          style: TextStyle(
+                            color: tempTimerMinutes == minutes
+                                ? CupertinoColors.white
+                                : CupertinoColors.label,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  // 自定义输入
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('自定义: '),
+                      SizedBox(
+                        width: 80,
+                        child: CupertinoTextField(
+                          keyboardType: TextInputType.number,
+                          placeholder: '分钟',
+                          textAlign: TextAlign.center,
+                          onChanged: (value) {
+                            final minutes = int.tryParse(value);
+                            if (minutes != null && minutes > 0) {
+                              setDialogState(() {
+                                tempTimerMinutes = minutes;
+                                remainingSeconds = minutes * 60;
+                              });
+                            }
+                          },
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-              ],
+                      const Text(' 分钟'),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
         actions: [
           CupertinoDialogAction(
             onPressed: () {
               updateTimer?.cancel();
-              // 恢复倒计时显示
-              setState(() {
-                _timerStartTime = pauseStartTime;
-                _pausedRemainingSeconds = null;
-              });
               Navigator.of(context).pop();
             },
             child: const Text('取消'),
           ),
           CupertinoDialogAction(
             onPressed: () {
-              // 取消定时器和更新定时器
+              // 取消更新定时器
               updateTimer?.cancel();
-              _timer?.cancel();
-              setState(() {
-                _timerMinutes = null;
-                _timerStartTime = null;
-              });
+              // 取消之前的定时器
+              playerProvider.cancelTimer();
               Navigator.of(context).pop();
             },
             child: const Text('取消定时'),
@@ -1208,36 +1276,9 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
             onPressed: () {
               // 取消更新定时器
               updateTimer?.cancel();
-              // 取消之前的定时器
-              _timer?.cancel();
               // 设置新的定时器
-              if (_timerMinutes != null) {
-                setState(() {
-                  // 保存原始设置的分钟数
-                  _originalTimerMinutes = _timerMinutes;
-                  // 记录定时开始时间
-                  _timerStartTime = DateTime.now();
-                  // 清除保存的剩余时间
-                  _pausedRemainingSeconds = null;
-                  // 使用实际设置的剩余时间
-                  _timer = Timer(Duration(minutes: _timerMinutes!), () {
-                    // 定时时间到，停止播放
-                    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-                    playerProvider.stop();
-                    // 清除定时时间和开始时间
-                    setState(() {
-                      _timerMinutes = null;
-                      _originalTimerMinutes = null;
-                      _timerStartTime = null;
-                    });
-                  });
-                });
-              } else {
-                // 如果没有设置定时时间，恢复之前的倒计时显示
-                setState(() {
-                  _timerStartTime = pauseStartTime;
-                  _pausedRemainingSeconds = null;
-                });
+              if (tempTimerMinutes != null) {
+                playerProvider.setTimer(tempTimerMinutes!);
               }
               Navigator.of(context).pop();
             },

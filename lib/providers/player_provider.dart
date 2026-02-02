@@ -46,6 +46,13 @@ class PlayerProvider with ChangeNotifier {
   // 当前歌词
   String? _currentLyrics;
 
+  // 倒计时相关
+  int? _timerMinutes; // 用户设置的定时分钟数
+  int? _originalTimerMinutes; // 保存原始设置的分钟数，用于恢复
+  Timer? _timer; // 倒计时定时器
+  DateTime? _timerStartTime; // 定时开始时间
+  int? _pausedRemainingSeconds; // 暂停时保存的剩余秒数
+
   // 订阅
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _positionSubscription;
@@ -95,6 +102,7 @@ class PlayerProvider with ChangeNotifier {
     _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
+    _timer?.cancel(); // 取消倒计时定时器
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -111,6 +119,16 @@ class PlayerProvider with ChangeNotifier {
   String? get sourceIdentifier => _sourceIdentifier;
   MusicInfo? get currentMusic => _currentMusic;
   String? get currentLyrics => _currentLyrics;
+  
+  // 倒计时相关getter
+  int? get timerMinutes => _timerMinutes;
+  set timerMinutes(int? value) {
+    _timerMinutes = value;
+    notifyListeners();
+  }
+  int? get originalTimerMinutes => _originalTimerMinutes;
+  DateTime? get timerStartTime => _timerStartTime;
+  int? get pausedRemainingSeconds => _pausedRemainingSeconds;
 
   /// 获取播放进度百分比
   double get progressPercent {
@@ -435,5 +453,59 @@ class PlayerProvider with ChangeNotifier {
   void clearLyrics() {
     _currentLyrics = null;
     notifyListeners();
+  }
+
+  /// 设置倒计时
+  void setTimer(int minutes) {
+    // 取消之前的定时器
+    _timer?.cancel();
+    
+    _timerMinutes = minutes;
+    _originalTimerMinutes = minutes;
+    _timerStartTime = DateTime.now();
+    _pausedRemainingSeconds = null;
+    
+    // 创建新的定时器
+    _timer = Timer(Duration(minutes: minutes), () {
+      // 定时时间到，停止播放
+      stop();
+      // 清除定时时间和开始时间
+      _timerMinutes = null;
+      _originalTimerMinutes = null;
+      _timerStartTime = null;
+      notifyListeners();
+    });
+    
+    notifyListeners();
+  }
+
+  /// 取消倒计时
+  void cancelTimer() {
+    _timer?.cancel();
+    _timerMinutes = null;
+    _originalTimerMinutes = null;
+    _timerStartTime = null;
+    _pausedRemainingSeconds = null;
+    notifyListeners();
+  }
+
+  /// 暂停倒计时
+  void pauseTimer() {
+    if (_timerStartTime != null && _originalTimerMinutes != null) {
+      final elapsed = DateTime.now().difference(_timerStartTime!).inSeconds;
+      final totalSeconds = _originalTimerMinutes! * 60;
+      _pausedRemainingSeconds = totalSeconds - elapsed;
+      _timerStartTime = null;
+      _timer?.cancel();
+      notifyListeners();
+    }
+  }
+
+  /// 恢复倒计时
+  void resumeTimer() {
+    if (_pausedRemainingSeconds != null && _pausedRemainingSeconds! > 0) {
+      final remainingMinutes = (_pausedRemainingSeconds! / 60).ceil();
+      setTimer(remainingMinutes);
+    }
   }
 }
