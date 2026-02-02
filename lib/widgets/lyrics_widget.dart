@@ -114,14 +114,14 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           selectionAnchorPosition: 0.5,
           // 选中锚点对齐方式
           selectionAlignment: MainAxisAlignment.center,
-          // 滚动动画时长 - 使用更长的时长实现更平滑的过渡
-          scrollDuration: const Duration(milliseconds: 600),
-          // 选中行自动恢复时长 - 增加时长使过渡更平滑
-          selectionAutoResumeDuration: const Duration(milliseconds: 500),
-          // 播放行自动恢复时长 - 增加时长使过渡更平滑
-          activeAutoResumeDuration: const Duration(milliseconds: 4000),
+          // 滚动动画时长 - 使用更短的时长提高响应速度
+          scrollDuration: const Duration(milliseconds: 300),
+          // 选中行自动恢复时长 - 使用更短的时长提高响应速度
+          selectionAutoResumeDuration: const Duration(milliseconds: 300),
+          // 播放行自动恢复时长 - 使用更短的时长提高响应速度
+          activeAutoResumeDuration: const Duration(milliseconds: 2000),
           // 滚动动画曲线 - 使用更平滑的曲线
-          scrollCurve: Curves.easeOutCubic,
+          scrollCurve: Curves.easeInOut,
           // 禁用触摸事件 - 由GestureDetector处理
           disableTouchEvent: false,
           // 选中行自动恢复模式 - 停止选择后再恢复

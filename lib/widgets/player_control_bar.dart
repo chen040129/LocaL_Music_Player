@@ -115,35 +115,57 @@ class PlayerControlBar extends StatelessWidget {
               // 播放控制按钮
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(AppIcons.skipPrevious),
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    onPressed: () => playerProvider.playPrevious(),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        isPlaying ? AppIcons.pause : AppIcons.playArrow,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                      onPressed: () => playerProvider.togglePlayPause(),
+                  // 上一曲
+                  InkWell(
+                    onTap: () => playerProvider.playPrevious(),
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    child: Icon(
+                      CupertinoIcons.backward_end_fill,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      size: 24,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(AppIcons.skipNext),
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    onPressed: () => playerProvider.playNext(),
+                  const SizedBox(width: 20),
+                  // 播放/暂停
+                  InkWell(
+                    onTap: () {
+                      final wasPlaying = playerProvider.isPlaying;
+                      playerProvider.togglePlayPause();
+
+                      // 处理倒计时
+                      if (playerProvider.timerMinutes != null) {
+                        if (wasPlaying) {
+                          // 暂停播放时，暂停倒计时
+                          playerProvider.pauseTimer();
+                        } else {
+                          // 恢复播放时，恢复倒计时
+                          playerProvider.resumeTimer();
+                        }
+                      }
+                    },
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    child: Icon(
+                      isPlaying ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // 下一曲
+                  InkWell(
+                    onTap: () => playerProvider.playNext(),
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    child: Icon(
+                      CupertinoIcons.forward_end_fill,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      size: 24,
+                    ),
                   ),
                 ],
               ),

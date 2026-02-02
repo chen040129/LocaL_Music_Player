@@ -5,7 +5,94 @@ import 'package:provider/provider.dart';
 import '../constants/app_icons.dart';
 import '../models/playlist_model.dart';
 import '../providers/music_provider.dart';
+import '../providers/player_provider.dart';
 import '../services/music_scanner_service.dart';
+import '../widgets/mask_card.dart';
+
+/// 歌单页面播放器辅助类
+class PlaylistsPagePlayerHelper {
+  /// 播放歌单中的指定歌曲
+  static void playSongInPlaylist(
+    BuildContext context,
+    PlaylistModel playlist,
+    List<MusicInfo> playlistSongs,
+    int songIndex,
+  ) {
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+
+    if (songIndex < 0 || songIndex >= playlistSongs.length) {
+      return;
+    }
+
+    // 检查是否需要更新播放列表
+    final currentPlaylist = playerProvider.playlist;
+    final currentSource = playerProvider.playlistSource;
+    final currentIdentifier = playerProvider.sourceIdentifier;
+    final needsUpdate = currentPlaylist.length != playlistSongs.length ||
+        currentSource != PlaylistSource.custom ||
+        currentIdentifier != playlist.name;
+
+    // 只在需要时更新播放列表
+    if (needsUpdate) {
+      playerProvider.setPlaylist(
+        musicList: playlistSongs,
+        source: PlaylistSource.custom,
+        identifier: playlist.name,
+        startIndex: songIndex,
+      );
+    }
+
+    // 播放选中的歌曲
+    playerProvider.playAtIndex(songIndex);
+  }
+
+  /// 播放整个歌单
+  static void playPlaylist(
+    BuildContext context,
+    PlaylistModel playlist,
+    List<MusicInfo> playlistSongs,
+  ) {
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+
+    if (playlistSongs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('歌单中没有歌曲'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 检查是否需要更新播放列表
+    final currentPlaylist = playerProvider.playlist;
+    final currentSource = playerProvider.playlistSource;
+    final currentIdentifier = playerProvider.sourceIdentifier;
+    final needsUpdate = currentPlaylist.length != playlistSongs.length ||
+        currentSource != PlaylistSource.custom ||
+        currentIdentifier != playlist.name;
+
+    // 只在需要时更新播放列表
+    if (needsUpdate) {
+      playerProvider.setPlaylist(
+        musicList: playlistSongs,
+        source: PlaylistSource.custom,
+        identifier: playlist.name,
+        startIndex: 0,
+      );
+    }
+
+    // 播放第一首歌曲
+    playerProvider.playAtIndex(0);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('开始播放歌单: ${playlist.name}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}
 
 class PlaylistsPage extends StatefulWidget {
   final VoidCallback? onSidebarToggle;
@@ -53,6 +140,20 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
+  }
+
+  /// 获取音质颜色
+  Color _getQualityColor(String? quality) {
+    switch (quality) {
+      case 'HR':
+        return Colors.purple;
+      case 'HQ':
+        return Colors.blue;
+      case 'SQ':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -282,24 +383,135 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     itemBuilder: (context, index) {
                       final music = playlistMusics[index]!;
                       
-                      // 使用歌单颜色或歌曲封面颜色
-                      final animationColor = playlist.color != null
-                          ? Color(playlist.color!)
-                          : (music.coverColor != null
-                              ? Color(music.coverColor!)
-                              : Theme.of(context).colorScheme.primary);
+                      // 使用歌曲封面颜色
+                      final animationColor = music.coverColor != null
+                          ? Color(music.coverColor!)
+                          : Theme.of(context).colorScheme.primary;
                       
-                      return _PlaylistMusicItem(
-                        music: music,
-                        onTap: () {
+                      return MouseRegion(
+                        onEnter: (_) {
                           setState(() {
-                            _touchedIndex = index;
+                            _hoveredIndex = index;
                           });
-                          // TODO: 播放音乐
                         },
-                        onDelete: () {
-                          playlistService.removeMusicFromPlaylist(playlist.id, music.id);
+                        onExit: (_) {
+                          setState(() {
+                            _hoveredIndex = -1;
+                          });
                         },
+                        child: MaskCard(
+                          isSelected: index == _touchedIndex,
+                          isHovered: index == _hoveredIndex,
+                          accentColor: animationColor,
+                          child: ListTile(
+                            leading: music.coverArt != null
+                                ? Image.memory(
+                                    music.coverArt!,
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        AppIcons.musicNote,
+                                        size: 56,
+                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                      );
+                                    },
+                                  )
+                                : Icon(
+                                    AppIcons.musicNote,
+                                    size: 56,
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                  ),
+                            title: Text(
+                              music.title,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  music.artist,
+                                  style: TextStyle(
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                  ),
+                                ),
+                                Text(
+                                  music.album,
+                                  style: TextStyle(
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (music.quality != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _getQualityColor(music.quality),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      music.quality!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatDuration(music.duration),
+                                  style: TextStyle(
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(
+                                    CupertinoIcons.delete,
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    playlistService.removeMusicFromPlaylist(playlist.id, music.id);
+                                  },
+                                  tooltip: '从歌单移除',
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              // 设置点击状态
+                              setState(() {
+                                _touchedIndex = _touchedIndex == index ? -1 : index;
+                              });
+
+                              // 播放音乐
+                              final playlistMusics = playlist.musicIds
+                                  .map((id) => musicProvider.getMusicById(id))
+                                  .where((music) => music != null)
+                                  .cast<MusicInfo>()
+                                  .toList();
+
+                              // 使用辅助类播放歌曲
+                              PlaylistsPagePlayerHelper.playSongInPlaylist(
+                                context,
+                                playlist,
+                                playlistMusics,
+                                index,
+                              );
+                            },
+                          ),
+                        ),
                       );
 
                     },
@@ -379,21 +591,109 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                   itemCount: filteredPlaylists.length,
                   itemBuilder: (context, index) {
                     final playlist = filteredPlaylists[index];
+                    final isHovered = index == _hoveredIndex;
+                    final isTouched = index == _touchedIndex;
 
                     // 使用歌单颜色或默认主题颜色
                     final animationColor = playlist.color != null
                         ? Color(playlist.color!)
                         : Theme.of(context).colorScheme.primary;
 
-                    return _PlaylistItem(
-                      playlist: playlist,
-                      onTap: () {
+                    return MouseRegion(
+                      onEnter: (_) {
                         setState(() {
-                          _selectedPlaylist = playlist;
+                          _hoveredIndex = index;
                         });
                       },
-                      onRename: () => _renamePlaylist(playlist),
-                      onDelete: () => _deletePlaylist(playlist.id),
+                      onExit: (_) {
+                        setState(() {
+                          _hoveredIndex = -1;
+                        });
+                      },
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _touchedIndex = isTouched ? -1 : index;
+                          });
+                        },
+                        child: MaskCard(
+                          isSelected: isTouched,
+                          isHovered: isHovered,
+                          accentColor: animationColor,
+                          child: ListTile(
+                            leading: Icon(
+                              AppIcons.playlist,
+                              color: animationColor,
+                            ),
+                            title: Text(
+                              playlist.name,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${playlist.musicIds.length} 首歌曲',
+                              style: TextStyle(
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                              ),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    AppIcons.playCircle,
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                  ),
+                                  onPressed: () {
+                                    // 获取歌单中的所有歌曲
+                                    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+                                    final playlistMusics = playlist.musicIds
+                                        .map((id) => musicProvider.getMusicById(id))
+                                        .where((music) => music != null)
+                                        .cast<MusicInfo>()
+                                        .toList();
+
+                                    // 播放整个歌单
+                                    PlaylistsPagePlayerHelper.playPlaylist(
+                                      context,
+                                      playlist,
+                                      playlistMusics,
+                                    );
+                                  },
+                                  tooltip: '播放歌单',
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    CupertinoIcons.pencil,
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                  ),
+                                  onPressed: () {
+                                    _renamePlaylist(playlist);
+                                  },
+                                  tooltip: '重命名',
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    CupertinoIcons.delete,
+                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                  ),
+                                  onPressed: () {
+                                    _deletePlaylist(playlist.id);
+                                  },
+                                  tooltip: '删除',
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _selectedPlaylist = playlist;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );

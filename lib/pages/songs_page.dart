@@ -618,6 +618,7 @@ class _SongsPageState extends State<SongsPage> {
   /// 随机播放一首歌曲
   void _playRandomSong(BuildContext context) {
     final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
     final musicList = musicProvider.musicList;
     
     if (musicList.isEmpty) {
@@ -634,14 +635,18 @@ class _SongsPageState extends State<SongsPage> {
     final randomIndex = (musicList.length * (DateTime.now().millisecondsSinceEpoch % 1000) / 1000).floor();
     final randomSong = musicList[randomIndex];
     
-    // 这里应该调用播放器的播放方法，但由于项目中没有实现实际的播放功能，
-    // 我们只显示一个提示
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('随机播放: ${randomSong.title} - ${randomSong.artist}'),
-        duration: const Duration(seconds: 2),
-      ),
+    // 设置播放列表为所有歌曲
+    playerProvider.setPlaylist(
+      musicList: musicList,
+      source: PlaylistSource.all,
+      startIndex: randomIndex,
     );
+
+    // 播放选中的歌曲
+    playerProvider.playAtIndex(randomIndex);
+
+    // 设置为随机播放模式（在播放之后设置，避免索引问题）
+    playerProvider.setPlayMode(PlayMode.shuffle);
   }
 
   /// 显示添加到歌单对话框

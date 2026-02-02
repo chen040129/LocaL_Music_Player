@@ -25,6 +25,7 @@ class MusicProvider with ChangeNotifier {
   bool _isLoading = false;
   double _loadingProgress = 0.0;
   StreamSubscription<Map<String, dynamic>>? _coverColorSubscription;
+  Timer? _saveTimer; // 用于防抖保存数据的定时器
 
   MusicProvider() {
     debugPrint('MusicProvider初始化');
@@ -52,6 +53,7 @@ class MusicProvider with ChangeNotifier {
   void dispose() {
     _progressSubscription?.cancel();
     _coverColorSubscription?.cancel();
+    _saveTimer?.cancel();
     _pinyinCache.clear();
     super.dispose();
   }
@@ -410,7 +412,6 @@ class MusicProvider with ChangeNotifier {
     music.playCount++;
     music.playHistory[dateKey] = (music.playHistory[dateKey] ?? 0) + 1;
 
-    saveData();
     notifyListeners();
   }
 

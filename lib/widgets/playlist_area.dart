@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../constants/app_icons.dart';
+import '../providers/player_provider.dart';
+import 'package:provider/provider.dart';
 
 class PlaylistArea extends StatelessWidget {
   final bool isSidebarExpanded;
@@ -16,6 +18,32 @@ class PlaylistArea extends StatelessWidget {
     required this.onSongTap,
     this.songs = const [],
   }) : super(key: key);
+
+  IconData _getPlayModeIcon(PlayMode mode) {
+    switch (mode) {
+      case PlayMode.sequence:
+        return CupertinoIcons.arrow_up_arrow_down_square;
+      case PlayMode.shuffle:
+        return CupertinoIcons.shuffle;
+      case PlayMode.loop:
+        return CupertinoIcons.repeat_1;
+      case PlayMode.listLoop:
+        return CupertinoIcons.repeat;
+    }
+  }
+
+  String _getPlayModeName(PlayMode mode) {
+    switch (mode) {
+      case PlayMode.sequence:
+        return '顺序播放';
+      case PlayMode.shuffle:
+        return '随机播放';
+      case PlayMode.loop:
+        return '单曲循环';
+      case PlayMode.listLoop:
+        return '列表循环';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,19 +65,31 @@ class PlaylistArea extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                Icon(AppIcons.repeat, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '循环播放',
-                  style: TextStyle(
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
-                ),
-                const Spacer(),
-              ],
+            child: Consumer<PlayerProvider>(
+              builder: (context, playerProvider, child) {
+                final playMode = playerProvider.playMode;
+                return Row(
+                  children: [
+                    Icon(AppIcons.repeat, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '循环播放',
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const Spacer(),
+                    // 播放顺序按钮
+                    IconButton(
+                      icon: Icon(_getPlayModeIcon(playMode)),
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      onPressed: () => playerProvider.togglePlayMode(),
+                      tooltip: _getPlayModeName(playMode),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           // 歌曲列表

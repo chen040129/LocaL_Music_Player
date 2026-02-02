@@ -38,8 +38,34 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      // 应用退出时保存数据
+      final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+      musicProvider.saveData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +75,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MusicProvider()),
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
-        ChangeNotifierProvider(create: (context) => PlayerProvider()),
+        ChangeNotifierProxyProvider<MusicProvider, PlayerProvider>(
+          create: (context) => PlayerProvider(),
+          update: (context, musicProvider, playerProvider) {
+            playerProvider ??= PlayerProvider();
+            playerProvider.setMusicProvider(musicProvider);
+            return playerProvider;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

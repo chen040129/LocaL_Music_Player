@@ -15,10 +15,9 @@ class StorageService {
       final directory = await _getAppDirectory();
       final file = File('${directory.path}/$_musicDataFileName');
 
-      // 转换为JSON并保存
-      final jsonData = jsonEncode(
-        musicList.map((music) => music.toJson()).toList(),
-      );
+      // 使用compute在后台线程进行JSON序列化，避免阻塞UI
+      final jsonData = await compute(_encodeMusicList, musicList);
+      
       // 使用缓冲写入提高性能
       final sink = file.openWrite();
       sink.write(jsonData);
@@ -29,6 +28,13 @@ class StorageService {
     } catch (e) {
       debugPrint('保存音乐列表失败: $e');
     }
+  }
+
+  /// 在后台线程编码音乐列表为JSON字符串
+  static String _encodeMusicList(List<MusicInfo> musicList) {
+    return jsonEncode(
+      musicList.map((music) => music.toJson()).toList(),
+    );
   }
 
   /// 从本地加载音乐列表

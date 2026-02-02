@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
 import 'package:path/path.dart' as path;
+import 'music_provider.dart';
 
 /// 播放模式枚举
 enum PlayMode {
@@ -26,6 +27,7 @@ enum PlaylistSource {
 /// 播放器状态管理Provider
 class PlayerProvider with ChangeNotifier {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  MusicProvider? _musicProvider; // 添加MusicProvider引用
 
   // 播放状态
   bool _isPlaying = false;
@@ -35,6 +37,7 @@ class PlayerProvider with ChangeNotifier {
 
   // 播放列表
   List<MusicInfo> _playlist = [];
+  List<MusicInfo> _originalPlaylist = []; // 保存原始播放列表
   int _currentIndex = 0;
   PlayMode _playMode = PlayMode.sequence;
   PlaylistSource _playlistSource = PlaylistSource.all;
@@ -52,6 +55,7 @@ class PlayerProvider with ChangeNotifier {
   Timer? _timer; // 倒计时定时器
   DateTime? _timerStartTime; // 定时开始时间
   int? _pausedRemainingSeconds; // 暂停时保存的剩余秒数
+  DateTime? _pausedStartTime; // 暂停时的开始时间
 
   // 订阅
   StreamSubscription? _playerStateSubscription;
@@ -61,6 +65,11 @@ class PlayerProvider with ChangeNotifier {
 
   PlayerProvider() {
     _initializePlayer();
+  }
+
+  /// 设置MusicProvider引用
+  void setMusicProvider(MusicProvider musicProvider) {
+    _musicProvider = musicProvider;
   }
 
   /// 初始化播放器
@@ -144,6 +153,7 @@ class PlayerProvider with ChangeNotifier {
     int startIndex = 0,
   }) {
     _playlist = List.from(musicList);
+    _originalPlaylist = List.from(musicList); // 保存原始播放列表
     _playlistSource = source;
     _sourceIdentifier = identifier;
     _currentIndex = startIndex.clamp(0, _playlist.length - 1);
@@ -179,6 +189,9 @@ class PlayerProvider with ChangeNotifier {
 
       debugPrint('播放命令已发送');
       _isPlaying = true;
+
+      // 记录播放统计
+      _musicProvider?.recordPlay(music);
 
       // 加载歌词
       _loadLyrics(music.filePath);
@@ -218,6 +231,9 @@ class PlayerProvider with ChangeNotifier {
         await _audioPlayer.play(source);
         _isPlaying = true;
 
+        // 记录播放统计
+        _musicProvider?.recordPlay(music);
+
         // 加载歌词
         _loadLyrics(music.filePath);
 
@@ -238,16 +254,28 @@ class PlayerProvider with ChangeNotifier {
     }
 
     if (_isPlaying) {
+      // 暂停播放时，暂停倒计时（如果有倒计时）
+      if (_timer != null) {
+        pauseTimer();
+      }
       await _audioPlayer.pause();
     } else {
+      // 恢复播放时，恢复倒计时（如果有倒计时）
       await _audioPlayer.resume();
+      if (_timer != null) {
+        resumeTimer();
+      }
     }
   }
 
   /// 停止播放
-  Future<void> stop() async {
-    await _audioPlayer.stop();
-    _position = Duration.zero;
+  Future<void> stop({bool resetPosition = true}) async {
+    await _audioPlayer.pause(); // 改为暂停而不是停止，以保留播放位置
+    if (resetPosition) {
+      _position = Duration.zero;
+    }
+    // 停止播放时，取消倒计时
+    cancelTimer();
     notifyListeners();
   }
 
@@ -258,25 +286,26 @@ class PlayerProvider with ChangeNotifier {
     int nextIndex;
     switch (_playMode) {
       case PlayMode.shuffle:
-        // 随机选择下一首，但不能是当前这首
-        if (_playlist.length > 1) {
-          do {
-            nextIndex = (DateTime.now().millisecondsSinceEpoch) % _playlist.length;
-          } while (nextIndex == _currentIndex);
-        } else {
-          nextIndex = 0;
-        }
+        // 随机播放模式：按照随机排序后的列表顺序播放
+        nextIndex = (_currentIndex + 1) % _playlist.length;
         break;
       case PlayMode.loop:
-        // 单曲循环，不切换
+        // 单曲循环模式：播放下一首后重新排序，使新歌曲置顶
+        nextIndex = (_currentIndex + 1) % _playlist.length;
+        await playAtIndex(nextIndex);
+        _reorderPlaylistByMode();
+        return;
+      case PlayMode.listLoop:
+        // 列表循环模式：播放下一首后重新排序，使新歌曲置顶
+        nextIndex = (_currentIndex + 1) % _playlist.length;
+        await playAtIndex(nextIndex);
+        _reorderPlaylistByMode();
         return;
       default:
-        // 顺序播放或列表循环
+        // 顺序播放
         nextIndex = (_currentIndex + 1) % _playlist.length;
-        if (_playMode == PlayMode.sequence && nextIndex == 0) {
-          // 顺序播放模式下，到最后一首就停止
-          return;
-        }
+        // 顺序播放模式下，最后一首歌播放完后回到第一首
+        break;
     }
 
     await playAtIndex(nextIndex);
@@ -289,22 +318,25 @@ class PlayerProvider with ChangeNotifier {
     int prevIndex;
     switch (_playMode) {
       case PlayMode.shuffle:
-        // 随机选择上一首
-        if (_playlist.length > 1) {
-          do {
-            prevIndex = (DateTime.now().millisecondsSinceEpoch) % _playlist.length;
-          } while (prevIndex == _currentIndex);
-        } else {
-          prevIndex = 0;
-        }
+        // 随机播放模式：按照随机排序后的列表顺序播放
+        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
         break;
       case PlayMode.loop:
-        // 单曲循环，不切换
+        // 单曲循环模式：播放上一首后重新排序，使新歌曲置顶
+        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
+        await playAtIndex(prevIndex);
+        _reorderPlaylistByMode();
+        return;
+      case PlayMode.listLoop:
+        // 列表循环模式：播放上一首后重新排序，使新歌曲置顶
+        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
+        await playAtIndex(prevIndex);
+        _reorderPlaylistByMode();
         return;
       default:
-        // 顺序播放或列表循环
+        // 顺序播放
         prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
-        if (_playMode == PlayMode.sequence && prevIndex == _playlist.length - 1) {
+        if (prevIndex == _playlist.length - 1) {
           // 顺序播放模式下，到第一首就停止
           return;
         }
@@ -348,13 +380,78 @@ class PlayerProvider with ChangeNotifier {
     final modes = PlayMode.values;
     final currentIndex = modes.indexOf(_playMode);
     _playMode = modes[(currentIndex + 1) % modes.length];
+    _reorderPlaylistByMode();
     notifyListeners();
   }
 
   /// 设置播放模式
   void setPlayMode(PlayMode mode) {
     _playMode = mode;
+    _reorderPlaylistByMode();
     notifyListeners();
+  }
+
+  /// 根据播放模式重新排序播放列表
+  void _reorderPlaylistByMode() {
+    if (_playlist.isEmpty || _currentMusic == null) return;
+
+    // 保存当前播放的音乐
+    final currentMusic = _currentMusic;
+
+    switch (_playMode) {
+      case PlayMode.shuffle:
+        // 随机打乱播放列表，但将当前播放的歌曲放在第一位
+        final current = _playlist[_currentIndex];
+        _playlist.removeAt(_currentIndex);
+        _playlist.shuffle();
+        _playlist.insert(0, current);
+        _currentIndex = 0;
+        break;
+      case PlayMode.sequence:
+        // 恢复原始顺序
+        if (_originalPlaylist.isNotEmpty && currentMusic != null) {
+          // 找到当前播放的音乐在原始列表中的位置
+          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
+          if (currentMusicIndex != -1) {
+            _playlist = List.from(_originalPlaylist);
+            _currentIndex = currentMusicIndex;
+          }
+        }
+        break;
+      case PlayMode.loop:
+        // 单曲循环模式：将当前歌曲放在第一位，形成一个环
+        if (_originalPlaylist.isNotEmpty && currentMusic != null) {
+          // 找到当前播放的音乐在原始列表中的位置
+          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
+          if (currentMusicIndex != -1) {
+            _playlist = List.from(_originalPlaylist);
+            // 将当前歌曲及其之后的歌曲移到前面
+            final beforeCurrent = _playlist.sublist(0, currentMusicIndex);
+            final fromCurrent = _playlist.sublist(currentMusicIndex);
+            _playlist = [...fromCurrent, ...beforeCurrent];
+            _currentIndex = 0;
+          }
+        }
+        break;
+      case PlayMode.listLoop:
+        // 列表循环模式：将当前歌曲放在第一位，形成一个环
+        if (_originalPlaylist.isNotEmpty && currentMusic != null) {
+          // 找到当前播放的音乐在原始列表中的位置
+          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
+          if (currentMusicIndex != -1) {
+            _playlist = List.from(_originalPlaylist);
+            // 将当前歌曲及其之后的歌曲移到前面
+            final beforeCurrent = _playlist.sublist(0, currentMusicIndex);
+            final fromCurrent = _playlist.sublist(currentMusicIndex);
+            _playlist = [...fromCurrent, ...beforeCurrent];
+            _currentIndex = 0;
+          }
+        }
+        break;
+    }
+
+    // 重新设置当前播放的音乐
+    _currentMusic = currentMusic;
   }
 
   /// 清空播放列表
@@ -368,13 +465,17 @@ class PlayerProvider with ChangeNotifier {
   /// 添加音乐到播放列表
   void addToPlaylist(List<MusicInfo> musicList) {
     _playlist.addAll(musicList);
+    _originalPlaylist.addAll(musicList); // 同步更新原始播放列表
     notifyListeners();
   }
 
   /// 从播放列表移除音乐
   void removeFromPlaylist(int index) {
     if (index >= 0 && index < _playlist.length) {
+      final removedMusic = _playlist[index];
       _playlist.removeAt(index);
+      // 从原始播放列表中也移除该音乐
+      _originalPlaylist.removeWhere((m) => m.id == removedMusic.id);
       if (index < _currentIndex) {
         _currentIndex--;
       } else if (index == _currentIndex) {
@@ -467,8 +568,8 @@ class PlayerProvider with ChangeNotifier {
     
     // 创建新的定时器
     _timer = Timer(Duration(minutes: minutes), () {
-      // 定时时间到，停止播放
-      stop();
+      // 定时时间到，停止播放但不重置位置
+      stop(resetPosition: false);
       // 清除定时时间和开始时间
       _timerMinutes = null;
       _originalTimerMinutes = null;
@@ -486,6 +587,7 @@ class PlayerProvider with ChangeNotifier {
     _originalTimerMinutes = null;
     _timerStartTime = null;
     _pausedRemainingSeconds = null;
+    _pausedStartTime = null;
     notifyListeners();
   }
 
@@ -495,6 +597,7 @@ class PlayerProvider with ChangeNotifier {
       final elapsed = DateTime.now().difference(_timerStartTime!).inSeconds;
       final totalSeconds = _originalTimerMinutes! * 60;
       _pausedRemainingSeconds = totalSeconds - elapsed;
+      _pausedStartTime = _timerStartTime; // 保存暂停时的开始时间
       _timerStartTime = null;
       _timer?.cancel();
       notifyListeners();
@@ -504,8 +607,29 @@ class PlayerProvider with ChangeNotifier {
   /// 恢复倒计时
   void resumeTimer() {
     if (_pausedRemainingSeconds != null && _pausedRemainingSeconds! > 0) {
-      final remainingMinutes = (_pausedRemainingSeconds! / 60).ceil();
-      setTimer(remainingMinutes);
+      // 取消之前的定时器
+      _timer?.cancel();
+
+      // 保存剩余的秒数
+      final remainingSeconds = _pausedRemainingSeconds!;
+
+      // 使用暂停时的开始时间来计算新的开始时间
+      _timerStartTime = _pausedStartTime;
+      _pausedRemainingSeconds = null;
+      _pausedStartTime = null;
+
+      // 创建新的定时器，使用剩余的秒数而不是分钟
+      _timer = Timer(Duration(seconds: remainingSeconds), () {
+        // 定时时间到，停止播放但不重置位置
+        stop(resetPosition: false);
+        // 清除定时时间和开始时间
+        _timerMinutes = null;
+        _originalTimerMinutes = null;
+        _timerStartTime = null;
+        notifyListeners();
+      });
+
+      notifyListeners();
     }
   }
 }
