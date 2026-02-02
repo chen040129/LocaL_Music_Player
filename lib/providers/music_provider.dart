@@ -413,6 +413,7 @@ class MusicProvider with ChangeNotifier {
     music.playHistory[dateKey] = (music.playHistory[dateKey] ?? 0) + 1;
 
     notifyListeners();
+    // 注意：不再在此处自动保存数据，改为在统计刷新或退出软件时保存
   }
 
   /// 获取指定时间段的排行榜

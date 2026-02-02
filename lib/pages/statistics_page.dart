@@ -26,6 +26,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   int _selectedRankingType = 0; // 0: 日榜, 1: 周榜, 2: 月榜, 3: 年榜
   int _selectedSortType = 0; // 0: 按歌曲, 1: 按作曲家, 2: 按专辑
   int _hoveredCardIndex = -1; // 用于统计卡片的悬停状态
+  bool _isRefreshing = false; // 防止重复刷新
 
   @override
   Widget build(BuildContext context) {
@@ -141,15 +142,27 @@ class _StatisticsPageState extends State<StatisticsPage> {
               CupertinoIcons.refresh,
               color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
             ),
-            onPressed: () async {
-              final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+            onPressed: _isRefreshing ? null : () async {
+              if (_isRefreshing) return;
               setState(() {
+                _isRefreshing = true;
                 _touchedIndex = -1;
                 _selectedYearIndex = -1;
                 _selectedFormatIndex = -1;
               });
-              // 重新初始化音乐数据
-              await musicProvider.initialize();
+              try {
+                final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+                // 保存统计数据
+                await musicProvider.saveData();
+                // 重新初始化音乐数据
+                await musicProvider.initialize();
+              } finally {
+                if (mounted) {
+                  setState(() {
+                    _isRefreshing = false;
+                  });
+                }
+              }
             },
             tooltip: '刷新',
           ),

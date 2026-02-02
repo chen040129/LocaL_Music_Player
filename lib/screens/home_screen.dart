@@ -227,20 +227,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '正在加载音乐库... ${(musicProvider.loadingProgress * 100).toInt()}%',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              LinearProgressIndicator(
-                                value: musicProvider.loadingProgress,
-                                minHeight: 3,
-                              ),
-                            ],
+                          child: Text(
+                            '正在加载音乐库...',
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ],

@@ -14,6 +14,10 @@ import 'package:flutter_music_player/pages/albums_page.dart';
 import 'providers/navigation_provider.dart';
 import 'widgets/animated_theme.dart';
 
+// 全局变量保存Provider引用
+MusicProvider? globalMusicProvider;
+PlayerProvider? globalPlayerProvider;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -45,16 +49,24 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListener {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 监听窗口关闭事件
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.setPreventClose(true);
+      windowManager.addListener(this);
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
   }
 
@@ -68,18 +80,43 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
+  void onWindowClose() async {
+    // 先隐藏窗口，让用户感觉立即关闭
+    await windowManager.hide();
+    // 停止音乐播放
+    if (globalPlayerProvider != null) {
+      globalPlayerProvider!.stop();
+    }
+    // 然后在后台保存数据
+    if (globalMusicProvider != null) {
+      await globalMusicProvider!.saveData();
+    }
+    // 最后彻底关闭窗口
+    await windowManager.destroy();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
-        ChangeNotifierProvider(create: (context) => MusicProvider()),
+        ChangeNotifierProvider(create: (context) {
+          final provider = MusicProvider();
+          globalMusicProvider = provider;
+          return provider;
+        }),
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
         ChangeNotifierProxyProvider<MusicProvider, PlayerProvider>(
-          create: (context) => PlayerProvider(),
+          create: (context) {
+            final provider = PlayerProvider();
+            globalPlayerProvider = provider;
+            return provider;
+          },
           update: (context, musicProvider, playerProvider) {
             playerProvider ??= PlayerProvider();
             playerProvider.setMusicProvider(musicProvider);
+            globalPlayerProvider = playerProvider;
             return playerProvider;
           },
         ),

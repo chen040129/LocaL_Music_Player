@@ -1034,7 +1034,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         size: _iconSize,
         color: iconColor,
       ),
-      onPressed: () => windowManager.close(),
+      onPressed: () async {
+        // 触发窗口关闭事件，让main.dart中的onWindowClose处理
+        await windowManager.close();
+      },
       padding: EdgeInsets.zero,
       constraints: _iconButtonConstraints,
     );
