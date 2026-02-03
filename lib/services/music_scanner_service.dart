@@ -27,6 +27,7 @@ class MusicInfo {
   int playCount;
   Map<String, int> playHistory; // 记录每天的播放次数，格式：{'2024-01-15': 3}
   final int? coverColor; // 封面主要颜色，使用 ARGB 格式存储
+  int actualPlayDuration; // 实际播放时长（秒），用于统计总播放时长
 
   MusicInfo({
     required this.id,
@@ -43,6 +44,7 @@ class MusicInfo {
     this.playCount = 0,
     this.coverColor,
     Map<String, int>? playHistory,
+    this.actualPlayDuration = 0,
   }) : playHistory = playHistory ?? {};
 
   Map<String, dynamic> toJson() {
@@ -61,6 +63,7 @@ class MusicInfo {
       'playCount': playCount,
       'playHistory': playHistory,
       'coverColor': coverColor,
+      'actualPlayDuration': actualPlayDuration,
     };
   }
 
@@ -86,6 +89,7 @@ class MusicInfo {
           ? Map<String, int>.from(json['playHistory'])
           : null,
       coverColor: json['coverColor'],
+      actualPlayDuration: json['actualPlayDuration'] ?? 0,
     );
   }
 

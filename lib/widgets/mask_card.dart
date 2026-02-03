@@ -71,6 +71,16 @@ class _MaskCardState extends State<MaskCard>
   @override
   Widget build(BuildContext context) {
     final isActive = widget.isSelected || widget.isHovered;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // 获取歌曲主题色
+    final accentColor = widget.accentColor ?? Theme.of(context).colorScheme.primary;
+
+    // 获取软件主题色（根据明暗模式）
+    final themeColor = isDarkMode ? Colors.white : Colors.black;
+
+    // 根据主题模式调整歌曲主题色的透明度
+    final adjustedAccentOpacity = isDarkMode ? 0.15 : 0.08;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -88,13 +98,21 @@ class _MaskCardState extends State<MaskCard>
                 spreadRadius: 0,
                 offset: const Offset(0, 2),
               ),
+              // 歌曲主题色阴影
               if (isActive)
                 BoxShadow(
-                  color: (widget.accentColor ?? Theme.of(context).colorScheme.primary)
-                      .withOpacity(0.25 * _animation.value),
+                  color: accentColor.withOpacity(0.2 * _animation.value),
                   blurRadius: 25,
                   spreadRadius: 3,
                   offset: const Offset(0, 5),
+                ),
+              // 软件主题色阴影（与歌曲主题色相反）
+              if (isActive)
+                BoxShadow(
+                  color: themeColor.withOpacity(0.1 * _animation.value),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, -3),
                 ),
             ],
           ),
@@ -102,13 +120,19 @@ class _MaskCardState extends State<MaskCard>
             borderRadius: BorderRadius.circular(widget.borderRadius),
             child: Stack(
               children: [
-                // 模糊的蒙罩层（放在底部，不阻挡交互）
+                // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
                 if (isActive)
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: (widget.accentColor ?? Theme.of(context).colorScheme.primary)
-                            .withOpacity(0.08 * _animation.value),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
+                            themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(widget.borderRadius),
                       ),
                     ),

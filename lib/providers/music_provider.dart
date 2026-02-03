@@ -121,9 +121,9 @@ class MusicProvider with ChangeNotifier {
     return stats;
   }
 
-  /// 获取总播放时长（秒）- 基于实际播放次数
+  /// 获取总播放时长（秒）- 基于实际播放时长
   int get totalDuration {
-    return _musicList.fold<int>(0, (sum, music) => sum + music.duration.inSeconds * music.playCount);
+    return _musicList.fold<int>(0, (sum, music) => sum + music.actualPlayDuration);
   }
 
   /// 获取总播放次数
@@ -312,6 +312,7 @@ class MusicProvider with ChangeNotifier {
           playCount: _musicList[index].playCount,
           playHistory: _musicList[index].playHistory,
           coverColor: coverColor,
+          actualPlayDuration: _musicList[index].actualPlayDuration,
         );
         _musicList[index] = updatedMusic;
         notifyListeners();
@@ -414,6 +415,19 @@ class MusicProvider with ChangeNotifier {
 
     notifyListeners();
     // 注意：不再在此处自动保存数据，改为在统计刷新或退出软件时保存
+  }
+
+  /// 更新歌曲的实际播放时长
+  void updateMusicActualPlayDuration(String musicId, int actualPlayDuration) {
+    try {
+      final index = _musicList.indexWhere((music) => music.id == musicId);
+      if (index != -1) {
+        _musicList[index].actualPlayDuration = actualPlayDuration;
+        // 不在这里调用notifyListeners，避免频繁通知
+      }
+    } catch (e) {
+      debugPrint('更新歌曲实际播放时长失败: $e');
+    }
   }
 
   /// 获取指定时间段的排行榜

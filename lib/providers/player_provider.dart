@@ -34,6 +34,8 @@ class PlayerProvider with ChangeNotifier {
   bool _isInitialized = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  Duration _lastRecordedPosition = Duration.zero; // 上次记录的播放位置
+  DateTime? _lastRecordTime; // 上次记录的时间
 
   // 播放列表
   List<MusicInfo> _playlist = [];
@@ -83,6 +85,38 @@ class PlayerProvider with ChangeNotifier {
 
       // 监听播放位置
       _positionSubscription = _audioPlayer.onPositionChanged.listen((position) {
+        // 计算自上次记录以来的播放时长
+        if (_isPlaying && _lastRecordTime != null) {
+          final now = DateTime.now();
+          final timeDiff = now.difference(_lastRecordTime!).inSeconds;
+
+          // 计算位置差，确保是正向播放（不是拖动进度条）
+          final positionDiff = position.inSeconds - _lastRecordedPosition.inSeconds;
+
+          // 只记录正向播放的时间，且不超过歌曲总时长
+          if (positionDiff > 0 && positionDiff <= timeDiff) {
+            // 计算实际播放时长（取位置差和时间差中较小的值，避免暂停时计入时间）
+            final actualPlayedSeconds = positionDiff;
+
+            // 更新当前歌曲的实际播放时长
+            if (_currentMusic != null) {
+              _currentMusic!.actualPlayDuration += actualPlayedSeconds;
+
+              // 更新音乐列表中的记录
+              final index = _playlist.indexWhere((m) => m.id == _currentMusic!.id);
+              if (index != -1) {
+                _playlist[index].actualPlayDuration = _currentMusic!.actualPlayDuration;
+              }
+
+              // 更新音乐提供者中的记录
+              _musicProvider?.updateMusicActualPlayDuration(_currentMusic!.id, _currentMusic!.actualPlayDuration);
+            }
+          }
+
+          _lastRecordTime = now;
+          _lastRecordedPosition = position;
+        }
+
         _position = position;
         notifyListeners();
       });
@@ -190,6 +224,10 @@ class PlayerProvider with ChangeNotifier {
       debugPrint('播放命令已发送');
       _isPlaying = true;
 
+      // 初始化记录时间和位置
+      _lastRecordTime = DateTime.now();
+      _lastRecordedPosition = Duration.zero;
+
       // 记录播放统计
       _musicProvider?.recordPlay(music);
 
@@ -231,6 +269,10 @@ class PlayerProvider with ChangeNotifier {
         await _audioPlayer.play(source);
         _isPlaying = true;
 
+        // 初始化记录时间和位置
+        _lastRecordTime = DateTime.now();
+        _lastRecordedPosition = Duration.zero;
+
         // 记录播放统计
         _musicProvider?.recordPlay(music);
 
@@ -259,12 +301,17 @@ class PlayerProvider with ChangeNotifier {
         pauseTimer();
       }
       await _audioPlayer.pause();
+      // 暂停时清空记录时间，避免暂停时间被计入
+      _lastRecordTime = null;
     } else {
       // 恢复播放时，恢复倒计时（如果有倒计时）
       await _audioPlayer.resume();
       if (_timer != null) {
         resumeTimer();
       }
+      // 恢复播放时，重新初始化记录时间和位置
+      _lastRecordTime = DateTime.now();
+      _lastRecordedPosition = _position;
     }
   }
 
@@ -360,6 +407,9 @@ class PlayerProvider with ChangeNotifier {
   /// 跳转到指定位置
   Future<void> seekTo(Duration position) async {
     await _audioPlayer.seek(position);
+    // 跳转后更新记录位置，避免跳转的时间差被计入
+    _lastRecordedPosition = position;
+    _lastRecordTime = DateTime.now();
   }
 
   /// 跳转到指定百分比位置

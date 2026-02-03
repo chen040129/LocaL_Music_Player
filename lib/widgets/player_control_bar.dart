@@ -39,8 +39,8 @@ class PlayerControlBar extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const LyricsPage()),
             );
           },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [

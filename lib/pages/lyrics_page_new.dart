@@ -473,6 +473,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                 const SizedBox(height: 32),
                                                 // 控制区
                                                 Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
                                                   children: [
                                                     // 进度条
                                                     MouseRegion(
@@ -649,17 +650,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                         const SizedBox(
                                                             height: 12),
                                                         // 播放控制按钮行
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      48),
-                                                          child: Row(
-                                                            children: [
-                                                              // 左侧占位，与上面的上一曲按钮对齐
-                                                              const SizedBox(width: 50),
-                                                              // 音量调节
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          children: [
+                                                            // 音量调节
                                                               Container(
                                                                 width: 24,
                                                                 child: Listener(
@@ -824,11 +818,8 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                         ],
                                                                       ),
                                                               ),
-                                                              // 右侧占位，与上面的下一曲按钮对齐
-                                                              const SizedBox(width: 0),
                                                             ],
                                                           ),
-                                                        ),
                                                       ],
                                                     ),
                                                   ],
