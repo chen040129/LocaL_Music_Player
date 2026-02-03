@@ -484,88 +484,112 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                       onExit: (_) => setState(() =>
                                                           _isHoveringProgress =
                                                               false),
-                                                      child: Row(
-                                                        children: [
-                                                          AnimatedOpacity(
-                                                            opacity:
-                                                                _isHoveringProgress
-                                                                    ? 1.0
-                                                                    : 0.0,
-                                                            duration:
-                                                                const Duration(
-                                                                    milliseconds:
-                                                                        200),
-                                                            child: Text(
-                                                              _formatDuration(
-                                                                  position),
-                                                              style: TextStyle(
-                                                                fontSize: 12,
-                                                                color: colorScheme
-                                                                    .onSurface
-                                                                    .withOpacity(
-                                                                        0.6),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 12),
-                                                          Expanded(
-                                                            child: SliderTheme(
-                                                              data: SliderTheme
-                                                                      .of(context)
-                                                                  .copyWith(
-                                                                trackHeight: 3,
-                                                                thumbShape:
-                                                                    const RoundSliderThumbShape(
-                                                                        enabledThumbRadius:
-                                                                            0),
-                                                                overlayShape:
-                                                                    const RoundSliderOverlayShape(
-                                                                        overlayRadius:
-                                                                            0),
-                                                                activeTrackColor: currentMusic
-                                                                            ?.coverColor !=
-                                                                        null
-                                                                    ? Color(currentMusic!
-                                                                        .coverColor!)
-                                                                    : colorScheme
-                                                                        .primary,
-                                                                inactiveTrackColor:
-                                                                    colorScheme
+                                                      child: Listener(
+                                                        onPointerSignal: (pointerSignal) {
+                                                          if (pointerSignal is PointerScrollEvent && _showVolumeControl) {
+                                                            // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                            final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
+                                                            final newProgress = (progress - delta).clamp(0.0, 1.0);
+                                                            playerProvider.seekToPercent(newProgress);
+                                                          }
+                                                        },
+                                                        child: Focus(
+                                                          onKeyEvent: (node, event) {
+                                                            if (_showVolumeControl && event is KeyDownEvent) {
+                                                              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                                                                final newProgress = (progress - 0.05).clamp(0.0, 1.0);
+                                                                playerProvider.seekToPercent(newProgress);
+                                                                return KeyEventResult.handled;
+                                                              } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                                                                final newProgress = (progress + 0.05).clamp(0.0, 1.0);
+                                                                playerProvider.seekToPercent(newProgress);
+                                                                return KeyEventResult.handled;
+                                                              }
+                                                            }
+                                                            return KeyEventResult.ignored;
+                                                          },
+                                                          child: Row(
+                                                            children: [
+                                                              AnimatedOpacity(
+                                                                opacity:
+                                                                    _isHoveringProgress
+                                                                        ? 1.0
+                                                                        : 0.0,
+                                                                duration:
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            200),
+                                                                child: Text(
+                                                                  _formatDuration(
+                                                                      position),
+                                                                  style: TextStyle(
+                                                                    fontSize: 12,
+                                                                    color: colorScheme
                                                                         .onSurface
                                                                         .withOpacity(
-                                                                            0.2),
-                                                                thumbColor: Colors
-                                                                    .transparent,
-                                                                overlayColor: Colors
-                                                                    .transparent,
+                                                                            0.6),
+                                                                  ),
+                                                                ),
                                                               ),
-                                                              child: Slider(
-                                                                value: _isDragging
-                                                                    ? _dragPosition.clamp(0.0, 1.0)
-                                                                    : progress.clamp(0.0, 1.0),
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    _isDragging =
-                                                                        true;
-                                                                    _dragPosition =
-                                                                        value.clamp(0.0, 1.0);
-                                                                  });
-                                                                },
-                                                                onChangeEnd:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    _isDragging =
-                                                                        false;
-                                                                  });
-                                                                  playerProvider
-                                                                      .seekToPercent(
-                                                                          value.clamp(0.0, 1.0));
-                                                                },
+                                                              const SizedBox(
+                                                                  width: 12),
+                                                              Expanded(
+                                                                child: SliderTheme(
+                                                                  data: SliderTheme
+                                                                          .of(context)
+                                                                      .copyWith(
+                                                                    trackHeight: 3,
+                                                                    thumbShape:
+                                                                        const RoundSliderThumbShape(
+                                                                            enabledThumbRadius:
+                                                                                0),
+                                                                    overlayShape:
+                                                                        const RoundSliderOverlayShape(
+                                                                            overlayRadius:
+                                                                                0),
+                                                                    activeTrackColor: currentMusic
+                                                                                ?.coverColor !=
+                                                                            null
+                                                                        ? Color(currentMusic!
+                                                                            .coverColor!)
+                                                                        : colorScheme
+                                                                            .primary,
+                                                                    inactiveTrackColor:
+                                                                        colorScheme
+                                                                            .onSurface
+                                                                            .withOpacity(
+                                                                                0.2),
+                                                                    thumbColor: Colors
+                                                                        .transparent,
+                                                                    overlayColor: Colors
+                                                                        .transparent,
+                                                                  ),
+                                                                  child: Slider(
+                                                                    value: _isDragging
+                                                                        ? _dragPosition.clamp(0.0, 1.0)
+                                                                        : progress.clamp(0.0, 1.0),
+                                                                    onChanged:
+                                                                        (value) {
+                                                                      setState(() {
+                                                                        _isDragging =
+                                                                            true;
+                                                                        _dragPosition =
+                                                                            value.clamp(0.0, 1.0);
+                                                                      });
+                                                                    },
+                                                                    onChangeEnd:
+                                                                        (value) {
+                                                                      setState(() {
+                                                                        _isDragging =
+                                                                            false;
+                                                                      });
+                                                                      playerProvider
+                                                                          .seekToPercent(
+                                                                              value.clamp(0.0, 1.0));
+                                                                    },
+                                                                  ),
+                                                                ),
                                                               ),
-                                                            ),
-                                                          ),
                                                           const SizedBox(
                                                               width: 12),
                                                           AnimatedOpacity(
@@ -591,15 +615,20 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                           ),
                                                         ],
                                                       ),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const SizedBox(height: 0),
                                                     // 播放控制按钮
                                                     Column(
+                                                      mainAxisSize: MainAxisSize.min,
                                                       children: [
+                                                        // 主播放控制行（上一曲、播放/暂停、下一曲）
                                                         Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
                                                                   .center,
+                                                          mainAxisSize: MainAxisSize.min,
                                                           children: [
                                                             // 上一曲
                                                             InkWell(
@@ -649,55 +678,50 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                         ),
                                                         const SizedBox(
                                                             height: 12),
-                                                        // 播放控制按钮行
-                                                        Row(
-                                                          mainAxisAlignment: MainAxisAlignment.center,
-                                                          children: [
-                                                            // 音量调节
-                                                              Container(
-                                                                width: 24,
-                                                                child: Listener(
-                                                                  onPointerSignal: (pointerSignal) {
-                                                                    if (pointerSignal is PointerScrollEvent) {
-                                                                      // 限制单次滚动的最大调整量，防止快速滚动时超出范围
-                                                                      final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
-                                                                      final newVolume = (_volume - delta).clamp(0.0, 1.0);
-                                                                      setState(() {
-                                                                        _volume = newVolume;
-                                                                      });
-                                                                      playerProvider.setVolume(newVolume);
-                                                                    }
-                                                                  },
-                                                                  child: MouseRegion(
-                                                                    onEnter: (_) =>
-                                                                        setState(() =>
-                                                                            _showVolumeControl =
-                                                                                true),
-                                                                    onExit: (_) =>
-                                                                        setState(() =>
-                                                                            _showVolumeControl =
-                                                                                false),
-                                                                    child: Focus(
-                                                                      onKeyEvent: (node, event) {
-                                                                        if (event is KeyDownEvent) {
-                                                                          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                                                                            setState(() {
-                                                                              _volume = (_volume - 0.05).clamp(0.0, 1.0);
-                                                                            });
-                                                                            playerProvider.setVolume(_volume);
-                                                                            return KeyEventResult.handled;
-                                                                          } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                                                                            setState(() {
-                                                                              _volume = (_volume + 0.05).clamp(0.0, 1.0);
-                                                                            });
-                                                                            playerProvider.setVolume(_volume);
-                                                                            return KeyEventResult.handled;
-                                                                          }
+                                                        // 次级控制行（音量、播放列表、定时播放、循环模式）
+                                                        SizedBox(
+                                                          width: 400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
+                                                          child: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                            children: [
+                                                              // 音量调节
+                                                              MouseRegion(
+                                                                onEnter: (_) => setState(() => _showVolumeControl = true),
+                                                                onExit: (_) => setState(() => _showVolumeControl = false),
+                                                                child: Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    Listener(
+                                                                      onPointerSignal: (pointerSignal) {
+                                                                        if (pointerSignal is PointerScrollEvent) {
+                                                                          // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                                          final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
+                                                                          final newVolume = (_volume - delta).clamp(0.0, 1.0);
+                                                                          setState(() {
+                                                                            _volume = newVolume;
+                                                                          });
+                                                                          playerProvider.setVolume(newVolume);
                                                                         }
-                                                                        return KeyEventResult.ignored;
                                                                       },
-                                                                      child: Container(
-                                                                        alignment: Alignment.center,
+                                                                      child: Focus(
+                                                                        onKeyEvent: (node, event) {
+                                                                          if (event is KeyDownEvent) {
+                                                                            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                                                                              setState(() {
+                                                                                _volume = (_volume - 0.05).clamp(0.0, 1.0);
+                                                                              });
+                                                                              playerProvider.setVolume(_volume);
+                                                                              return KeyEventResult.handled;
+                                                                            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                                                                              setState(() {
+                                                                                _volume = (_volume + 0.05).clamp(0.0, 1.0);
+                                                                              });
+                                                                              playerProvider.setVolume(_volume);
+                                                                              return KeyEventResult.handled;
+                                                                            }
+                                                                          }
+                                                                          return KeyEventResult.ignored;
+                                                                        },
                                                                         child: IconButton(
                                                                           icon: Icon(
                                                                             _volume > 0
@@ -720,106 +744,121 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              // 右侧控制区（播放列表、定时播放、循环模式或音量控制条）
-                                                              Expanded(
-                                                                child: _showVolumeControl
-                                                                    ? Padding(
+                                                                    // 音量控制条
+                                                                    if (_showVolumeControl)
+                                                                      Padding(
                                                                         padding: const EdgeInsets.only(left: 8),
-                                                                        child: SliderTheme(
-                                                                          data: SliderThemeData(
-                                                                            trackHeight: 2,
-                                                                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                                                                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                                                                            activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
-                                                                            inactiveTrackColor: colorScheme.onSurface.withOpacity(0.2),
-                                                                            trackShape: const CustomSliderTrackShape(trackWidth: 250),
+                                                                        child: Container(
+                                                                          width: 280,
+                                                                          decoration: BoxDecoration(
+                                                                            gradient: LinearGradient(
+                                                                              begin: Alignment.topLeft,
+                                                                              end: Alignment.bottomRight,
+                                                                              colors: [
+                                                                                colorScheme.surface.withOpacity(0.7),
+                                                                                colorScheme.surface.withOpacity(0.85),
+                                                                                colorScheme.surface.withOpacity(0.95),
+                                                                              ],
+                                                                              stops: const [0.0, 0.3, 1.0],
+                                                                            ),
+                                                                            borderRadius: BorderRadius.circular(8),
                                                                           ),
-                                                                          child: Slider(
-                                                                            value: _volume.clamp(0.0, 1.0),
-                                                                            onChanged: (value) {
-                                                                              setState(() {
-                                                                                _volume = value.clamp(0.0, 1.0);
-                                                                              });
-                                                                              playerProvider.setVolume(value.clamp(0.0, 1.0));
-                                                                            },
+                                                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                          child: SliderTheme(
+                                                                            data: SliderThemeData(
+                                                                              trackHeight: 3,
+                                                                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                                                                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                              activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
+                                                                              inactiveTrackColor: colorScheme.onSurface.withOpacity(0.3),
+                                                                              thumbColor: Colors.transparent,
+                                                                              overlayColor: Colors.transparent,
+                                                                            ),
+                                                                            child: Slider(
+                                                                              value: _volume.clamp(0.0, 1.0),
+                                                                              onChanged: (value) {
+                                                                                setState(() {
+                                                                                  _volume = value.clamp(0.0, 1.0);
+                                                                                });
+                                                                                playerProvider.setVolume(value.clamp(0.0, 1.0));
+                                                                              },
+                                                                            ),
                                                                           ),
                                                                         ),
-                                                                      )
-                                                                    : Row(
-                                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                        children: [
-                                                                          // 播放列表
-                                                                          IconButton(
-                                                                            icon: const Icon(
-                                                                                CupertinoIcons
-                                                                                    .list_bullet),
-                                                                            color: colorScheme
-                                                                                .onSurface
-                                                                                .withOpacity(
-                                                                                    0.7),
-                                                                            onPressed: () {
-                                                                              _pageSwitchController
-                                                                                  .forward(from: 0)
-                                                                                  .then((_) {
-                                                                                setState(() {
-                                                                                  _currentPage = 1;
-                                                                                });
-                                                                                _pageSwitchController
-                                                                                    .reset();
-                                                                              });
-                                                                            },
-                                                                            tooltip: '播放列表',
-                                                                            padding:
-                                                                                EdgeInsets
-                                                                                    .zero,
-                                                                            constraints:
-                                                                                const BoxConstraints(),
-                                                                          ),
-                                                                          // 定时播放
-                                                                          playerProvider.timerMinutes != null
-                                                                              ? _buildTimerWidget(context, colorScheme)
-                                                                              : IconButton(
-                                                                                  icon: const Icon(
-                                                                                    CupertinoIcons.clock,
-                                                                                    size: 24,
-                                                                                  ),
-                                                                                  color: colorScheme.onSurface.withOpacity(0.7),
-                                                                                  onPressed: () {
-                                                                                    _showTimerDialog(context);
-                                                                                  },
-                                                                                  tooltip: '定时播放',
-                                                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                                                  constraints: const BoxConstraints(),
-                                                                                ),
-                                                                          // 循环模式
-                                                                          IconButton(
-                                                                            icon: Icon(
-                                                                                _getPlayModeIcon(
-                                                                                    playMode)),
-                                                                            color: colorScheme
-                                                                                .onSurface
-                                                                                .withOpacity(
-                                                                                    0.7),
-                                                                            onPressed: () =>
-                                                                                playerProvider
-                                                                                    .togglePlayMode(),
-                                                                            tooltip:
-                                                                                _getPlayModeName(
-                                                                                    playMode),
-                                                                            padding:
-                                                                                EdgeInsets
-                                                                                    .zero,
-                                                                            constraints:
-                                                                                const BoxConstraints(),
-                                                                          ),
-                                                                        ],
                                                                       ),
+                                                                  ],
+                                                                ),
                                                               ),
+                                                              // 播放列表、定时播放、循环模式（仅在音量控制条未展开时显示）
+                                                              if (!_showVolumeControl) ...[
+                                                                // 播放列表
+                                                                IconButton(
+                                                                  icon: const Icon(
+                                                                      CupertinoIcons
+                                                                          .list_bullet),
+                                                                  color: colorScheme
+                                                                      .onSurface
+                                                                      .withOpacity(
+                                                                          0.7),
+                                                                  onPressed: () {
+                                                                    _pageSwitchController
+                                                                        .forward(from: 0)
+                                                                        .then((_) {
+                                                                      setState(() {
+                                                                        _currentPage = 1;
+                                                                      });
+                                                                      _pageSwitchController
+                                                                          .reset();
+                                                                    });
+                                                                  },
+                                                                  tooltip: '播放列表',
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  constraints:
+                                                                      const BoxConstraints(),
+                                                                ),
+                                                                // 定时播放
+                                                                playerProvider.timerMinutes != null
+                                                                    ? _buildTimerWidget(context, colorScheme)
+                                                                    : IconButton(
+                                                                        icon: const Icon(
+                                                                          CupertinoIcons.clock,
+                                                                          size: 24,
+                                                                        ),
+                                                                        color: colorScheme.onSurface.withOpacity(0.7),
+                                                                        onPressed: () {
+                                                                          _showTimerDialog(context);
+                                                                        },
+                                                                        tooltip: '定时播放',
+                                                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                        constraints: const BoxConstraints(),
+                                                                      ),
+                                                                // 循环模式
+                                                                IconButton(
+                                                                  icon: Icon(
+                                                                      _getPlayModeIcon(
+                                                                          playMode)),
+                                                                  color: colorScheme
+                                                                      .onSurface
+                                                                      .withOpacity(
+                                                                          0.7),
+                                                                  onPressed: () =>
+                                                                      playerProvider
+                                                                          .togglePlayMode(),
+                                                                  tooltip:
+                                                                      _getPlayModeName(
+                                                                          playMode),
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  constraints:
+                                                                      const BoxConstraints(),
+                                                                ),
+                                                              ],
                                                             ],
                                                           ),
+                                                        ),
                                                       ],
                                                     ),
                                                   ],
