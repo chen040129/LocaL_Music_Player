@@ -1,3 +1,4 @@
+
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -171,8 +172,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                     final currentIndex = _lyricController.activeIndexNotifiter.value;
                     // 根据滚轮方向调整歌词行
                     final delta = pointerSignal.scrollDelta.dy;
-                    final newIndex = delta > 0 
-                        ? currentIndex + 1 
+                    final newIndex = delta > 0
+                        ? currentIndex + 1
                         : currentIndex - 1;
                     // 确保新索引在有效范围内
                     final lyricModel = _lyricController.lyricNotifier.value;

@@ -18,14 +18,14 @@ class _AboutPageState extends State<AboutPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部工具栏
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.transparent,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),

@@ -6,6 +6,7 @@ import '../constants/app_icons.dart';
 import '../models/playlist_model.dart';
 import '../providers/music_provider.dart';
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/music_scanner_service.dart';
 import '../widgets/mask_card.dart';
 
@@ -159,14 +160,16 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -239,7 +242,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     height: 36,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Row(
@@ -326,6 +329,8 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                   ),
               ],
             ),
+          );
+            },
           ),
           Expanded(
             child: Consumer2<PlaylistService, MusicProvider>(

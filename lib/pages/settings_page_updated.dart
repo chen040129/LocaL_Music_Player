@@ -1,11 +1,9 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
+import '../constants/app_icons.dart';
 import 'ui_settings_page.dart';
 import 'lyrics_settings_page.dart';
 import 'player_settings_page.dart';
-import '../providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback? onSidebarToggle;
@@ -23,7 +21,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // 当前显示的页面
   Widget? _currentPage;
-             
+
+  // 显示的页面类型
+  String? _currentView;
+
   @override
   Widget build(BuildContext context) {
     // 如果有子页面，显示子页面
@@ -32,17 +33,15 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Container(
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           // 顶部工具栏
-          Consumer<SettingsProvider>(
-            builder: (context, settings, child) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  boxShadow: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -66,7 +65,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _isTitleHovered 
+                        color: _isTitleHovered
                             ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
@@ -74,8 +73,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: Row(
                         children: [
                           Icon(
-                            CupertinoIcons.settings, 
-                            color: _isTitleHovered 
+                            AppIcons.settings,
+                            color: _isTitleHovered
                                 ? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                           ),
@@ -83,7 +82,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             '设置',
                             style: TextStyle(
-                              color: _isTitleHovered 
+                              color: _isTitleHovered
                                   ? Theme.of(context).colorScheme.primary
                                   : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                               fontSize: 18,
@@ -97,8 +96,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
-          );
-            },
           ),
           // 设置内容
           Expanded(
@@ -147,7 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
           context,
           '用户界面',
           '自定义应用外观和行为',
-          CupertinoIcons.settings,
+          AppIcons.settings,
           Colors.blue,
           0,
         ),
@@ -155,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           context,
           '歌词',
           '歌词显示和同步设置',
-          CupertinoIcons.music_note,
+          AppIcons.musicNote,
           Colors.green,
           1,
         ),
@@ -163,7 +160,7 @@ class _SettingsPageState extends State<SettingsPage> {
           context,
           '歌曲界面',
           '播放器和歌曲列表设置',
-          CupertinoIcons.play_circle,
+          AppIcons.playCircle,
           Colors.orange,
           2,
         ),
@@ -194,87 +191,89 @@ class _SettingsPageState extends State<SettingsPage> {
         });
       },
       child: GestureDetector(
-        onTap: () => _navigateToSettings(index),
+        onTap: () {
+          _navigateToSettings(index);
+        },
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        height: 80,
-        decoration: BoxDecoration(
-          color: isHovered
-              ? color.withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+          duration: const Duration(milliseconds: 300),
+          height: 80,
+          decoration: BoxDecoration(
             color: isHovered
-                ? color.withOpacity(0.6)
-                : Theme.of(context).dividerColor.withOpacity(0.3),
-            width: isHovered ? 2 : 1,
-          ),
-          boxShadow: isHovered
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 12,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(isHovered ? 0.3 : 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
+                ? color.withOpacity(0.1)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isHovered
+                  ? color.withOpacity(0.6)
+                  : Theme.of(context).dividerColor.withOpacity(0.3),
+              width: isHovered ? 2 : 1,
+            ),
+            boxShadow: isHovered
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.2),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 4),
                     ),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      child: SizedBox(
-                        height: isHovered ? 24 : 0,
-                        child: Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  ]
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(isHovered ? 0.3 : 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        child: SizedBox(
+                          height: isHovered ? 24 : 0,
+                          child: Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 

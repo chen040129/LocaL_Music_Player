@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 import '../constants/app_icons.dart';
+import '../providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class CustomTitleBar extends StatefulWidget {
   final String title;
@@ -48,7 +50,6 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
   static const double _iconSize = 16.0;
   static const double _hoverScale = 1.2;
   static const double _normalScale = 1.0;
-  static const double _borderRadius = 4.0;
 
   @override
   void initState() {
@@ -102,7 +103,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
         // 标题栏
         Container(
           height: 32,
-          color: colorScheme.surface,
+          color: Colors.transparent,
           child: Row(
             children: [
               // 拖动区域
@@ -112,7 +113,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
                   onPanStart: _isDesktopPlatform ? (_) => windowManager.startDragging() : null,
                   onTap: widget.onToggleSidebar,
                   child: Container(
-                    color: colorScheme.surface,
+                    color: Colors.transparent,
                   ),
                 ),
               ),
@@ -136,12 +137,14 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringPin = true),
       onExit: (_) => setState(() => _isHoveringPin = false),
-      child: AnimatedContainer(
-        duration: _animationDuration,
-        decoration: BoxDecoration(
-          color: _isHoveringPin ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return AnimatedContainer(
+            duration: _animationDuration,
+            decoration: BoxDecoration(
+              color: _isHoveringPin ? hoverBackgroundColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+            ),
         child: IconButton(
           icon: AnimatedScale(
             scale: _isHoveringPin ? _hoverScale : _normalScale,
@@ -152,10 +155,12 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
               color: widget.isAlwaysOnTop ? Colors.blue : null,
             ),
           ),
-          onPressed: widget.onAlwaysOnTop,
-          padding: EdgeInsets.zero,
-          constraints: _iconButtonConstraints,
-        ),
+            onPressed: widget.onAlwaysOnTop,
+            padding: EdgeInsets.zero,
+            constraints: _iconButtonConstraints,
+          ),
+          );
+        },
       ),
     );
   }
@@ -164,22 +169,26 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringMinimize = true),
       onExit: (_) => setState(() => _isHoveringMinimize = false),
-      child: AnimatedContainer(
-        duration: _animationDuration,
-        decoration: BoxDecoration(
-          color: _isHoveringMinimize ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return AnimatedContainer(
+            duration: _animationDuration,
+            decoration: BoxDecoration(
+              color: _isHoveringMinimize ? hoverBackgroundColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+            ),
         child: IconButton(
           icon: Icon(
             CupertinoIcons.minus,
             size: _iconSize,
             color: iconColor,
           ),
-          onPressed: widget.onMinimize,
-          padding: EdgeInsets.zero,
-          constraints: _iconButtonConstraints,
-        ),
+            onPressed: widget.onMinimize,
+            padding: EdgeInsets.zero,
+            constraints: _iconButtonConstraints,
+          ),
+          );
+        },
       ),
     );
   }

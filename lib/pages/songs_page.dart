@@ -9,6 +9,7 @@ import '../constants/app_icons.dart';
 import '../constants/app_pages.dart';
 import '../providers/music_provider.dart';
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/music_scanner_service.dart';
 import '../models/playlist_model.dart';
 import '../providers/navigation_provider.dart';
@@ -45,15 +46,17 @@ class _SongsPageState extends State<SongsPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -140,7 +143,7 @@ class _SongsPageState extends State<SongsPage> {
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
@@ -255,6 +258,8 @@ class _SongsPageState extends State<SongsPage> {
                 ),
               ],
             ),
+          );
+            },
           ),
           // 歌曲列表
           Expanded(

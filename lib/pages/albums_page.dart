@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
+import '../providers/settings_provider.dart';
 import '../models/playlist_model.dart';
 import '../services/music_scanner_service.dart';
 import '../providers/navigation_provider.dart';
@@ -535,15 +536,17 @@ class _AlbumsPageState extends State<AlbumsPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -617,7 +620,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
@@ -720,6 +723,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                 ),
               ],
             ),
+          );
+            },
           ),
           // 专辑列表
           Expanded(

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
 
 class LyricsPage extends StatefulWidget {
@@ -57,25 +58,18 @@ class _LyricsPageState extends State<LyricsPage> {
           body: Stack(
             children: [
               // 主内容区域
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.surface.withOpacity(0.95),
-                    ],
-                  ),
-                ),
+              Consumer<SettingsProvider>(
+                builder: (context, settings, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                    ),
                 child: SafeArea(
                   child: Column(
                     children: [
                       // 顶部导航栏（留出标题栏空间）
                       Padding(
-                        padding: const EdgeInsets.only(top: 32),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                           child: Row(
                             children: [
                               // 回退按钮
@@ -128,11 +122,13 @@ class _LyricsPageState extends State<LyricsPage> {
                     ),
                   ),
                   // 底部播放控制
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      boxShadow: [
+                  Consumer<SettingsProvider>(
+                    builder: (context, settings, child) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                          boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
@@ -180,6 +176,8 @@ class _LyricsPageState extends State<LyricsPage> {
                         ),
                       ],
                     ),
+                  );
+                    },
                   ),
                 ],
               ),

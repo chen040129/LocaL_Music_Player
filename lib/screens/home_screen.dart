@@ -11,6 +11,7 @@ import 'package:flutter_music_player/theme/theme_provider.dart';
 import 'package:flutter_music_player/services/music_scanner_service.dart';
 import 'package:flutter_music_player/providers/music_provider.dart';
 import 'package:flutter_music_player/providers/navigation_provider.dart';
+import 'package:flutter_music_player/providers/settings_provider.dart';
 import 'package:flutter_music_player/constants/app_pages.dart';
 import 'package:flutter_music_player/pages/songs_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
@@ -110,6 +111,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _updateWindowBorderRadius(double borderRadius) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // 触发窗口重绘以应用新的圆角
+      await windowManager.setSize(await windowManager.getSize());
+    }
+  }
+
   void _togglePlay() {
     setState(() {
       _isPlaying = !_isPlaying;
@@ -183,9 +191,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Stack(
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        // 监听窗口边框弧度变化
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _updateWindowBorderRadius(settings.windowBorderRadius);
+        });
+
+        return Material(
+          color: Colors.transparent,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Padding(
+              padding: EdgeInsets.all(settings.windowBorderRadius > 0 ? settings.windowBorderRadius * 0.3 : 0),
+              child: Stack(
         children: [
           // 主内容
           Column(
@@ -387,7 +406,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ],
-      ),
-    );
+            ),
+          ),
+        ),
+      );
+    },
+  );
   }
 }

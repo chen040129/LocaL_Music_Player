@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import '../providers/settings_provider.dart';
 
 /// 蒙版卡片组件
 /// 使用半透明蒙罩实现卡片效果，主题切换时只改变背景色
@@ -82,69 +84,73 @@ class _MaskCardState extends State<MaskCard>
     // 根据主题模式调整歌曲主题色的透明度
     final adjustedAccentOpacity = isDarkMode ? 0.15 : 0.08;
 
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          margin: widget.margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            boxShadow: [
-              // 柔和的阴影，使边界更模糊
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 15,
-                spreadRadius: 0,
-                offset: const Offset(0, 2),
-              ),
-              // 歌曲主题色阴影
-              if (isActive)
-                BoxShadow(
-                  color: accentColor.withOpacity(0.2 * _animation.value),
-                  blurRadius: 25,
-                  spreadRadius: 3,
-                  offset: const Offset(0, 5),
-                ),
-              // 软件主题色阴影（与歌曲主题色相反）
-              if (isActive)
-                BoxShadow(
-                  color: themeColor.withOpacity(0.1 * _animation.value),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, -3),
-                ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            child: Stack(
-              children: [
-                // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
-                if (isActive)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
-                            themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(widget.borderRadius),
-                      ),
-                    ),
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Container(
+              margin: widget.margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                boxShadow: [
+                  // 柔和的阴影，使边界更模糊
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 15,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 2),
                   ),
-                // 内容（放在顶部，可以交互）
-                Padding(
-                  padding: widget.padding ?? EdgeInsets.zero,
-                  child: widget.child,
+                  // 歌曲主题色阴影
+                  if (isActive)
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.2 * _animation.value),
+                      blurRadius: 25,
+                      spreadRadius: 3,
+                      offset: const Offset(0, 5),
+                    ),
+                  // 软件主题色阴影（与歌曲主题色相反）
+                  if (isActive)
+                    BoxShadow(
+                      color: themeColor.withOpacity(0.1 * _animation.value),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                      offset: const Offset(0, -3),
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                child: Stack(
+                  children: [
+                    // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
+                    if (isActive)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
+                                themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(widget.borderRadius),
+                          ),
+                        ),
+                      ),
+                    // 内容（放在顶部，可以交互）
+                    Padding(
+                      padding: widget.padding ?? EdgeInsets.zero,
+                      child: widget.child,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

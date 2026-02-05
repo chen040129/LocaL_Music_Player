@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
+import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
+import 'mask_card.dart';
 
 /// 音质饼状图组件
 class QualityPieChartWidget extends StatelessWidget {
@@ -117,6 +119,7 @@ class QualityPieChartWidget extends StatelessWidget {
     Map<String, int> qualitySizes,
     List<Color> colors,
   ) {
+    final settings = Provider.of<SettingsProvider>(context);
     int colorIndex = 0;
     final List<Widget> statWidgets = [];
 
@@ -133,17 +136,10 @@ class QualityPieChartWidget extends StatelessWidget {
       final color = colors[colorIndex % colors.length];
 
       statWidgets.add(
-        Container(
+        MaskCard(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
+          accentColor: color,
           child: Row(
             children: [
               Container(

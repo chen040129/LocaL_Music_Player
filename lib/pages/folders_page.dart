@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_icons.dart';
+import '../providers/settings_provider.dart';
 
 class FoldersPage extends StatefulWidget {
   final VoidCallback? onSidebarToggle;
@@ -20,15 +22,17 @@ class _FoldersPageState extends State<FoldersPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -93,6 +97,8 @@ class _FoldersPageState extends State<FoldersPage> {
                 ),
               ],
             ),
+          );
+            },
           ),
           // 文件夹列表
           Expanded(

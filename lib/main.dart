@@ -8,6 +8,7 @@ import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
 import 'providers/player_provider.dart';
+import 'providers/settings_provider.dart';
 import 'models/playlist_model.dart';
 import 'package:flutter_music_player/pages/artists_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
@@ -31,6 +32,7 @@ void main() async {
       backgroundColor: Colors.transparent, // 使用透明背景，避免主题切换时出现白色边框
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
+      windowButtonVisibility: false,
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -59,7 +61,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
       windowManager.setPreventClose(true);
       windowManager.addListener(this);
     }
+    // 窗口透明度现在由背景层控制，不需要单独初始化
   }
+
 
   @override
   void dispose() {
@@ -107,15 +111,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
         }),
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
-        ChangeNotifierProxyProvider<MusicProvider, PlayerProvider>(
+        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider, PlayerProvider>(
           create: (context) {
             final provider = PlayerProvider();
             globalPlayerProvider = provider;
             return provider;
           },
-          update: (context, musicProvider, playerProvider) {
+          update: (context, musicProvider, settingsProvider, playerProvider) {
             playerProvider ??= PlayerProvider();
             playerProvider.setMusicProvider(musicProvider);
+            playerProvider.setSettingsProvider(settingsProvider);
             globalPlayerProvider = playerProvider;
             return playerProvider;
           },
@@ -131,7 +137,25 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
             themeMode: themeProvider.themeMode,
             home: ThemeTransition(
               themeMode: themeProvider.themeMode,
-              child: const HomeScreen(),
+              child: Consumer<SettingsProvider>(
+                builder: (context, settings, child) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+                    child: Stack(
+                      children: [
+                        // 背景层 - 应用透明度
+                        Positioned.fill(
+                          child: Container(
+                            color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                          ),
+                        ),
+                        // 内容层 - 不应用透明度
+                        const HomeScreen(),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
             routes: {
               '/artists': (context) {

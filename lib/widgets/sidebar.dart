@@ -6,6 +6,7 @@ import '../constants/app_icons.dart';
 import '../constants/app_pages.dart';
 import '../services/music_scanner_service.dart';
 import 'package:file_picker/file_picker.dart';
+import '../providers/settings_provider.dart';
 
 class Sidebar extends StatefulWidget {
   final bool isExpanded;
@@ -142,7 +143,7 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
           return Container(
             width: _widthAnimation.value,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.transparent,
             ),
             child: Column(
               children: [
@@ -342,9 +343,11 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
         color: isSelected
             ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
             : Colors.transparent,
-        child: InkWell(
-          onTap: onTap ?? () {},
-          borderRadius: BorderRadius.circular(8),
+        child: Consumer<SettingsProvider>(
+          builder: (context, settings, child) {
+            return InkWell(
+              onTap: onTap ?? () {},
+              borderRadius: BorderRadius.circular(settings.borderRadius),
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 12, horizontal: isExpanded ? 12 : 8),
             child: Row(
@@ -390,6 +393,8 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
               ],
             ),
           ),
+            );
+          },
         ),
       ),
     );

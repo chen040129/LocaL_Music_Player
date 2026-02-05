@@ -7,6 +7,7 @@ import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
 import 'package:path/path.dart' as path;
 import 'music_provider.dart';
+import 'settings_provider.dart';
 
 /// 播放模式枚举
 enum PlayMode {
@@ -28,6 +29,7 @@ enum PlaylistSource {
 class PlayerProvider with ChangeNotifier {
   final AudioPlayer _audioPlayer = AudioPlayer();
   MusicProvider? _musicProvider; // 添加MusicProvider引用
+  SettingsProvider? _settingsProvider; // 添加SettingsProvider引用
 
   // 播放状态
   bool _isPlaying = false;
@@ -74,9 +76,17 @@ class PlayerProvider with ChangeNotifier {
     _musicProvider = musicProvider;
   }
 
+  /// 设置SettingsProvider引用
+  void setSettingsProvider(SettingsProvider settingsProvider) {
+    _settingsProvider = settingsProvider;
+  }
+
   /// 初始化播放器
   Future<void> _initializePlayer() async {
     try {
+      // 设置默认音量
+      await _audioPlayer.setVolume(0.7);
+
       // 监听播放状态
       _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
         _isPlaying = state == PlayerState.playing;
@@ -219,7 +229,21 @@ class PlayerProvider with ChangeNotifier {
       debugPrint('音频源类型: ${source.runtimeType}');
 
       debugPrint('发送播放命令...');
-      await _audioPlayer.play(source);
+
+      // 应用淡入淡出效果
+      if (_settingsProvider?.enableFadeEffect ?? true) {
+        final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
+        await _audioPlayer.setVolume(0);
+        await _audioPlayer.play(source);
+        await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+            ? (_settingsProvider!.defaultVolume / 100) 
+            : 0.7);
+      } else {
+        await _audioPlayer.play(source);
+        await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+            ? (_settingsProvider!.defaultVolume / 100) 
+            : 0.7);
+      }
 
       debugPrint('播放命令已发送');
       _isPlaying = true;
@@ -266,7 +290,22 @@ class PlayerProvider with ChangeNotifier {
 
       try {
         final source = DeviceFileSource(music.filePath);
-        await _audioPlayer.play(source);
+
+        // 应用淡入淡出效果
+        if (_settingsProvider?.enableFadeEffect ?? true) {
+          final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
+          await _audioPlayer.setVolume(0);
+          await _audioPlayer.play(source);
+          await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+              ? (_settingsProvider!.defaultVolume / 100) 
+              : 0.7);
+        } else {
+          await _audioPlayer.play(source);
+          await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+              ? (_settingsProvider!.defaultVolume / 100) 
+              : 0.7);
+        }
+
         _isPlaying = true;
 
         // 初始化记录时间和位置
@@ -300,12 +339,36 @@ class PlayerProvider with ChangeNotifier {
       if (_timer != null) {
         pauseTimer();
       }
-      await _audioPlayer.pause();
+
+      // 应用淡出效果
+      if (_settingsProvider?.enableFadeEffect ?? true) {
+        final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
+        await _audioPlayer.setVolume(0);
+        await _audioPlayer.pause();
+        await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+            ? (_settingsProvider!.defaultVolume / 100) 
+            : 0.7);
+      } else {
+        await _audioPlayer.pause();
+      }
+
       // 暂停时清空记录时间，避免暂停时间被计入
       _lastRecordTime = null;
     } else {
       // 恢复播放时，恢复倒计时（如果有倒计时）
-      await _audioPlayer.resume();
+
+      // 应用淡入效果
+      if (_settingsProvider?.enableFadeEffect ?? true) {
+        final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
+        await _audioPlayer.setVolume(0);
+        await _audioPlayer.resume();
+        await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
+            ? (_settingsProvider!.defaultVolume / 100) 
+            : 0.7);
+      } else {
+        await _audioPlayer.resume();
+      }
+
       if (_timer != null) {
         resumeTimer();
       }
@@ -399,8 +462,15 @@ class PlayerProvider with ChangeNotifier {
       _audioPlayer.seek(Duration.zero);
       _audioPlayer.resume();
     } else {
-      // 其他模式，播放下一首
-      playNext();
+      // 检查是否启用自动播放下一首
+      if (_settingsProvider?.autoPlayNext ?? true) {
+        // 其他模式，播放下一首
+        playNext();
+      } else {
+        // 不自动播放下一首，停止播放
+        _isPlaying = false;
+        notifyListeners();
+      }
     }
   }
 

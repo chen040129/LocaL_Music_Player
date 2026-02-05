@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import '../constants/app_icons.dart';
 import '../providers/music_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/music_scanner_service.dart';
 
 class ScannerPage extends StatefulWidget {
@@ -30,15 +31,17 @@ class _ScannerPageState extends State<ScannerPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 3,
@@ -93,6 +96,8 @@ class _ScannerPageState extends State<ScannerPage> {
                 ),
               ],
             ),
+          );
+            },
           ),
           // 扫描内容
           Expanded(
@@ -104,6 +109,8 @@ class _ScannerPageState extends State<ScannerPage> {
                   children: [
                   // 扫描状态卡片
                   Card(
+                    color: Colors.transparent,
+                    elevation: 0,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Consumer<MusicProvider>(
@@ -186,6 +193,9 @@ class _ScannerPageState extends State<ScannerPage> {
                           label: Text(musicProvider.isScanning ? '扫描中...' : '开始扫描'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Theme.of(context).colorScheme.primary,
+                            elevation: 0,
                           ),
                         ),
                       );
@@ -235,6 +245,8 @@ class _ScannerPageState extends State<ScannerPage> {
                                 itemBuilder: (context, index) {
                                   final folder = scannedFolders[index];
                                   return Card(
+                                    color: Colors.transparent,
+                                    elevation: 0,
                                     margin: const EdgeInsets.only(bottom: 8),
                                     child: ListTile(
                                       leading: Icon(
@@ -563,6 +575,8 @@ class _ScannerPageState extends State<ScannerPage> {
                           itemBuilder: (context, index) {
                             final music = musicList[index];
                             return Card(
+                              color: Colors.transparent,
+                              elevation: 0,
                               margin: const EdgeInsets.only(bottom: 8),
                               child: ListTile(
                                 leading: music.coverArt != null

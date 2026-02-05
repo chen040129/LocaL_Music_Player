@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../constants/app_icons.dart';
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class PlaylistArea extends StatelessWidget {
@@ -49,14 +50,14 @@ class PlaylistArea extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.transparent,
       child: Column(
         children: [
           // 顶部播放控制相关功能
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.transparent,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -107,9 +108,14 @@ class PlaylistArea extends StatelessWidget {
                   color: isPlaying 
                       ? Theme.of(context).colorScheme.primary.withOpacity(0.1) 
                       : Theme.of(context).colorScheme.surface,
-                  child: InkWell(
-                    onTap: () => onSongTap(index),
-                    borderRadius: BorderRadius.circular(12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(context.read<SettingsProvider>().borderRadius),
+                  ),
+                  child: Consumer<SettingsProvider>(
+                    builder: (context, settings, child) {
+                      return InkWell(
+                        onTap: () => onSongTap(index),
+                        borderRadius: BorderRadius.circular(settings.borderRadius),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Row(
@@ -210,7 +216,9 @@ class PlaylistArea extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
+                      ),
+                      );
+                    },
                   ),
                 );
               },

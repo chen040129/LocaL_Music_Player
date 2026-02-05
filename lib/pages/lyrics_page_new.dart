@@ -9,8 +9,9 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
-import '../widgets/lyrics_widget.dart';
+import '../widgets/lyrics_widget_new.dart' as lyrics_widgets;
 
 // 自定义SliderTrackShape，用于控制进度条的宽度
 class CustomSliderTrackShape extends SliderTrackShape {
@@ -214,17 +215,24 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
             children: [
               // 背景模糊效果
               if (currentMusic?.coverArt != null)
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.3,
-                    child: ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: Image.memory(
-                        currentMusic!.coverArt!,
-                        fit: BoxFit.cover,
+                Consumer<SettingsProvider>(
+                  builder: (context, settings, child) {
+                    if (!settings.useBlurBackground) {
+                      return const SizedBox.shrink();
+                    }
+                    return Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.3,
+                        child: ImageFiltered(
+                          imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                          child: Image.memory(
+                            currentMusic!.coverArt!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               // 渐变遮罩
               Positioned.fill(
@@ -313,19 +321,24 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                 MainAxisAlignment.center,
                                             children: [
                                                 // 专辑封面
-                                                LayoutBuilder(
-                                                  builder:
-                                                      (context, constraints) {
-                                                    // 获取整个窗口的宽度
-                                                    final windowWidth =
-                                                        MediaQuery.of(context)
-                                                            .size
-                                                            .width;
-                                                    // 根据窗口宽度计算封面大小，使用更平滑的比例
-                                                    final size = (windowWidth *
-                                                            0.25)
-                                                        .clamp(330.0, 700.0);
-                                                    return GestureDetector(
+                                                Consumer<SettingsProvider>(
+                                                  builder: (context, settings, child) {
+                                                    if (!settings.showAlbumArt) {
+                                                      return const SizedBox.shrink();
+                                                    }
+                                                    return LayoutBuilder(
+                                                      builder:
+                                                          (context, constraints) {
+                                                        // 获取整个窗口的宽度
+                                                        final windowWidth =
+                                                            MediaQuery.of(context)
+                                                                .size
+                                                                .width;
+                                                        // 根据窗口宽度计算封面大小，使用更平滑的比例
+                                                        final size = (windowWidth *
+                                                                0.25)
+                                                            .clamp(330.0, 700.0);
+                                                        return GestureDetector(
                                                       onHorizontalDragStart:
                                                           (details) {
                                                         setState(() {
@@ -467,6 +480,8 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                           ),
                                                         ),
                                                       ),
+                                                    );
+                                                  },
                                                     );
                                                   },
                                                 ),
@@ -871,27 +886,44 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                             ),
                             // 右侧歌词区
                             Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 48, right: 48, bottom: 80),
-                                child: playerProvider.currentLyrics != null
-                                    ? LyricsWidget(
-                                        lyrics: playerProvider.currentLyrics!,
-                                        position: position,
-                                        onLineTap: (duration) {
-                                          playerProvider.seekTo(duration);
-                                        },
-                                      )
-                                    : Center(
-                                        child: Text(
-                                          '暂无歌词',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            color: colorScheme.onSurface
-                                                .withOpacity(0.5),
-                                          ),
+                              child: Consumer<SettingsProvider>(
+                                builder: (context, settings, child) {
+                                  // 根据设置决定是否显示歌词
+                                  if (!settings.showLyricsInPlayer) {
+                                    return Center(
+                                      child: Text(
+                                        '歌词显示已关闭',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: colorScheme.onSurface.withOpacity(0.5),
                                         ),
                                       ),
+                                    );
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 48, right: 48, bottom: 80),
+                                    child: playerProvider.currentLyrics != null
+                                        ? lyrics_widgets.LyricsWidget(
+                                            lyrics: playerProvider.currentLyrics!,
+                                            position: position,
+                                            onLineTap: (duration) {
+                                              playerProvider.seekTo(duration);
+                                            },
+                                          )
+                                        : Center(
+                                            child: Text(
+                                              '暂无歌词',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                color: colorScheme.onSurface
+                                                    .withOpacity(0.5),
+                                              ),
+                                            ),
+                                          ),
+                                  );
+                                },
                               ),
                             ),
                           ],
