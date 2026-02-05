@@ -133,8 +133,13 @@ class _FoldersPageState extends State<FoldersPage> {
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: _folders.length,
+                    itemCount: _folders.length + 1, // 添加一个额外的项作为底部占位
                     itemBuilder: (context, index) {
+                      // 如果是最后一项，显示底部占位区域
+                      if (index == _folders.length) {
+                        return const SizedBox(height: 90); // 底部占位区域高度
+                      }
+
                       final folder = _folders[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),

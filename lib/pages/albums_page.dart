@@ -796,8 +796,13 @@ class _AlbumsPageState extends State<AlbumsPage> {
                   children: [
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
-                      itemCount: sortedAlbums.length,
+                      itemCount: sortedAlbums.length + 1, // 添加一个额外的项作为底部占位
                       itemBuilder: (context, index) {
+                        // 如果是最后一项，显示底部占位区域
+                        if (index == sortedAlbums.length) {
+                          return const SizedBox(height: 90); // 底部占位区域高度
+                        }
+
                         final album = sortedAlbums[index];
                         final albumMusics = musicProvider.getMusicByAlbum(album);
                         final coverArt = albumMusics.isNotEmpty ? albumMusics.first.coverArt : null;

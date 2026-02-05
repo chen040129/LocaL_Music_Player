@@ -122,31 +122,41 @@ class _MaskCardState extends State<MaskCard>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                child: Stack(
-                  children: [
-                    // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
-                    if (isActive)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
-                                themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
-                              ],
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: widget.onTap,
+                    onDoubleTap: widget.onDoubleTap,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    child: Stack(
+                      children: [
+                        // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
+                        if (isActive)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
+                                    themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(widget.borderRadius),
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(widget.borderRadius),
                           ),
+                        // 内容（放在顶部，可以交互）
+                        Padding(
+                          padding: widget.padding ?? EdgeInsets.zero,
+                          child: widget.child,
                         ),
-                      ),
-                    // 内容（放在顶部，可以交互）
-                    Padding(
-                      padding: widget.padding ?? EdgeInsets.zero,
-                      child: widget.child,
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             );

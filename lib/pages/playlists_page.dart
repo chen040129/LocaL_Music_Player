@@ -593,8 +593,13 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: ClampingScrollPhysics(),
                   ),
-                  itemCount: filteredPlaylists.length,
+                  itemCount: filteredPlaylists.length + 1, // 添加一个额外的项作为底部占位
                   itemBuilder: (context, index) {
+                    // 如果是最后一项，显示底部占位区域
+                    if (index == filteredPlaylists.length) {
+                      return const SizedBox(height: 90); // 底部占位区域高度
+                    }
+
                     final playlist = filteredPlaylists[index];
                     final isHovered = index == _hoveredIndex;
                     final isTouched = index == _touchedIndex;

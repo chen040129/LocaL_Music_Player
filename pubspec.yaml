@@ -4,6 +4,11 @@ publish_to: 'none'
 version: 1.0.0+1
 uses-material-design: true
 
+flutter:
+  uses-material-design: true
+  shaders:
+    - shaders/liquidglass.frag
+
 environment:
   sdk: '>=3.0.0 <4.0.0'
 

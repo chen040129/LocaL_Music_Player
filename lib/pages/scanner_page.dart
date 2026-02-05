@@ -102,8 +102,9 @@ class _ScannerPageState extends State<ScannerPage> {
           // 扫描内容
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 114),
               child: SingleChildScrollView(
+                padding: const EdgeInsets.only(right: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -109,6 +109,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   _buildSectionHeader('设置类别'),
                   _buildSettingsCards(context),
+                  // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
+                  const SizedBox(height: 90),
                 ],
               ),
             ),

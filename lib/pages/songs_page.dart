@@ -355,8 +355,13 @@ class _SongsPageState extends State<SongsPage> {
                   children: [
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
-                      itemCount: musicList.length,
+                      itemCount: musicList.length + 1, // 添加一个额外的项作为底部占位
                       itemBuilder: (context, index) {
+                        // 如果是最后一项，显示底部占位区域
+                        if (index == musicList.length) {
+                          return const SizedBox(height: 90); // 底部占位区域高度
+                        }
+
                         final music = musicList[index];
                         final isHovered = index == _hoveredIndex;
                         final isTouched = index == _touchedIndex;
@@ -890,7 +895,7 @@ class _SongsPageState extends State<SongsPage> {
                         CupertinoIcons.person,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到艺术家'),
+                      title: const Text('艺术家'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // 使用NavigationProvider切换到艺术家页面
@@ -903,7 +908,7 @@ class _SongsPageState extends State<SongsPage> {
                         CupertinoIcons.music_albums,
                         color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到专辑'),
+                      title: const Text('专辑'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // 使用NavigationProvider切换到专辑页面

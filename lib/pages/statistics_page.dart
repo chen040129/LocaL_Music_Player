@@ -67,6 +67,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                           ],
                         ),
                       ),
+                      // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
+                      const SizedBox(height: 90),
                     ],
                   ),
                 );

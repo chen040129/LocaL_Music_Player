@@ -32,6 +32,8 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   _buildSectionHeader('歌词显示设置'),
                   const SizedBox(height: 16),
                   _buildLyricsSettings(context),
+                  // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
+                  const SizedBox(height: 90),
                 ],
               ),
             ),

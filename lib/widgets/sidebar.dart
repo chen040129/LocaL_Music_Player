@@ -33,6 +33,13 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
   bool _isScanning = false;
   late AnimationController _widthController;
   late Animation<double> _widthAnimation;
+  
+  // 菜单项悬停状态
+  final Map<String, bool> _menuHoverStates = {};
+  
+  static const Duration _animationDuration = Duration(milliseconds: 200);
+  static const double _hoverScale = 1.2;
+  static const double _normalScale = 1.0;
 
   /// 扫描音乐
   Future<void> _scanMusic() async {
@@ -70,7 +77,8 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
 
     try {
       // 执行扫描
-      final scannedMusic = await _musicScannerService.scanDirectory(selectedDirectory);
+      final scannedMusic =
+          await _musicScannerService.scanDirectory(selectedDirectory);
 
       // 通知父组件扫描完成
       if (widget.onMusicScanned != null) {
@@ -140,68 +148,103 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _widthAnimation,
       builder: (context, child) {
-          return Container(
-            width: _widthAnimation.value,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-            ),
-            child: Column(
-              children: [
-                // 顶部工具栏
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 16.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
+        return Container(
+          width: _widthAnimation.value,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+          ),
+          child: Column(
+            children: [
+              // 顶部工具栏
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 16.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
                     // 主题切换按钮
                     Consumer<ThemeProvider>(
                       builder: (context, themeProvider, child) {
-                        return IconButton(
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 400),
-                            transitionBuilder: (child, animation) {
-                              return ScaleTransition(
-                                scale: animation,
-                                child: child,
-                              );
-                            },
-                            child: Icon(
-                              themeProvider.isDarkMode
-                                  ? AppIcons.sun
-                                  : AppIcons.moon,
-                              key: ValueKey<bool>(themeProvider.isDarkMode),
-                              color: Theme.of(context).iconTheme.color,
+                        return MouseRegion(
+                          onEnter: (_) => setState(() {
+                            _menuHoverStates['theme'] = true;
+                          }),
+                          onExit: (_) => setState(() {
+                            _menuHoverStates['theme'] = false;
+                          }),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              onTap: () {
+                                themeProvider.toggleTheme();
+                              },
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              child: Padding(
+                                padding: EdgeInsets.zero,
+                                child: AnimatedScale(
+                                  scale: (_menuHoverStates['theme'] ?? false) ? _hoverScale : _normalScale,
+                                  duration: _animationDuration,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 400),
+                                    transitionBuilder: (child, animation) {
+                                      return ScaleTransition(
+                                        scale: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    child: Icon(
+                                      themeProvider.isDarkMode
+                                          ? AppIcons.sun
+                                          : AppIcons.moon,
+                                      key: ValueKey<bool>(
+                                          themeProvider.isDarkMode),
+                                      color: Theme.of(context).iconTheme.color,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          onPressed: () {
-                            themeProvider.toggleTheme();
-                          },
-                          tooltip: themeProvider.isDarkMode ? '切换到浅色主题' : '切换到深色主题',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
                           ),
                         );
                       },
                     ),
                     // 音质设置按钮
-                    IconButton(
-                      icon: Icon(
-                        AppIcons.qualityHigh,
-                        color: Theme.of(context).iconTheme.color,
-                      ),
-                      onPressed: () {
-                        // TODO: 实现音质设置功能
-                      },
-                      tooltip: '音质设置',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+                    MouseRegion(
+                      onEnter: (_) => setState(() {
+                        _menuHoverStates['quality'] = true;
+                      }),
+                      onExit: (_) => setState(() {
+                        _menuHoverStates['quality'] = false;
+                      }),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          onTap: () {
+                            // TODO: 实现音质设置功能
+                          },
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          hoverColor: Colors.transparent,
+                          child: Padding(
+                            padding: EdgeInsets.zero,
+                            child: AnimatedScale(
+                              scale: (_menuHoverStates['quality'] ?? false) ? _hoverScale : _normalScale,
+                              duration: _animationDuration,
+                              child: Icon(
+                                AppIcons.qualityHigh,
+                                color: Theme.of(context).iconTheme.color,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -252,7 +295,6 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         widget.onPageChanged(AppPage.artists);
                       },
                     ),
-
                     _buildMenuItem(
                       context: context,
                       icon: AppIcons.playlist,
@@ -281,7 +323,6 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         widget.onPageChanged(AppPage.scanner);
                       },
                     ),
-
                     _buildMenuItem(
                       context: context,
                       icon: AppIcons.chart,
@@ -337,63 +378,90 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
     VoidCallback? onTap,
     bool isSelected = false,
   }) {
+    // 初始化悬停状态
+    _menuHoverStates.putIfAbsent(title, () => false);
+    
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isExpanded ? 8 : 4, vertical: 4),
+      padding:
+          EdgeInsets.symmetric(horizontal: isExpanded ? 8 : 4, vertical: 4),
       child: Material(
         color: isSelected
             ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
             : Colors.transparent,
         child: Consumer<SettingsProvider>(
           builder: (context, settings, child) {
-            return InkWell(
-              onTap: onTap ?? () {},
-              borderRadius: BorderRadius.circular(settings.borderRadius),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: isExpanded ? 12 : 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).brightness == Brightness.dark
-                          ? iconColor.withOpacity(0.8)
-                          : iconColor,
-                  size: 24,
-                ),
-                if (isExpanded) ...[
-                  SizedBox(width: isExpanded ? 16 : 0),
-                  Flexible(
-                    child: ClipRect(
-                      child: AnimatedSize(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOutCubic,
-                        child: AnimatedOpacity(
-                          opacity: isExpanded ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOutCubic,
-                          child: Text(
-                            title,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            style: TextStyle(
+            return MouseRegion(
+              onEnter: (_) => setState(() => _menuHoverStates[title] = true),
+              onExit: (_) => setState(() => _menuHoverStates[title] = false),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(settings.borderRadius),
+                  child: InkWell(
+                    onTap: onTap ?? () {},
+                    borderRadius: BorderRadius.circular(settings.borderRadius),
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 12, horizontal: isExpanded ? 12 : 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedScale(
+                            scale: _menuHoverStates[title]! ? _hoverScale : _normalScale,
+                            duration: _animationDuration,
+                            child: Icon(
+                              icon,
                               color: isSelected
                                   ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).textTheme.bodyMedium?.color,
-                              fontSize: 15,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  : Theme.of(context).brightness == Brightness.dark
+                                      ? iconColor.withOpacity(0.8)
+                                      : iconColor,
+                              size: 24,
                             ),
                           ),
-                        ),
+                          if (isExpanded) ...[
+                            SizedBox(width: isExpanded ? 16 : 0),
+                            Flexible(
+                              child: ClipRect(
+                                child: AnimatedSize(
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeInOutCubic,
+                                  child: AnimatedOpacity(
+                                    opacity: isExpanded ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 400),
+                                    curve: Curves.easeInOutCubic,
+                                    child: Text(
+                                      title,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                            : Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.color,
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
-            );
+                ),
+              );
           },
         ),
       ),

@@ -139,26 +139,28 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
       onExit: (_) => setState(() => _isHoveringPin = false),
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
-          return AnimatedContainer(
-            duration: _animationDuration,
-            decoration: BoxDecoration(
-              color: _isHoveringPin ? hoverBackgroundColor : Colors.transparent,
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: widget.onAlwaysOnTop,
               borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringPin ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    widget.isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
+                    size: _iconSize,
+                    color: widget.isAlwaysOnTop ? Colors.blue : null,
+                  ),
+                ),
+              ),
             ),
-        child: IconButton(
-          icon: AnimatedScale(
-            scale: _isHoveringPin ? _hoverScale : _normalScale,
-            duration: _animationDuration,
-            child: Icon(
-              widget.isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
-              size: _iconSize,
-              color: widget.isAlwaysOnTop ? Colors.blue : null,
-            ),
-          ),
-            onPressed: widget.onAlwaysOnTop,
-            padding: EdgeInsets.zero,
-            constraints: _iconButtonConstraints,
-          ),
           );
         },
       ),
@@ -171,22 +173,28 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
       onExit: (_) => setState(() => _isHoveringMinimize = false),
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
-          return AnimatedContainer(
-            duration: _animationDuration,
-            decoration: BoxDecoration(
-              color: _isHoveringMinimize ? hoverBackgroundColor : Colors.transparent,
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: widget.onMinimize,
               borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringMinimize ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.minus,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
             ),
-        child: IconButton(
-          icon: Icon(
-            CupertinoIcons.minus,
-            size: _iconSize,
-            color: iconColor,
-          ),
-            onPressed: widget.onMinimize,
-            padding: EdgeInsets.zero,
-            constraints: _iconButtonConstraints,
-          ),
           );
         },
       ),
@@ -194,28 +202,70 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
   }
 
   Widget _buildMaximizeButton(Color? iconColor) {
-    return IconButton(
-      icon: Icon(
-        CupertinoIcons.fullscreen,
-        size: _iconSize,
-        color: iconColor,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringMaximize = true),
+      onExit: (_) => setState(() => _isHoveringMaximize = false),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: widget.onMaximize,
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringMaximize ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.fullscreen,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
-      onPressed: widget.onMaximize,
-      padding: EdgeInsets.zero,
-      constraints: _iconButtonConstraints,
     );
   }
 
   Widget _buildCloseButton(Color? iconColor) {
-    return IconButton(
-      icon: Icon(
-        CupertinoIcons.xmark,
-        size: _iconSize,
-        color: iconColor,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringClose = true),
+      onExit: (_) => setState(() => _isHoveringClose = false),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: widget.onClose,
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringClose ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
-      onPressed: widget.onClose,
-      padding: EdgeInsets.zero,
-      constraints: _iconButtonConstraints,
     );
   }
 }

@@ -32,6 +32,8 @@ class _UISettingsPageState extends State<UISettingsPage> {
                   _buildSectionHeader('界面设置'),
                   const SizedBox(height: 16),
                   _buildUISettings(context),
+                  // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
+                  const SizedBox(height: 90),
                 ],
               ),
             ),
@@ -129,6 +131,40 @@ class _UISettingsPageState extends State<UISettingsPage> {
                   icon: CupertinoIcons.music_albums,
                   value: settings.showAlbumArt,
                   onChanged: (value) => settings.setShowAlbumArt(value),
+                ),
+                const Divider(height: 32),
+
+                // 侧边栏玻璃材质开关
+                _buildSwitchTile(
+                  title: '侧边栏玻璃材质',
+                  subtitle: '为侧边栏应用玻璃材质效果',
+                  icon: CupertinoIcons.sidebar_left,
+                  value: settings.useSidebarGlass,
+                  onChanged: (value) => settings.setUseSidebarGlass(value),
+                ),
+                const Divider(height: 32),
+
+                // 播放栏玻璃材质开关
+                _buildSwitchTile(
+                  title: '播放栏玻璃材质',
+                  subtitle: '为底部播放栏应用玻璃材质效果',
+                  icon: CupertinoIcons.music_note_2,
+                  value: settings.usePlayerGlass,
+                  onChanged: (value) => settings.setUsePlayerGlass(value),
+                ),
+                const Divider(height: 32),
+
+                // 玻璃透明度滑块
+                _buildSliderTile(
+                  title: '玻璃透明度',
+                  subtitle: '调整玻璃材质的透明度',
+                  icon: CupertinoIcons.eye,
+                  value: settings.glassOpacity,
+                  min: 0.0,
+                  max: 0.8,
+                  divisions: 80,
+                  label: '${(settings.glassOpacity * 100).toInt()}%',
+                  onChanged: (value) => settings.setGlassOpacity(value),
                 ),
                 const Divider(height: 32),
 

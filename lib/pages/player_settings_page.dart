@@ -32,6 +32,8 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   _buildSectionHeader('播放器设置'),
                   const SizedBox(height: 16),
                   _buildPlayerSettings(context),
+                  // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
+                  const SizedBox(height: 90),
                 ],
               ),
             ),

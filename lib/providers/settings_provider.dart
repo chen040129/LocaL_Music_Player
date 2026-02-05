@@ -21,6 +21,9 @@ class SettingsProvider with ChangeNotifier {
   // 用户界面设置
   bool _useBlurBackground = true;      // 是否使用模糊背景
   bool _showAlbumArt = true;           // 是否显示专辑封面
+  bool _useSidebarGlass = true;         // 是否使用侧边栏玻璃材质
+  bool _usePlayerGlass = true;         // 是否使用播放栏玻璃材质
+  double _glassOpacity = 0.2;         // 玻璃材质透明度
   double _borderRadius = 8.0;          // 主页面边框弧度值
   double _windowBorderRadius = 12.0;   // 窗口边框弧度值
   double _windowOpacity = 0.85;        // 窗口背景透明度
@@ -55,6 +58,9 @@ class SettingsProvider with ChangeNotifier {
   // 用户界面设置 getters
   bool get useBlurBackground => _useBlurBackground;
   bool get showAlbumArt => _showAlbumArt;
+  bool get useSidebarGlass => _useSidebarGlass;
+  bool get usePlayerGlass => _usePlayerGlass;
+  double get glassOpacity => _glassOpacity;
   double get borderRadius => _borderRadius;
   double get windowBorderRadius => _windowBorderRadius;
   double get windowOpacity => _windowOpacity;
@@ -79,6 +85,9 @@ class SettingsProvider with ChangeNotifier {
     // 加载用户界面设置
     _useBlurBackground = prefs.getBool('use_blur_background') ?? true;
     _showAlbumArt = prefs.getBool('show_album_art') ?? true;
+    _useSidebarGlass = prefs.getBool('use_sidebar_glass') ?? true;
+    _usePlayerGlass = prefs.getBool('use_player_glass') ?? true;
+    _glassOpacity = prefs.getDouble('glass_opacity') ?? 0.2;
     _borderRadius = prefs.getDouble('border_radius') ?? 8.0;
     _windowBorderRadius = prefs.getDouble('window_border_radius') ?? 12.0;
     _windowOpacity = prefs.getDouble('window_opacity') ?? 0.85;
@@ -129,6 +138,24 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setShowAlbumArt(bool value) async {
     _showAlbumArt = value;
     await _saveSetting('show_album_art', value);
+    notifyListeners();
+  }
+
+  Future<void> setUseSidebarGlass(bool value) async {
+    _useSidebarGlass = value;
+    await _saveSetting('use_sidebar_glass', value);
+    notifyListeners();
+  }
+
+  Future<void> setUsePlayerGlass(bool value) async {
+    _usePlayerGlass = value;
+    await _saveSetting('use_player_glass', value);
+    notifyListeners();
+  }
+
+  Future<void> setGlassOpacity(double value) async {
+    _glassOpacity = value.clamp(0.0, 0.8);
+    await _saveSetting('glass_opacity', _glassOpacity);
     notifyListeners();
   }
 
@@ -245,6 +272,9 @@ class SettingsProvider with ChangeNotifier {
     // 重置用户界面设置
     await prefs.remove('use_blur_background');
     await prefs.remove('show_album_art');
+    await prefs.remove('use_sidebar_glass');
+    await prefs.remove('use_player_glass');
+    await prefs.remove('glass_opacity');
     await prefs.remove('border_radius');
     await prefs.remove('window_border_radius');
     await prefs.remove('window_opacity');

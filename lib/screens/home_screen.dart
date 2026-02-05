@@ -271,14 +271,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     // 右侧内容区域
                     Expanded(
-                      child: Column(
+                      child: Stack(
                         children: [
-                          // 根据当前页面显示不同的内容
-                          Expanded(
-                            child: _buildCurrentPage(),
+                          // 主内容区域
+                          Column(
+                            children: [
+                              // 根据当前页面显示不同的内容
+                              Expanded(
+                                child: _buildCurrentPage(),
+                              ),
+                            ],
                           ),
-                          // 底部播放控制栏
-                          const PlayerControlBar(),
+                          // 底部播放控制栏 - 使用Positioned定位在底部
+                          Positioned(
+                            left: 16,
+                            right: 16,
+                            bottom: 16,
+                            child: const PlayerControlBar(),
+                          ),
                         ],
                       ),
                     ),
