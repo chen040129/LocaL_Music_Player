@@ -118,6 +118,14 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   int _currentPage = 0; // 0: 歌曲信息, 1: 播放列表
   bool _showVolumeControl = false;
 
+  // 按钮悬停状态
+  bool _isPlaylistHovered = false;
+  bool _isTimerHovered = false;
+  bool _isPlayModeHovered = false;
+  bool _isHoveringPrevious = false;
+  bool _isHoveringPlayPause = false;
+  bool _isHoveringNext = false;
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late AnimationController _pageSwitchController;
@@ -646,47 +654,77 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                           mainAxisSize: MainAxisSize.min,
                                                           children: [
                                                             // 上一曲
-                                                            InkWell(
-                                                              onTap: () => playerProvider.playPrevious(),
-                                                              splashColor: Colors.transparent,
-                                                              highlightColor: Colors.transparent,
-                                                              hoverColor: Colors.transparent,
-                                                              child: Icon(
-                                                                  CupertinoIcons.backward_end_fill,
-                                                                  color: colorScheme.onSurface.withOpacity(0.8),
-                                                                  size: 32,
+                                                            MouseRegion(
+                                                              onEnter: (_) => setState(() => _isHoveringPrevious = true),
+                                                              onExit: (_) => setState(() => _isHoveringPrevious = false),
+                                                              child: InkWell(
+                                                                onTap: () => playerProvider.playPrevious(),
+                                                                splashColor: Colors.transparent,
+                                                                highlightColor: Colors.transparent,
+                                                                hoverColor: Colors.transparent,
+                                                                child: AnimatedScale(
+                                                                  scale: _isHoveringPrevious ? _hoverScale : _normalScale,
+                                                                  duration: _animationDuration,
+                                                                  child: Icon(
+                                                                      CupertinoIcons.backward_end_fill,
+                                                                      color: _isHoveringPrevious
+                                                                          ? colorScheme.primary
+                                                                          : colorScheme.onSurface.withOpacity(0.8),
+                                                                      size: 32,
+                                                                  ),
+                                                                ),
                                                               ),
                                                             ),
                                                             const SizedBox(
                                                                 width: 20),
                                                             // 播放/暂停
-                                                            InkWell(
-                                                              onTap: () {
-                                                                  playerProvider.togglePlayPause();
-                                                                },
-                                                              splashColor: Colors.transparent,
-                                                              highlightColor: Colors.transparent,
-                                                              hoverColor: Colors.transparent,
-                                                              child: Icon(
-                                                                isPlaying
-                                                                    ? CupertinoIcons.pause_fill
-                                                                    : CupertinoIcons.play_fill,
-                                                                color: colorScheme.onSurface.withOpacity(0.8),
-                                                                size: 44,
+                                                            MouseRegion(
+                                                              onEnter: (_) => setState(() => _isHoveringPlayPause = true),
+                                                              onExit: (_) => setState(() => _isHoveringPlayPause = false),
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                    playerProvider.togglePlayPause();
+                                                                  },
+                                                                splashColor: Colors.transparent,
+                                                                highlightColor: Colors.transparent,
+                                                                hoverColor: Colors.transparent,
+                                                                child: AnimatedScale(
+                                                                  scale: _isHoveringPlayPause ? _hoverScale : _normalScale,
+                                                                  duration: _animationDuration,
+                                                                  child: Icon(
+                                                                    isPlaying
+                                                                        ? CupertinoIcons.pause_fill
+                                                                        : CupertinoIcons.play_fill,
+                                                                    color: _isHoveringPlayPause
+                                                                        ? colorScheme.primary
+                                                                        : colorScheme.onSurface.withOpacity(0.8),
+                                                                    size: 44,
+                                                                  ),
+                                                                ),
                                                               ),
                                                             ),
                                                             const SizedBox(
                                                                 width: 20),
                                                             // 下一曲
-                                                            InkWell(
-                                                              onTap: () => playerProvider.playNext(),
-                                                              splashColor: Colors.transparent,
-                                                              highlightColor: Colors.transparent,
-                                                              hoverColor: Colors.transparent,
-                                                              child: Icon(
-                                                                  CupertinoIcons.forward_end_fill,
-                                                                  color: colorScheme.onSurface.withOpacity(0.8),
-                                                                  size: 32,
+                                                            MouseRegion(
+                                                              onEnter: (_) => setState(() => _isHoveringNext = true),
+                                                              onExit: (_) => setState(() => _isHoveringNext = false),
+                                                              child: InkWell(
+                                                                onTap: () => playerProvider.playNext(),
+                                                                splashColor: Colors.transparent,
+                                                                highlightColor: Colors.transparent,
+                                                                hoverColor: Colors.transparent,
+                                                                child: AnimatedScale(
+                                                                  scale: _isHoveringNext ? _hoverScale : _normalScale,
+                                                                  duration: _animationDuration,
+                                                                  child: Icon(
+                                                                      CupertinoIcons.forward_end_fill,
+                                                                      color: _isHoveringNext
+                                                                          ? colorScheme.primary
+                                                                          : colorScheme.onSurface.withOpacity(0.8),
+                                                                      size: 32,
+                                                                  ),
+                                                                ),
                                                               ),
                                                             ),
                                                           ],
@@ -738,22 +776,27 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           return KeyEventResult.ignored;
                                                                         },
                                                                         child: IconButton(
-                                                                          icon: Icon(
-                                                                            _volume > 0
-                                                                                ? CupertinoIcons.speaker_2_fill
-                                                                                : CupertinoIcons.speaker_slash,
+                                                                          splashColor: Colors.transparent,
+                                                                          highlightColor: Colors.transparent,
+                                                                          hoverColor: Colors.transparent,
+                                                                          icon: AnimatedScale(
+                                                                            scale: _showVolumeControl ? _hoverScale : _normalScale,
+                                                                            duration: _animationDuration,
+                                                                            child: Icon(
+                                                                              _volume > 0
+                                                                                  ? CupertinoIcons.speaker_2_fill
+                                                                                  : CupertinoIcons.speaker_slash,
+                                                                              color: _showVolumeControl
+                                                                                  ? colorScheme.primary
+                                                                                  : colorScheme.onSurface.withOpacity(0.7),
+                                                                            ),
                                                                           ),
-                                                                          color: colorScheme
-                                                                              .onSurface
-                                                                              .withOpacity(
-                                                                                  0.7),
                                                                           onPressed: () {
                                                                             setState(() {
                                                                               _volume = _volume > 0 ? 0.0 : 0.7;
                                                                             });
                                                                             playerProvider.setVolume(_volume);
                                                                           },
-                                                                          tooltip: '音量',
                                                                           padding: EdgeInsets.zero,
                                                                           constraints: const BoxConstraints(),
                                                                         ),
@@ -807,68 +850,103 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                               // 播放列表、定时播放、循环模式（仅在音量控制条未展开时显示）
                                                               if (!_showVolumeControl) ...[
                                                                 // 播放列表
-                                                                IconButton(
-                                                                  icon: const Icon(
-                                                                      CupertinoIcons
-                                                                          .list_bullet),
-                                                                  color: colorScheme
-                                                                      .onSurface
-                                                                      .withOpacity(
-                                                                          0.7),
-                                                                  onPressed: () {
-                                                                    _pageSwitchController
-                                                                        .forward(from: 0)
-                                                                        .then((_) {
-                                                                      setState(() {
-                                                                        _currentPage = 1;
-                                                                      });
+                                                                MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (_) => setState(() => _isPlaylistHovered = true),
+                                                                  onExit: (_) => setState(() => _isPlaylistHovered = false),
+                                                                  child: GestureDetector(
+                                                                    onTap: () {
                                                                       _pageSwitchController
-                                                                          .reset();
-                                                                    });
-                                                                  },
-                                                                  tooltip: '播放列表',
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .zero,
-                                                                  constraints:
-                                                                      const BoxConstraints(),
+                                                                          .forward(from: 0)
+                                                                          .then((_) {
+                                                                        setState(() {
+                                                                          _currentPage = 1;
+                                                                        });
+                                                                        _pageSwitchController
+                                                                            .reset();
+                                                                      });
+                                                                    },
+                                                                    child: AnimatedContainer(
+                                                                      duration: const Duration(milliseconds: 200),
+                                                                      padding: const EdgeInsets.all(8),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.transparent,
+                                                                        borderRadius: BorderRadius.circular(8),
+                                                                      ),
+                                                                      child: AnimatedScale(
+                                                                        scale: _isPlaylistHovered ? _hoverScale : _normalScale,
+                                                                        duration: _animationDuration,
+                                                                        child: Icon(
+                                                                            CupertinoIcons.list_bullet,
+                                                                            color: _isPlaylistHovered
+                                                                                ? colorScheme.primary
+                                                                                : colorScheme.onSurface.withOpacity(0.7),
+                                                                            size: 20,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                                 // 定时播放
                                                                 playerProvider.timerMinutes != null
                                                                     ? _buildTimerWidget(context, colorScheme)
-                                                                    : IconButton(
-                                                                        icon: const Icon(
-                                                                          CupertinoIcons.clock,
-                                                                          size: 24,
+                                                                    : MouseRegion(
+                                                                        cursor: SystemMouseCursors.click,
+                                                                        onEnter: (_) => setState(() => _isTimerHovered = true),
+                                                                        onExit: (_) => setState(() => _isTimerHovered = false),
+                                                                        child: GestureDetector(
+                                                                          onTap: () {
+                                                                            _showTimerDialog(context);
+                                                                          },
+                                                                          child: AnimatedContainer(
+                                                                            duration: const Duration(milliseconds: 200),
+                                                                            padding: const EdgeInsets.all(8),
+                                                                            decoration: BoxDecoration(
+                                                                              color: Colors.transparent,
+                                                                              borderRadius: BorderRadius.circular(8),
+                                                                            ),
+                                                                            child: AnimatedScale(
+                                                                              scale: _isTimerHovered ? _hoverScale : _normalScale,
+                                                                              duration: _animationDuration,
+                                                                              child: Icon(
+                                                                                CupertinoIcons.clock,
+                                                                                color: _isTimerHovered
+                                                                                    ? colorScheme.primary
+                                                                                    : colorScheme.onSurface.withOpacity(0.7),
+                                                                                size: 20,
+                                                                              ),
+                                                                            ),
+                                                                          ),
                                                                         ),
-                                                                        color: colorScheme.onSurface.withOpacity(0.7),
-                                                                        onPressed: () {
-                                                                          _showTimerDialog(context);
-                                                                        },
-                                                                        tooltip: '定时播放',
-                                                                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                                        constraints: const BoxConstraints(),
                                                                       ),
                                                                 // 循环模式
-                                                                IconButton(
-                                                                  icon: Icon(
-                                                                      _getPlayModeIcon(
-                                                                          playMode)),
-                                                                  color: colorScheme
-                                                                      .onSurface
-                                                                      .withOpacity(
-                                                                          0.7),
-                                                                  onPressed: () =>
-                                                                      playerProvider
-                                                                          .togglePlayMode(),
-                                                                  tooltip:
-                                                                      _getPlayModeName(
-                                                                          playMode),
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .zero,
-                                                                  constraints:
-                                                                      const BoxConstraints(),
+                                                                MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (_) => setState(() => _isPlayModeHovered = true),
+                                                                  onExit: (_) => setState(() => _isPlayModeHovered = false),
+                                                                  child: GestureDetector(
+                                                                    onTap: () =>
+                                                                        playerProvider.togglePlayMode(),
+                                                                    child: AnimatedContainer(
+                                                                      duration: const Duration(milliseconds: 200),
+                                                                      padding: const EdgeInsets.all(8),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.transparent,
+                                                                        borderRadius: BorderRadius.circular(8),
+                                                                      ),
+                                                                      child: AnimatedScale(
+                                                                        scale: _isPlayModeHovered ? _hoverScale : _normalScale,
+                                                                        duration: _animationDuration,
+                                                                        child: Icon(
+                                                                            _getPlayModeIcon(playMode),
+                                                                            color: _isPlayModeHovered
+                                                                                ? colorScheme.primary
+                                                                                : colorScheme.onSurface.withOpacity(0.7),
+                                                                            size: 20,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ],
@@ -1004,38 +1082,34 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   Widget _buildPinButton() {
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color;
-    final hoverBackgroundColor =
-        theme.colorScheme.surfaceContainerHighest.withOpacity(0.5);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringPin = true),
       onExit: (_) => setState(() => _isHoveringPin = false),
-      child: AnimatedContainer(
-        duration: _animationDuration,
-        decoration: BoxDecoration(
-          color: _isHoveringPin ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
-        child: IconButton(
-          icon: AnimatedScale(
-            scale: _isHoveringPin ? _hoverScale : _normalScale,
-            duration: _animationDuration,
-            child: Icon(
-              _isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
-              size: _iconSize,
-              color: _isAlwaysOnTop ? Colors.blue : iconColor,
-            ),
+      child: IconButton(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        icon: AnimatedScale(
+          scale: _isHoveringPin ? _hoverScale : _normalScale,
+          duration: _animationDuration,
+          child: Icon(
+            _isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
+            size: _iconSize,
+            color: _isHoveringPin
+                ? theme.colorScheme.primary
+                : (_isAlwaysOnTop ? Colors.blue : iconColor),
           ),
-          onPressed: () async {
-            final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
-            await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
-            setState(() {
-              _isAlwaysOnTop = !isAlwaysOnTop;
-            });
-          },
-          padding: EdgeInsets.zero,
-          constraints: _iconButtonConstraints,
         ),
+        onPressed: () async {
+          final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+          await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
+          setState(() {
+            _isAlwaysOnTop = !isAlwaysOnTop;
+          });
+        },
+        padding: EdgeInsets.zero,
+        constraints: _iconButtonConstraints,
       ),
     );
   }
@@ -1043,29 +1117,28 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   Widget _buildMinimizeButton() {
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color;
-    final hoverBackgroundColor =
-        theme.colorScheme.surfaceContainerHighest.withOpacity(0.5);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringMinimize = true),
       onExit: (_) => setState(() => _isHoveringMinimize = false),
-      child: AnimatedContainer(
-        duration: _animationDuration,
-        decoration: BoxDecoration(
-          color:
-              _isHoveringMinimize ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
-        child: IconButton(
-          icon: Icon(
+      child: IconButton(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        icon: AnimatedScale(
+          scale: _isHoveringMinimize ? _hoverScale : _normalScale,
+          duration: _animationDuration,
+          child: Icon(
             CupertinoIcons.minus,
             size: _iconSize,
-            color: iconColor,
+            color: _isHoveringMinimize
+                ? theme.colorScheme.primary
+                : iconColor,
           ),
-          onPressed: () => windowManager.minimize(),
-          padding: EdgeInsets.zero,
-          constraints: _iconButtonConstraints,
         ),
+        onPressed: () => windowManager.minimize(),
+        padding: EdgeInsets.zero,
+        constraints: _iconButtonConstraints,
       ),
     );
   }
@@ -1074,15 +1147,28 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color;
 
-    return IconButton(
-      icon: Icon(
-        CupertinoIcons.fullscreen,
-        size: _iconSize,
-        color: iconColor,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringMaximize = true),
+      onExit: (_) => setState(() => _isHoveringMaximize = false),
+      child: IconButton(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        icon: AnimatedScale(
+          scale: _isHoveringMaximize ? _hoverScale : _normalScale,
+          duration: _animationDuration,
+          child: Icon(
+            CupertinoIcons.fullscreen,
+            size: _iconSize,
+            color: _isHoveringMaximize
+                ? theme.colorScheme.primary
+                : iconColor,
+          ),
+        ),
+        onPressed: () => windowManager.maximize(),
+        padding: EdgeInsets.zero,
+        constraints: _iconButtonConstraints,
       ),
-      onPressed: () => windowManager.maximize(),
-      padding: EdgeInsets.zero,
-      constraints: _iconButtonConstraints,
     );
   }
 
@@ -1090,18 +1176,31 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color;
 
-    return IconButton(
-      icon: Icon(
-        CupertinoIcons.xmark,
-        size: _iconSize,
-        color: iconColor,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringClose = true),
+      onExit: (_) => setState(() => _isHoveringClose = false),
+      child: IconButton(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        icon: AnimatedScale(
+          scale: _isHoveringClose ? _hoverScale : _normalScale,
+          duration: _animationDuration,
+          child: Icon(
+            CupertinoIcons.xmark,
+            size: _iconSize,
+            color: _isHoveringClose
+                ? theme.colorScheme.primary
+                : iconColor,
+          ),
+        ),
+        onPressed: () async {
+          // 触发窗口关闭事件，让main.dart中的onWindowClose处理
+          await windowManager.close();
+        },
+        padding: EdgeInsets.zero,
+        constraints: _iconButtonConstraints,
       ),
-      onPressed: () async {
-        // 触发窗口关闭事件，让main.dart中的onWindowClose处理
-        await windowManager.close();
-      },
-      padding: EdgeInsets.zero,
-      constraints: _iconButtonConstraints,
     );
   }
 
@@ -1656,15 +1755,23 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                 ),
                                 const SizedBox(width: 16),
                                 // 播放顺序按钮
-                                InkWell(
-                                  onTap: () => playerProvider.togglePlayMode(),
-                                  splashColor: Colors.transparent,
-                                  highlightColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  child: Icon(
-                                    _getPlayModeIcon(playerProvider.playMode),
-                                    color: colorScheme.onSurface.withOpacity(0.7),
-                                    size: 20,
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () => playerProvider.togglePlayMode(),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        _getPlayModeIcon(playerProvider.playMode),
+                                        color: colorScheme.onSurface.withOpacity(0.7),
+                                        size: 20,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],

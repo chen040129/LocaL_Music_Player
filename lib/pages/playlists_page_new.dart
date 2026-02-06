@@ -110,6 +110,10 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   int _hoveredIndex = -1;
   int _touchedIndex = -1;
 
+  // 按钮悬停状态
+  bool _isBackHovered = false;
+  bool _isAddHovered = false;
+
   @override
   void initState() {
     super.initState();
@@ -146,17 +150,34 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
             child: Row(
               children: [
                 if (_selectedPlaylist != null)
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.back,
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    onEnter: (_) => setState(() => _isBackHovered = true),
+                    onExit: (_) => setState(() => _isBackHovered = false),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedPlaylist = null;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: AnimatedScale(
+                          scale: _isBackHovered ? 1.2 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            CupertinoIcons.back,
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _selectedPlaylist = null;
-                      });
-                    },
-                    tooltip: '返回',
                   ),
                 Icon(AppIcons.playlist, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
                 const SizedBox(width: 8),
@@ -228,26 +249,60 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     ),
                   ),
                 if (_selectedPlaylist == null)
-                  IconButton(
-                    icon: Icon(
-                      AppIcons.add,
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    onEnter: (_) => setState(() => _isAddHovered = true),
+                    onExit: (_) => setState(() => _isAddHovered = false),
+                    child: GestureDetector(
+                      onTap: () {
+                        _createPlaylist();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: AnimatedScale(
+                          scale: _isAddHovered ? 1.2 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            AppIcons.add,
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      _createPlaylist();
-                    },
-                    tooltip: '创建歌单',
                   ),
                 if (_selectedPlaylist != null)
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.add,
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    onEnter: (_) => setState(() => _isAddHovered = true),
+                    onExit: (_) => setState(() => _isAddHovered = false),
+                    child: GestureDetector(
+                      onTap: () {
+                        _showAddMusicDialog();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: AnimatedScale(
+                          scale: _isAddHovered ? 1.2 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            CupertinoIcons.add,
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      _showAddMusicDialog();
-                    },
-                    tooltip: '添加音乐',
                   ),
               ],
             ),

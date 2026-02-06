@@ -30,6 +30,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
   bool _isAscending = true;
   // 标题悬停状态
   bool _isTitleHovered = false;
+  // 按钮悬停状态
+  bool _isSortHovered = false;
   
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
@@ -44,6 +46,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
   // 悬停和点击状态
   int _hoveredIndex = -1;
   int _touchedIndex = -1;
+  int _detailHoveredIndex = -1;
   
   // 搜索状态
   final TextEditingController _searchController = TextEditingController();
@@ -674,52 +677,83 @@ class _AlbumsPageState extends State<AlbumsPage> {
                 ),
                 const SizedBox(width: 8),
                 // 排序按钮
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    AppIcons.sort,
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) => setState(() => _isSortHovered = true),
+                  onExit: (_) => setState(() => _isSortHovered = false),
+                  child: GestureDetector(
+                    onTapDown: (details) {
+                      final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+                      final Offset position = overlay.globalToLocal(details.globalPosition);
+                      showMenu<String>(
+                        context: context,
+                        position: RelativeRect.fromLTRB(
+                          position.dx,
+                          position.dy,
+                          position.dx,
+                          position.dy,
+                        ),
+                        items: [
+                          const PopupMenuItem<String>(
+                            value: 'name',
+                            child: Text('按名称排序'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'count',
+                            child: Text('按歌曲数量排序'),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            value: 'asc',
+                            child: Row(
+                              children: [
+                                Icon(AppIcons.arrowUpward, size: 16),
+                                const SizedBox(width: 8),
+                                const Text('升序'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'desc',
+                            child: Row(
+                              children: [
+                                Icon(AppIcons.arrowDownward, size: 16),
+                                const SizedBox(width: 8),
+                                const Text('降序'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            if (value == 'asc' || value == 'desc') {
+                              _isAscending = value == 'asc';
+                            } else {
+                              _sortBy = value;
+                            }
+                          });
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: AnimatedScale(
+                        scale: _isSortHovered ? 1.2 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          AppIcons.sort,
+                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   ),
-                  tooltip: '排序方式',
-                  onSelected: (String value) {
-                    setState(() {
-                      if (value == 'asc' || value == 'desc') {
-                        _isAscending = value == 'asc';
-                      } else {
-                        _sortBy = value;
-                      }
-                    });
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'name',
-                      child: Text('按名称排序'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'count',
-                      child: Text('按歌曲数量排序'),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<String>(
-                      value: 'asc',
-                      child: Row(
-                        children: [
-                          Icon(AppIcons.arrowUpward, size: 16),
-                          const SizedBox(width: 8),
-                          const Text('升序'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'desc',
-                      child: Row(
-                        children: [
-                          Icon(AppIcons.arrowDownward, size: 16),
-                          const SizedBox(width: 8),
-                          const Text('降序'),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -938,16 +972,34 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                                   ),
                                                 ),
                                                 const SizedBox(width: 8),
-                                                IconButton(
-                                                  icon: Icon(
-                                                    CupertinoIcons.ellipsis,
-                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                                    size: 20,
+                                                MouseRegion(
+                                                  cursor: SystemMouseCursors.click,
+                                                  onEnter: (_) => setState(() => _detailHoveredIndex = index),
+                                                  onExit: (_) => setState(() => _detailHoveredIndex = -1),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      _showMusicDetailDialog(music);
+                                                    },
+                                                    child: AnimatedContainer(
+                                                      duration: const Duration(milliseconds: 200),
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.transparent,
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      child: AnimatedScale(
+                                                        scale: _detailHoveredIndex == index ? 1.2 : 1.0,
+                                                        duration: const Duration(milliseconds: 200),
+                                                        child: Icon(
+                                                          CupertinoIcons.ellipsis,
+                                                          color: _detailHoveredIndex == index
+                                                              ? Theme.of(context).colorScheme.primary
+                                                              : Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                          size: 20,
+                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
-                                                  onPressed: () {
-                                                    _showMusicDetailDialog(music);
-                                                  },
-                                                  tooltip: '详细信息',
                                                 ),
                                               ],
                                             ),

@@ -110,6 +110,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   PlaylistModel? _selectedPlaylist;
   // 标题悬停状态
   bool _isTitleHovered = false;
+  bool _isCreatePlaylistHovered = false;
   
   // 悬停和点击状态
   int _hoveredIndex = -1;
@@ -295,15 +296,33 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                     ),
                   ),
                 if (_selectedPlaylist == null)
-                  IconButton(
-                    icon: Icon(
-                      AppIcons.add,
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    onEnter: (_) => setState(() => _isCreatePlaylistHovered = true),
+                    onExit: (_) => setState(() => _isCreatePlaylistHovered = false),
+                    child: GestureDetector(
+                      onTap: () {
+                        _createPlaylist();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: AnimatedScale(
+                          scale: _isCreatePlaylistHovered ? 1.2 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            AppIcons.add,
+                            color: _isCreatePlaylistHovered 
+                                ? Theme.of(context).colorScheme.primary 
+                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      _createPlaylist();
-                    },
-                    tooltip: '创建歌单',
                   ),
                 if (_selectedPlaylist != null)
                   IconButton(
