@@ -111,7 +111,6 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onPanStart: _isDesktopPlatform ? (_) => windowManager.startDragging() : null,
-                  onTap: widget.onToggleSidebar,
                   child: Container(
                     color: Colors.transparent,
                   ),

@@ -144,15 +144,6 @@ class _PlayerControlBarState extends State<PlayerControlBar> with TickerProvider
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // 显示播放次数（如果设置中启用）
-                            if (settings.showPlayCount && currentMusic != null)
-                              Text(
-                                '  ${currentMusic!.playCount}次',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                              ),
                           ],
                         ),
                         const SizedBox(height: 4),

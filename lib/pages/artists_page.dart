@@ -7,6 +7,7 @@ import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/player_provider.dart';
 import '../models/playlist_model.dart';
 import '../services/music_scanner_service.dart';
 import '../providers/navigation_provider.dart';
@@ -952,6 +953,20 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                 color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                               ),
                                             ),
+                                            onTap: () {
+                                              final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                                              final musicList = musicProvider.getMusicByArtist(artist);
+                                              final index = musicList.indexWhere((m) => m.id == music.id);
+                                              if (index != -1) {
+                                                playerProvider.setPlaylist(
+                                                  musicList: musicList,
+                                                  source: PlaylistSource.artist,
+                                                  identifier: artist,
+                                                  startIndex: index,
+                                                );
+                                                playerProvider.playAtIndex(index);
+                                              }
+                                            },
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
@@ -994,9 +1009,6 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                 ),
                                               ],
                                             ),
-                                            onTap: () {
-                                              // TODO: 播放音乐
-                                            },
                                           );
                                         },
                                       )

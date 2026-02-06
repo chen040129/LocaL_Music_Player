@@ -38,6 +38,7 @@ class PlayerProvider with ChangeNotifier {
   Duration _position = Duration.zero;
   Duration _lastRecordedPosition = Duration.zero; // 上次记录的播放位置
   DateTime? _lastRecordTime; // 上次记录的时间
+  int _totalPlayDuration = 0; // 总播放时长（秒）
 
   // 播放列表
   List<MusicInfo> _playlist = [];
@@ -98,15 +99,18 @@ class PlayerProvider with ChangeNotifier {
         // 计算自上次记录以来的播放时长
         if (_isPlaying && _lastRecordTime != null) {
           final now = DateTime.now();
-          final timeDiff = now.difference(_lastRecordTime!).inSeconds;
+          final timeDiff = now.difference(_lastRecordTime!).inMilliseconds;
 
           // 计算位置差，确保是正向播放（不是拖动进度条）
-          final positionDiff = position.inSeconds - _lastRecordedPosition.inSeconds;
+          final positionDiff = position.inMilliseconds - _lastRecordedPosition.inMilliseconds;
 
           // 只记录正向播放的时间，且不超过歌曲总时长
           if (positionDiff > 0 && positionDiff <= timeDiff) {
             // 计算实际播放时长（取位置差和时间差中较小的值，避免暂停时计入时间）
-            final actualPlayedSeconds = positionDiff;
+            final actualPlayedSeconds = (positionDiff / 1000).round();
+
+            // 更新总播放时长
+            _totalPlayDuration += actualPlayedSeconds;
 
             // 更新当前歌曲的实际播放时长
             if (_currentMusic != null) {
@@ -123,8 +127,11 @@ class PlayerProvider with ChangeNotifier {
             }
           }
 
-          _lastRecordTime = now;
-          _lastRecordedPosition = position;
+          // 每秒更新一次记录时间和位置，而不是每次位置变化都更新
+          if (timeDiff >= 1000) {
+            _lastRecordTime = now;
+            _lastRecordedPosition = position;
+          }
         }
 
         _position = position;
@@ -172,6 +179,7 @@ class PlayerProvider with ChangeNotifier {
   String? get sourceIdentifier => _sourceIdentifier;
   MusicInfo? get currentMusic => _currentMusic;
   String? get currentLyrics => _currentLyrics;
+  int get totalPlayDuration => _totalPlayDuration;
   
   // 倒计时相关getter
   int? get timerMinutes => _timerMinutes;
@@ -230,6 +238,10 @@ class PlayerProvider with ChangeNotifier {
 
       debugPrint('发送播放命令...');
 
+      // 初始化记录时间和位置（在播放前设置）
+      _lastRecordTime = DateTime.now();
+      _lastRecordedPosition = Duration.zero;
+
       // 应用淡入淡出效果
       if (_settingsProvider?.enableFadeEffect ?? true) {
         final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
@@ -247,10 +259,6 @@ class PlayerProvider with ChangeNotifier {
 
       debugPrint('播放命令已发送');
       _isPlaying = true;
-
-      // 初始化记录时间和位置
-      _lastRecordTime = DateTime.now();
-      _lastRecordedPosition = Duration.zero;
 
       // 记录播放统计
       _musicProvider?.recordPlay(music);
@@ -291,6 +299,10 @@ class PlayerProvider with ChangeNotifier {
       try {
         final source = DeviceFileSource(music.filePath);
 
+        // 初始化记录时间和位置（在播放前设置）
+        _lastRecordTime = DateTime.now();
+        _lastRecordedPosition = Duration.zero;
+
         // 应用淡入淡出效果
         if (_settingsProvider?.enableFadeEffect ?? true) {
           final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
@@ -307,10 +319,6 @@ class PlayerProvider with ChangeNotifier {
         }
 
         _isPlaying = true;
-
-        // 初始化记录时间和位置
-        _lastRecordTime = DateTime.now();
-        _lastRecordedPosition = Duration.zero;
 
         // 记录播放统计
         _musicProvider?.recordPlay(music);
@@ -528,13 +536,17 @@ class PlayerProvider with ChangeNotifier {
         _currentIndex = 0;
         break;
       case PlayMode.sequence:
-        // 恢复原始顺序
+        // 顺序播放模式：将当前歌曲放在第一位，形成一个环
         if (_originalPlaylist.isNotEmpty && currentMusic != null) {
           // 找到当前播放的音乐在原始列表中的位置
           final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
           if (currentMusicIndex != -1) {
             _playlist = List.from(_originalPlaylist);
-            _currentIndex = currentMusicIndex;
+            // 将当前歌曲及其之后的歌曲移到前面
+            final beforeCurrent = _playlist.sublist(0, currentMusicIndex);
+            final fromCurrent = _playlist.sublist(currentMusicIndex);
+            _playlist = [...fromCurrent, ...beforeCurrent];
+            _currentIndex = 0;
           }
         }
         break;
@@ -643,6 +655,12 @@ class PlayerProvider with ChangeNotifier {
       case PlayMode.listLoop:
         return '列表循环';
     }
+  }
+
+  /// 重置总播放时长
+  void resetTotalPlayDuration() {
+    _totalPlayDuration = 0;
+    notifyListeners();
   }
 
   /// 加载歌词
