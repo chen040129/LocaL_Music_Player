@@ -219,9 +219,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         final colorScheme = theme.colorScheme;
 
         return Scaffold(
-          body: Stack(
-            children: [
-              // 背景模糊效果
+          body: Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return Padding(
+                padding: EdgeInsets.all(settings.windowBorderRadius > 0 ? settings.windowBorderRadius * 0.3 : 0),
+                child: Stack(
+                  children: [
+                    // 背景模糊效果
               if (currentMusic?.coverArt != null)
                 Consumer<SettingsProvider>(
                   builder: (context, settings, child) {
@@ -1046,7 +1050,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            ],
+                  ],
+                ),
+              );
+            },
           ),
         );
       },

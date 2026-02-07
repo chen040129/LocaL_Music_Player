@@ -134,16 +134,6 @@ class _UISettingsPageState extends State<UISettingsPage> {
                 ),
                 const Divider(height: 32),
 
-                // 侧边栏玻璃材质开关
-                _buildSwitchTile(
-                  title: '侧边栏玻璃材质',
-                  subtitle: '为侧边栏应用玻璃材质效果',
-                  icon: CupertinoIcons.sidebar_left,
-                  value: settings.useSidebarGlass,
-                  onChanged: (value) => settings.setUseSidebarGlass(value),
-                ),
-                const Divider(height: 32),
-
                 // 播放栏玻璃材质开关
                 _buildSwitchTile(
                   title: '播放栏玻璃材质',

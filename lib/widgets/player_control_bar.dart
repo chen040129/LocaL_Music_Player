@@ -58,7 +58,22 @@ class _PlayerControlBarState extends State<PlayerControlBar> with TickerProvider
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LyricsPage()),
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return Consumer<SettingsProvider>(
+                          builder: (context, settings, child) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+                              child: const LyricsPage(),
+                            );
+                          },
+                        );
+                      },
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
                   );
                 },
                 child: LiquidGlassWidget(
