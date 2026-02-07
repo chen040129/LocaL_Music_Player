@@ -1089,34 +1089,43 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   Widget _buildPinButton() {
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color;
+    final colorScheme = theme.colorScheme;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringPin = true),
       onExit: (_) => setState(() => _isHoveringPin = false),
-      child: IconButton(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        icon: AnimatedScale(
-          scale: _isHoveringPin ? _hoverScale : _normalScale,
-          duration: _animationDuration,
-          child: Icon(
-            _isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
-            size: _iconSize,
-            color: _isHoveringPin
-                ? theme.colorScheme.primary
-                : (_isAlwaysOnTop ? Colors.blue : iconColor),
-          ),
-        ),
-        onPressed: () async {
-          final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
-          await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
-          setState(() {
-            _isAlwaysOnTop = !isAlwaysOnTop;
-          });
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: () async {
+                final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+                await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
+                setState(() {
+                  _isAlwaysOnTop = !_isAlwaysOnTop;
+                });
+              },
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringPin ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    _isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
+                    size: _iconSize,
+                    color: _isAlwaysOnTop ? Colors.blue : iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
         },
-        padding: EdgeInsets.zero,
-        constraints: _iconButtonConstraints,
       ),
     );
   }
@@ -1128,24 +1137,32 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringMinimize = true),
       onExit: (_) => setState(() => _isHoveringMinimize = false),
-      child: IconButton(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        icon: AnimatedScale(
-          scale: _isHoveringMinimize ? _hoverScale : _normalScale,
-          duration: _animationDuration,
-          child: Icon(
-            CupertinoIcons.minus,
-            size: _iconSize,
-            color: _isHoveringMinimize
-                ? theme.colorScheme.primary
-                : iconColor,
-          ),
-        ),
-        onPressed: () => windowManager.minimize(),
-        padding: EdgeInsets.zero,
-        constraints: _iconButtonConstraints,
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: () => windowManager.minimize(),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringMinimize ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.minus,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1157,24 +1174,32 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringMaximize = true),
       onExit: (_) => setState(() => _isHoveringMaximize = false),
-      child: IconButton(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        icon: AnimatedScale(
-          scale: _isHoveringMaximize ? _hoverScale : _normalScale,
-          duration: _animationDuration,
-          child: Icon(
-            CupertinoIcons.fullscreen,
-            size: _iconSize,
-            color: _isHoveringMaximize
-                ? theme.colorScheme.primary
-                : iconColor,
-          ),
-        ),
-        onPressed: () => windowManager.maximize(),
-        padding: EdgeInsets.zero,
-        constraints: _iconButtonConstraints,
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: () => windowManager.maximize(),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringMaximize ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.fullscreen,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1186,27 +1211,35 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringClose = true),
       onExit: (_) => setState(() => _isHoveringClose = false),
-      child: IconButton(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        icon: AnimatedScale(
-          scale: _isHoveringClose ? _hoverScale : _normalScale,
-          duration: _animationDuration,
-          child: Icon(
-            CupertinoIcons.xmark,
-            size: _iconSize,
-            color: _isHoveringClose
-                ? theme.colorScheme.primary
-                : iconColor,
-          ),
-        ),
-        onPressed: () async {
-          // 触发窗口关闭事件，让main.dart中的onWindowClose处理
-          await windowManager.close();
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: () async {
+                // 触发窗口关闭事件，让main.dart中的onWindowClose处理
+                await windowManager.close();
+              },
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringClose ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: _iconSize,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+            ),
+          );
         },
-        padding: EdgeInsets.zero,
-        constraints: _iconButtonConstraints,
       ),
     );
   }
