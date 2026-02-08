@@ -225,9 +225,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                 ),
-                child: Padding(
-                  padding: EdgeInsets.all(settings.windowBorderRadius > 0 ? settings.windowBorderRadius * 0.3 : 0),
-                  child: Stack(
+                child: Stack(
                   children: [
                     // 背景模糊效果
               if (currentMusic?.coverArt != null)
@@ -1042,13 +1040,27 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                         ),
                       ),
                       // 窗口控制按钮
-                      Row(
-                        children: [
-                          _buildPinButton(),
-                          _buildMinimizeButton(),
-                          _buildMaximizeButton(),
-                          _buildCloseButton(),
-                        ],
+                      Consumer<SettingsProvider>(
+                        builder: (context, settings, child) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: settings.windowBorderRadius > 0 
+                                  ? settings.windowBorderRadius * 0.3 
+                                  : 0,
+                              top: settings.windowBorderRadius > 0 
+                                  ? settings.windowBorderRadius * 0.3 
+                                  : 0,
+                            ),
+                            child: Row(
+                              children: [
+                                _buildPinButton(),
+                                _buildMinimizeButton(),
+                                _buildMaximizeButton(),
+                                _buildCloseButton(),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -1056,7 +1068,6 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
               ),
                   ],
                 ),
-              ),
               );
             },
           ),
@@ -1103,7 +1114,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
             child: InkWell(
               onTap: () async {
                 final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
@@ -1112,7 +1123,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                   _isAlwaysOnTop = !_isAlwaysOnTop;
                 });
               },
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1146,10 +1157,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
             child: InkWell(
               onTap: () => windowManager.minimize(),
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1183,10 +1194,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
             child: InkWell(
               onTap: () => windowManager.maximize(),
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1220,13 +1231,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
             child: InkWell(
               onTap: () async {
                 // 触发窗口关闭事件，让main.dart中的onWindowClose处理
                 await windowManager.close();
               },
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
