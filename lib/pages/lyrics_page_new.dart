@@ -221,9 +221,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         return Scaffold(
           body: Consumer<SettingsProvider>(
             builder: (context, settings, child) {
-              return Padding(
-                padding: EdgeInsets.all(settings.windowBorderRadius > 0 ? settings.windowBorderRadius * 0.3 : 0),
-                child: Stack(
+              return Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(settings.windowBorderRadius > 0 ? settings.windowBorderRadius * 0.3 : 0),
+                  child: Stack(
                   children: [
                     // 背景模糊效果
               if (currentMusic?.coverArt != null)
@@ -254,11 +258,11 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        colorScheme.surface.withOpacity(0.7),
-                        colorScheme.surface.withOpacity(0.85),
-                        colorScheme.surface.withOpacity(0.95),
+                        colorScheme.surface.withOpacity(0.9),
+                        colorScheme.surface.withOpacity(0.9),
+                        colorScheme.surface.withOpacity(0.9),
                       ],
-                      stops: const [0.0, 0.3, 1.0],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                   ),
                 ),
@@ -1052,6 +1056,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
               ),
                   ],
                 ),
+              ),
               );
             },
           ),
