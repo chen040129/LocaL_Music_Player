@@ -9,6 +9,20 @@ enum SettingsCategory {
   player,       // 播放器
 }
 
+/// 歌曲页面背景类型枚举
+enum SongPageBackgroundType {
+  fluid,        // 流体背景
+  blur,         // 模糊背景
+  gradient,     // 渐变背景
+  solid,        // 纯色背景
+}
+
+/// 渐变类型枚举
+enum GradientType {
+  static,       // 静态渐变
+  dynamic,      // 动态渐变
+}
+
 /// 歌词对齐方式枚举
 enum LyricsAlignment {
   left,         // 左对齐
@@ -46,6 +60,21 @@ class SettingsProvider with ChangeNotifier {
   int _defaultVolume = 70;             // 默认音量(0-100)
   bool _showLyricsInPlayer = true;     // 播放器中是否显示歌词
 
+  // 歌曲页面设置
+  SongPageBackgroundType _songPageBackgroundType = SongPageBackgroundType.fluid;  // 歌曲页面背景类型
+  GradientType _gradientType = GradientType.static;  // 渐变类型
+  bool _isFluidDynamic = false;        // 流体背景是否动态
+  double _blurAmount = 30.0;          // 模糊程度
+  double _pageOpacity = 1.0;          // 页面透明度
+  double _gradientSongColorRatio = 0.7;  // 渐变中歌曲主题色占比（0.0-1.0）
+
+  // 流体背景参数
+  double _fluidBubblesSize = 400.0;          // 流体气泡大小
+  double _fluidVelocity = 120.0;              // 流体速度
+  int _fluidAnimationDuration = 2000;         // 流体动画持续时间（毫秒）
+  double _fluidOffsetAmount = 20.0;           // 流体偏移量
+  double _fluidLayerOpacity = 0.3;            // 流体层透明度
+
   // 播放器设置
   bool get autoPlayNext => _autoPlayNext;
   bool get savePlayProgress => _savePlayProgress;
@@ -73,6 +102,21 @@ class SettingsProvider with ChangeNotifier {
   bool get enableLyricsBlur => _enableLyricsBlur;
   double get lyricsOpacity => _lyricsOpacity;
   int get lyricsLineGap => _lyricsLineGap;
+
+  // 歌曲页面设置 getters
+  SongPageBackgroundType get songPageBackgroundType => _songPageBackgroundType;
+  GradientType get gradientType => _gradientType;
+  bool get isFluidDynamic => _isFluidDynamic;
+  double get blurAmount => _blurAmount;
+  double get pageOpacity => _pageOpacity;
+  double get gradientSongColorRatio => _gradientSongColorRatio;
+
+  // 流体背景参数 getters
+  double get fluidBubblesSize => _fluidBubblesSize;
+  double get fluidVelocity => _fluidVelocity;
+  int get fluidAnimationDuration => _fluidAnimationDuration;
+  double get fluidOffsetAmount => _fluidOffsetAmount;
+  double get fluidLayerOpacity => _fluidLayerOpacity;
 
   SettingsProvider() {
     _loadSettings();
@@ -110,6 +154,23 @@ class SettingsProvider with ChangeNotifier {
     _fadeDuration = prefs.getDouble('fade_duration') ?? 2.0;
     _defaultVolume = prefs.getInt('default_volume') ?? 70;
     _showLyricsInPlayer = prefs.getBool('show_lyrics_in_player') ?? true;
+
+    // 加载歌曲页面设置
+    final backgroundTypeIndex = prefs.getInt('song_page_background_type') ?? 0;
+    _songPageBackgroundType = SongPageBackgroundType.values[backgroundTypeIndex];
+    final gradientTypeIndex = prefs.getInt('gradient_type') ?? 0;
+    _gradientType = GradientType.values[gradientTypeIndex];
+    _isFluidDynamic = prefs.getBool('is_fluid_dynamic') ?? false;
+    _blurAmount = prefs.getDouble('blur_amount') ?? 30.0;
+    _pageOpacity = prefs.getDouble('page_opacity') ?? 1.0;
+    _gradientSongColorRatio = prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
+
+    // 加载流体背景参数
+    _fluidBubblesSize = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
+    _fluidVelocity = prefs.getDouble('fluid_velocity') ?? 120.0;
+    _fluidAnimationDuration = prefs.getInt('fluid_animation_duration') ?? 2000;
+    _fluidOffsetAmount = prefs.getDouble('fluid_offset_amount') ?? 20.0;
+    _fluidLayerOpacity = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
 
     notifyListeners();
   }
@@ -265,6 +326,74 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // 歌曲页面设置 setters
+  Future<void> setSongPageBackgroundType(SongPageBackgroundType value) async {
+    _songPageBackgroundType = value;
+    await _saveSetting('song_page_background_type', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setGradientType(GradientType value) async {
+    _gradientType = value;
+    await _saveSetting('gradient_type', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setIsFluidDynamic(bool value) async {
+    _isFluidDynamic = value;
+    await _saveSetting('is_fluid_dynamic', value);
+    notifyListeners();
+  }
+
+  Future<void> setBlurAmount(double value) async {
+    _blurAmount = value.clamp(0.0, 50.0);
+    await _saveSetting('blur_amount', _blurAmount);
+    notifyListeners();
+  }
+
+  Future<void> setPageOpacity(double value) async {
+    _pageOpacity = value.clamp(0.3, 1.0);
+    await _saveSetting('page_opacity', _pageOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setGradientSongColorRatio(double value) async {
+    _gradientSongColorRatio = value.clamp(0.0, 1.0);
+    await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
+    notifyListeners();
+  }
+
+  // 流体背景参数 setters
+  Future<void> setFluidBubblesSize(double value) async {
+    _fluidBubblesSize = value.clamp(100.0, 1000.0);
+    await _saveSetting('fluid_bubbles_size', _fluidBubblesSize);
+    notifyListeners();
+  }
+
+  Future<void> setFluidVelocity(double value) async {
+    _fluidVelocity = value.clamp(0.0, 500.0);
+    await _saveSetting('fluid_velocity', _fluidVelocity);
+    notifyListeners();
+  }
+
+  Future<void> setFluidAnimationDuration(int value) async {
+    _fluidAnimationDuration = value.clamp(500, 10000);
+    await _saveSetting('fluid_animation_duration', _fluidAnimationDuration);
+    notifyListeners();
+  }
+
+  Future<void> setFluidOffsetAmount(double value) async {
+    _fluidOffsetAmount = value.clamp(0.0, 100.0);
+    await _saveSetting('fluid_offset_amount', _fluidOffsetAmount);
+    notifyListeners();
+  }
+
+  Future<void> setFluidLayerOpacity(double value) async {
+    _fluidLayerOpacity = value.clamp(0.1, 1.0);
+    await _saveSetting('fluid_layer_opacity', _fluidLayerOpacity);
+    notifyListeners();
+  }
+
   /// 重置所有设置为默认值
   Future<void> resetToDefaults() async {
     final prefs = await SharedPreferences.getInstance();
@@ -296,6 +425,21 @@ class SettingsProvider with ChangeNotifier {
     await prefs.remove('fade_duration');
     await prefs.remove('default_volume');
     await prefs.remove('show_lyrics_in_player');
+
+    // 重置歌曲页面设置
+    await prefs.remove('song_page_background_type');
+    await prefs.remove('gradient_type');
+    await prefs.remove('is_fluid_dynamic');
+    await prefs.remove('blur_amount');
+    await prefs.remove('page_opacity');
+    await prefs.remove('gradient_song_color_ratio');
+
+    // 重置流体背景参数
+    await prefs.remove('fluid_bubbles_size');
+    await prefs.remove('fluid_velocity');
+    await prefs.remove('fluid_animation_duration');
+    await prefs.remove('fluid_offset_amount');
+    await prefs.remove('fluid_layer_opacity');
 
     // 重新加载设置
     await _loadSettings();

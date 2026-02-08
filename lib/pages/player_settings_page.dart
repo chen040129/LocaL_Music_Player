@@ -32,6 +32,10 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   _buildSectionHeader('播放器设置'),
                   const SizedBox(height: 16),
                   _buildPlayerSettings(context),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('歌曲页面设置'),
+                  const SizedBox(height: 16),
+                  _buildSongPageSettings(context),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],
@@ -342,6 +346,273 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
           divisions: divisions,
           label: label,
           onChanged: enabled ? onChanged : null,
+        ),
+      ],
+    );
+  }
+
+  /// 构建歌曲页面设置
+  Widget _buildSongPageSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 背景类型选择
+                _buildBackgroundTypeTile(context, settings),
+                const Divider(height: 32),
+                
+                // 根据背景类型显示不同的设置选项
+                if (settings.songPageBackgroundType == SongPageBackgroundType.fluid) ...[
+                  _buildSwitchTile(
+                    title: '流体动态效果',
+                    subtitle: '启用流体背景的动态效果',
+                    icon: CupertinoIcons.waveform_path,
+                    value: settings.isFluidDynamic,
+                    onChanged: (value) => settings.setIsFluidDynamic(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体偏移量',
+                    subtitle: '调整流体效果的偏移程度',
+                    icon: CupertinoIcons.move,
+                    value: settings.fluidOffsetAmount,
+                    min: 0.0,
+                    max: 100.0,
+                    divisions: 100,
+                    label: '${settings.fluidOffsetAmount.toInt()}',
+                    onChanged: (value) => settings.setFluidOffsetAmount(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体层透明度',
+                    subtitle: '调整流体层的透明度',
+                    icon: CupertinoIcons.eye_slash,
+                    value: settings.fluidLayerOpacity,
+                    min: 0.1,
+                    max: 1.0,
+                    divisions: 90,
+                    label: '${(settings.fluidLayerOpacity * 100).toInt()}%',
+                    onChanged: (value) => settings.setFluidLayerOpacity(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体动画时长',
+                    subtitle: '调整流体动画的持续时间',
+                    icon: CupertinoIcons.time,
+                    value: settings.fluidAnimationDuration.toDouble(),
+                    min: 500,
+                    max: 10000,
+                    divisions: 95,
+                    label: '${settings.fluidAnimationDuration}ms',
+                    onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
+                  ),
+                  const Divider(height: 32),
+                ],
+                
+                if (settings.songPageBackgroundType == SongPageBackgroundType.blur) ...[
+                  _buildSliderTile(
+                    title: '模糊程度',
+                    subtitle: '调整背景的模糊程度',
+                    icon: CupertinoIcons.photo,
+                    value: settings.blurAmount,
+                    min: 0.0,
+                    max: 50.0,
+                    divisions: 50,
+                    label: '${settings.blurAmount.toInt()}',
+                    onChanged: (value) => settings.setBlurAmount(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+                
+                if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
+                  _buildGradientTypeTile(context, settings),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '歌曲主题色占比',
+                    subtitle: '调整渐变中歌曲主题色的占比',
+                    icon: CupertinoIcons.color_filter,
+                    value: settings.gradientSongColorRatio,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 100,
+                    label: '${(settings.gradientSongColorRatio * 100).toInt()}%',
+                    onChanged: (value) => settings.setGradientSongColorRatio(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+                
+                // 页面透明度
+                _buildSliderTile(
+                  title: '页面透明度',
+                  subtitle: '调整歌曲页面的透明度',
+                  icon: CupertinoIcons.eye,
+                  value: settings.pageOpacity,
+                  min: 0.3,
+                  max: 1.0,
+                  divisions: 70,
+                  label: '${(settings.pageOpacity * 100).toInt()}%',
+                  onChanged: (value) => settings.setPageOpacity(value),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建背景类型选择项
+  Widget _buildBackgroundTypeTile(BuildContext context, SettingsProvider settings) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                CupertinoIcons.photo_fill_on_rectangle_fill,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '背景类型',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '选择歌曲页面的背景类型',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SegmentedButton<SongPageBackgroundType>(
+          segments: const [
+            ButtonSegment(
+              value: SongPageBackgroundType.fluid,
+              label: Text('流体'),
+              icon: Icon(CupertinoIcons.waveform_path),
+            ),
+            ButtonSegment(
+              value: SongPageBackgroundType.blur,
+              label: Text('模糊'),
+              icon: Icon(CupertinoIcons.photo),
+            ),
+            ButtonSegment(
+              value: SongPageBackgroundType.gradient,
+              label: Text('渐变'),
+              icon: Icon(CupertinoIcons.color_filter),
+            ),
+            ButtonSegment(
+              value: SongPageBackgroundType.solid,
+              label: Text('纯色'),
+              icon: Icon(CupertinoIcons.circle_fill),
+            ),
+          ],
+          selected: {settings.songPageBackgroundType},
+          onSelectionChanged: (Set<SongPageBackgroundType> newSelection) {
+            settings.setSongPageBackgroundType(newSelection.first);
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 构建渐变类型选择项
+  Widget _buildGradientTypeTile(BuildContext context, SettingsProvider settings) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                CupertinoIcons.color_filter,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '渐变类型',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '选择渐变背景的类型',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SegmentedButton<GradientType>(
+          segments: const [
+            ButtonSegment(
+              value: GradientType.static,
+              label: Text('静态'),
+              icon: Icon(CupertinoIcons.stop_circle),
+            ),
+            ButtonSegment(
+              value: GradientType.dynamic,
+              label: Text('动态'),
+              icon: Icon(CupertinoIcons.play_circle),
+            ),
+          ],
+          selected: {settings.gradientType},
+          onSelectionChanged: (Set<GradientType> newSelection) {
+            settings.setGradientType(newSelection.first);
+          },
         ),
       ],
     );

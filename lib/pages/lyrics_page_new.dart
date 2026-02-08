@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:fluid_background/fluid_background.dart';
 import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
@@ -205,6 +206,141 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     return colorScheme.primary;
   }
 
+  /// 构建渐变背景
+  Widget _buildGradientBackground(PlayerProvider playerProvider, SettingsProvider settings, ColorScheme colorScheme) {
+    // 获取歌曲主题色
+    Color? songColor;
+    try {
+      final coverColor = playerProvider.currentMusic?.coverColor;
+      if (coverColor != null && coverColor.isFinite) {
+        if (coverColor >= 0 && coverColor <= 0xFFFFFFFF) {
+          final color = Color(coverColor);
+          if (color.alpha >= 0 && color.alpha <= 255 &&
+              color.red >= 0 && color.red <= 255 &&
+              color.green >= 0 && color.green <= 255 &&
+              color.blue >= 0 && color.blue <= 255) {
+            songColor = color;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('获取封面颜色失败: $e');
+    }
+
+    // 如果歌曲没有主题色，使用黑色
+    final topLeftColor = songColor ?? Colors.black;
+
+    // 软件主题色：根据深色/浅色模式自动切换黑色或白色
+    final bottomRightColor = colorScheme.brightness == Brightness.dark ? Colors.black : Colors.white;
+
+    if (settings.gradientType == GradientType.dynamic) {
+      // 动态渐变
+      return AnimatedContainer(
+        duration: const Duration(seconds: 3),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              topLeftColor,
+              Color.lerp(topLeftColor, bottomRightColor, 1 - settings.gradientSongColorRatio)!,
+              bottomRightColor,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+      );
+    } else {
+      // 静态渐变
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              topLeftColor,
+              Color.lerp(topLeftColor, bottomRightColor, 1 - settings.gradientSongColorRatio)!,
+              bottomRightColor,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+      );
+    }
+  }
+
+  /// 构建纯色背景
+  Widget _buildSolidBackground(PlayerProvider playerProvider, ColorScheme colorScheme) {
+    // 获取歌曲主题色
+    Color? songColor;
+    try {
+      final coverColor = playerProvider.currentMusic?.coverColor;
+      if (coverColor != null && coverColor.isFinite) {
+        if (coverColor >= 0 && coverColor <= 0xFFFFFFFF) {
+          final color = Color(coverColor);
+          if (color.alpha >= 0 && color.alpha <= 255 &&
+              color.red >= 0 && color.red <= 255 &&
+              color.green >= 0 && color.green <= 255 &&
+              color.blue >= 0 && color.blue <= 255) {
+            songColor = color;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('获取封面颜色失败: $e');
+    }
+
+    // 如果歌曲没有主题色，使用黑色
+    return Container(
+      color: songColor ?? Colors.black,
+    );
+  }
+
+  /// 构建流体背景
+  Widget _buildFluidBackground(PlayerProvider playerProvider, SettingsProvider settings) {
+    // 获取歌曲主题色
+    Color? songColor;
+    try {
+      final coverColor = playerProvider.currentMusic?.coverColor;
+      if (coverColor != null && coverColor.isFinite) {
+        if (coverColor >= 0 && coverColor <= 0xFFFFFFFF) {
+          final color = Color(coverColor);
+          if (color.alpha >= 0 && color.alpha <= 255 &&
+              color.red >= 0 && color.red <= 255 &&
+              color.green >= 0 && color.green <= 255 &&
+              color.blue >= 0 && color.blue <= 255) {
+            songColor = color;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('获取封面颜色失败: $e');
+    }
+
+    // 如果歌曲没有主题色，使用黑色
+    final baseColor = songColor ?? Colors.black;
+
+    // 生成流体背景的颜色
+    final colors = [
+      baseColor,
+      baseColor.withOpacity(0.8),
+      baseColor.withOpacity(0.6),
+      Colors.black,
+    ];
+
+    return FluidBackground(
+      key: ValueKey('fluid_${playerProvider.currentMusic?.id ?? 0}'),
+      initialPositions: InitialOffsets.predefined(),
+      initialColors: InitialColors.custom(colors),
+      bubblesSize: settings.fluidBubblesSize,
+      velocity: settings.isFluidDynamic ? settings.fluidVelocity : 0,
+      bubbleMutationDuration: settings.isFluidDynamic ? Duration(milliseconds: settings.fluidAnimationDuration) : null,
+      allowColorChanging: true,
+      child: const SizedBox.expand(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PlayerProvider>(
@@ -227,46 +363,44 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                 ),
                 child: Stack(
                   children: [
-                    // 背景模糊效果
-              if (currentMusic?.coverArt != null)
-                Consumer<SettingsProvider>(
-                  builder: (context, settings, child) {
-                    if (!settings.useBlurBackground) {
-                      return const SizedBox.shrink();
-                    }
-                    return Positioned.fill(
-                      child: Opacity(
-                        opacity: 0.3,
-                        child: ImageFiltered(
-                          imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                          child: Image.memory(
-                            currentMusic!.coverArt!,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                    // 根据背景类型显示不同的背景
+                    Positioned.fill(
+                      child: Consumer2<PlayerProvider, SettingsProvider>(
+                        builder: (context, player, settings, child) {
+                          switch (settings.songPageBackgroundType) {
+                            case SongPageBackgroundType.fluid:
+                              return _buildFluidBackground(player, settings);
+                            case SongPageBackgroundType.blur:
+                              if (currentMusic?.coverArt != null) {
+                                return Opacity(
+                                  opacity: 0.3,
+                                  child: ImageFiltered(
+                                    imageFilter: ui.ImageFilter.blur(
+                                      sigmaX: settings.blurAmount,
+                                      sigmaY: settings.blurAmount,
+                                    ),
+                                    child: Image.memory(
+                                      currentMusic!.coverArt!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Container(
+                                color: colorScheme.surface,
+                              );
+                            case SongPageBackgroundType.gradient:
+                              return _buildGradientBackground(playerProvider, settings, colorScheme);
+                            case SongPageBackgroundType.solid:
+                              return _buildSolidBackground(playerProvider, colorScheme);
+                          }
+                        },
                       ),
-                    );
-                  },
-                ),
-              // 渐变遮罩
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        colorScheme.surface.withOpacity(0.9),
-                        colorScheme.surface.withOpacity(0.9),
-                        colorScheme.surface.withOpacity(0.9),
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
                     ),
-                  ),
-                ),
-              ),
-              // 主内容区域
-              SafeArea(
+                    // 主内容区域（带透明度）
+                    Opacity(
+                      opacity: settings.pageOpacity,
+                      child: SafeArea(
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Column(
@@ -1017,6 +1151,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+                    ),
               // 透明标题栏
               Positioned(
                 top: 0,

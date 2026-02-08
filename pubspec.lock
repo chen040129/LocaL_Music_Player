@@ -409,6 +409,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.66.2"
+  fluid_background:
+    dependency: "direct main"
+    description:
+      path: "../fluid_background"
+      relative: true
+    source: path
+    version: "1.0.5"
   flutter:
     dependency: "direct main"
     description: flutter

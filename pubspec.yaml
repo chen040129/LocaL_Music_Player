@@ -16,6 +16,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  fluid_background:
+    path: ../fluid_background
+
   cupertino_icons: ^1.0.6
   provider: ^6.1.1
   flutter_colorpicker: ^1.0.3
