@@ -299,39 +299,42 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
 
   /// 构建流体背景
   Widget _buildFluidBackground(PlayerProvider playerProvider, SettingsProvider settings) {
-    // 获取歌曲主题色
-    Color? songColor;
+    // 获取歌曲封面颜色
+    final music = playerProvider.currentMusic;
+    Color? primaryColor;
+    Color? secondaryColor;
+    Color? tertiaryColor;
+
     try {
-      final coverColor = playerProvider.currentMusic?.coverColor;
-      if (coverColor != null && coverColor.isFinite) {
-        if (coverColor >= 0 && coverColor <= 0xFFFFFFFF) {
-          final color = Color(coverColor);
-          if (color.alpha >= 0 && color.alpha <= 255 &&
-              color.red >= 0 && color.red <= 255 &&
-              color.green >= 0 && color.green <= 255 &&
-              color.blue >= 0 && color.blue <= 255) {
-            songColor = color;
-          }
-        }
+      if (music?.coverColor != null && music!.coverColor! >= 0 && music.coverColor! <= 0xFFFFFFFF) {
+        primaryColor = Color(music.coverColor!);
+      }
+      if (music?.secondaryColor != null && music!.secondaryColor! >= 0 && music.secondaryColor! <= 0xFFFFFFFF) {
+        secondaryColor = Color(music.secondaryColor!);
+      }
+      if (music?.tertiaryColor != null && music!.tertiaryColor! >= 0 && music.tertiaryColor! <= 0xFFFFFFFF) {
+        tertiaryColor = Color(music.tertiaryColor!);
       }
     } catch (e) {
       debugPrint('获取封面颜色失败: $e');
     }
 
-    // 如果歌曲没有主题色，使用黑色
-    final baseColor = songColor ?? Colors.black;
-
-    // 生成流体背景的颜色
+    // 使用歌曲封面颜色，如果没有则使用默认颜色
     final colors = [
-      baseColor,
-      baseColor.withOpacity(0.8),
-      baseColor.withOpacity(0.6),
+      primaryColor ?? Colors.blue,
+      secondaryColor ?? Colors.purple,
+      tertiaryColor ?? Colors.indigo,
       Colors.black,
     ];
 
     return FluidBackground(
-      key: ValueKey('fluid_${playerProvider.currentMusic?.id ?? 0}'),
-      initialPositions: InitialOffsets.predefined(),
+      key: ValueKey('fluid_${music?.id ?? 0}'),
+      initialPositions: InitialOffsets.custom([
+        const Offset(0.3, 0.5),
+        const Offset(0.7, 0.3),
+        const Offset(0.2, 0.8),
+        const Offset(0.8, 0.7),
+      ]),
       initialColors: InitialColors.custom(colors),
       bubblesSize: settings.fluidBubblesSize,
       velocity: settings.isFluidDynamic ? settings.fluidVelocity : 0,
