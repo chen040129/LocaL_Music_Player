@@ -60,7 +60,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
     if (oldWidget.lyrics != widget.lyrics) {
       _lyricController.loadLyric(widget.lyrics);
     }
-    if (oldWidget.position != widget.position) {
+    // 只在非选择状态下更新进度，避免用户滚动时被打断
+    if (oldWidget.position != widget.position && !_lyricController.isSelectingNotifier.value) {
       _lyricController.setProgress(widget.position);
     }
   }
@@ -198,10 +199,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                     if (lyricModel != null && newIndex >= 0 && newIndex < lyricModel.lines.length) {
                       // 更新高亮的歌词行
                       _lyricController.activeIndexNotifiter.value = newIndex;
-                      // 延迟恢复到播放行
-                      Future.delayed(const Duration(seconds: 3), () {
-                        _lyricController.isSelectingNotifier.value = false;
-                      });
+                      // 延迟恢复到播放行 - 增加延迟时间到5秒
+                      _resetResumeTimer();
                     }
                   }
                 },
