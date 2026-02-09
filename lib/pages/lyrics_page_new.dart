@@ -877,6 +877,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                         // 次级控制行（音量、播放列表、定时播放、循环模式）
                                                         SizedBox(
                                                           width: 400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
+                                                          height: 20, // 固定高度，防止音量控制条展开时上方构件移动
                                                           child: Row(
                                                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                             children: [
@@ -949,22 +950,8 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                     if (_showVolumeControl)
                                                                       Padding(
                                                                         padding: const EdgeInsets.only(left: 8),
-                                                                        child: Container(
+                                                                        child: SizedBox(
                                                                           width: 280,
-                                                                          decoration: BoxDecoration(
-                                                                            gradient: LinearGradient(
-                                                                              begin: Alignment.topLeft,
-                                                                              end: Alignment.bottomRight,
-                                                                              colors: [
-                                                                                colorScheme.surface.withOpacity(0.7),
-                                                                                colorScheme.surface.withOpacity(0.85),
-                                                                                colorScheme.surface.withOpacity(0.95),
-                                                                              ],
-                                                                              stops: const [0.0, 0.3, 1.0],
-                                                                            ),
-                                                                            borderRadius: BorderRadius.circular(8),
-                                                                          ),
-                                                                          padding: const EdgeInsets.symmetric(horizontal: 8),
                                                                           child: SliderTheme(
                                                                             data: SliderThemeData(
                                                                               trackHeight: 3,

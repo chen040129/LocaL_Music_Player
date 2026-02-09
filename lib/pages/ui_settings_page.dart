@@ -114,26 +114,6 @@ class _UISettingsPageState extends State<UISettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 模糊背景开关
-                _buildSwitchTile(
-                  title: '模糊背景',
-                  subtitle: '使用专辑封面作为模糊背景',
-                  icon: CupertinoIcons.photo,
-                  value: settings.useBlurBackground,
-                  onChanged: (value) => settings.setUseBlurBackground(value),
-                ),
-                const Divider(height: 32),
-
-                // 显示专辑封面开关
-                _buildSwitchTile(
-                  title: '显示专辑封面',
-                  subtitle: '在播放器中显示专辑封面',
-                  icon: CupertinoIcons.music_albums,
-                  value: settings.showAlbumArt,
-                  onChanged: (value) => settings.setShowAlbumArt(value),
-                ),
-                const Divider(height: 32),
-
                 // 播放栏玻璃材质开关
                 _buildSwitchTile(
                   title: '播放栏玻璃材质',

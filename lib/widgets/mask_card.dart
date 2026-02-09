@@ -76,7 +76,8 @@ class _MaskCardState extends State<MaskCard>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // 获取歌曲主题色
-    final accentColor = widget.accentColor ?? Theme.of(context).colorScheme.primary;
+    final accentColor =
+        widget.accentColor ?? Theme.of(context).colorScheme.primary;
 
     // 获取软件主题色（根据明暗模式）
     final themeColor = isDarkMode ? Colors.white : Colors.black;
@@ -90,9 +91,13 @@ class _MaskCardState extends State<MaskCard>
           animation: _animation,
           builder: (context, child) {
             return Container(
-              margin: widget.margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: widget.margin ??
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                color: Theme.of(context)
+                    .colorScheme
+                    .surface
+                    .withOpacity(settings.windowOpacity),
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 boxShadow: [
                   // 柔和的阴影，使边界更模糊
@@ -122,41 +127,35 @@ class _MaskCardState extends State<MaskCard>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: widget.onTap,
-                    onDoubleTap: widget.onDoubleTap,
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    hoverColor: Colors.transparent,
-                    child: Stack(
-                      children: [
-                        // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
-                        if (isActive)
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    accentColor.withOpacity(adjustedAccentOpacity * _animation.value),
-                                    themeColor.withOpacity(isDarkMode ? 0.05 : 0.03 * _animation.value),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(widget.borderRadius),
-                              ),
+                child: Stack(
+                  children: [
+                    // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
+                    if (isActive)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                accentColor.withOpacity(
+                                    adjustedAccentOpacity * _animation.value),
+                                themeColor.withOpacity(isDarkMode
+                                    ? 0.05
+                                    : 0.03 * _animation.value),
+                              ],
                             ),
+                            borderRadius:
+                                BorderRadius.circular(widget.borderRadius),
                           ),
-                        // 内容（放在顶部，可以交互）
-                        Padding(
-                          padding: widget.padding ?? EdgeInsets.zero,
-                          child: widget.child,
                         ),
-                      ],
+                      ),
+                    // 内容（放在顶部，可以交互）
+                    Padding(
+                      padding: widget.padding ?? EdgeInsets.zero,
+                      child: widget.child,
                     ),
-                  ),
+                  ],
                 ),
               ),
             );

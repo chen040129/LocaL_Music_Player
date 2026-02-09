@@ -118,6 +118,26 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 显示专辑封面开关
+                _buildSwitchTile(
+                  title: '显示专辑封面',
+                  subtitle: '在播放器中显示专辑封面',
+                  icon: CupertinoIcons.music_albums,
+                  value: settings.showAlbumArt,
+                  onChanged: (value) => settings.setShowAlbumArt(value),
+                ),
+                const Divider(height: 32),
+
+                // 播放器中显示歌词开关
+                _buildSwitchTile(
+                  title: '播放器中显示歌词',
+                  subtitle: '在播放器界面中显示歌词',
+                  icon: CupertinoIcons.music_note,
+                  value: settings.showLyricsInPlayer,
+                  onChanged: (value) => settings.setShowLyricsInPlayer(value),
+                ),
+                const Divider(height: 32),
+
                 // 自动播放下一首开关
                 _buildSwitchTile(
                   title: '自动播放下一首',
@@ -184,16 +204,6 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   divisions: 20,
                   label: '${settings.defaultVolume}%',
                   onChanged: (value) => settings.setDefaultVolume(value.toInt()),
-                ),
-                const Divider(height: 32),
-
-                // 播放器中显示歌词开关
-                _buildSwitchTile(
-                  title: '播放器中显示歌词',
-                  subtitle: '在播放器界面中显示歌词',
-                  icon: CupertinoIcons.music_note,
-                  value: settings.showLyricsInPlayer,
-                  onChanged: (value) => settings.setShowLyricsInPlayer(value),
                 ),
               ],
             ),

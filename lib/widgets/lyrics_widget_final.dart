@@ -31,16 +31,12 @@ class _LyricsWidgetState extends State<LyricsWidget> {
     LyricStyles.default1,
   );
 
-  // 添加滚动控制器
-  final ScrollController _scrollController = ScrollController();
-  // 是否正在滑动
-  bool _isDragging = false;
-  // 记录用户最后交互时间，用于自动恢复播放进度
-  DateTime _lastInteractionTime = DateTime.now();
   // 恢复播放进度的定时器
   Timer? _resumeTimer;
-  // 记录上一次滚动的索引，用于优化滚动体验
-  int _lastScrollIndex = -1;
+  // 记录用户是否正在手动滚动
+  bool _isUserScrolling = false;
+  // 记录上一次的播放位置
+  Duration _lastPosition = Duration.zero;
 
   @override
   void initState() {
@@ -61,13 +57,16 @@ class _LyricsWidgetState extends State<LyricsWidget> {
       _lyricController.loadLyric(widget.lyrics);
     }
     if (oldWidget.position != widget.position) {
-      _lyricController.setProgress(widget.position);
+      // 只有在用户没有手动滚动时才更新进度
+      if (!_isUserScrolling) {
+        _lyricController.setProgress(widget.position);
+      }
+      _lastPosition = widget.position;
     }
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _lyricController.dispose();
     _styleNotifier.dispose();
     _resumeTimer?.cancel();
@@ -77,10 +76,13 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   /// 重置自动恢复播放进度的定时器
   void _resetResumeTimer() {
     _resumeTimer?.cancel();
-    _lastInteractionTime = DateTime.now();
+    _isUserScrolling = true;
     _resumeTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
+        _isUserScrolling = false;
         _lyricController.isSelectingNotifier.value = false;
+        // 恢复到当前播放位置
+        _lyricController.setProgress(_lastPosition);
       }
     });
   }
@@ -118,9 +120,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
     return ValueListenableBuilder(
       valueListenable: _styleNotifier,
       builder: (context, style, child) {
-        // 根据主题和设置调整歌词样式，增强动态效果
+        // 根据主题和设置调整歌词样式
         final adjustedStyle = LyricStyle(
-          // 非激活歌词样式
           textStyle: TextStyle(
             color: isDark
                 ? Colors.white.withOpacity(0.4 * settings.lyricsOpacity)
@@ -128,7 +129,6 @@ class _LyricsWidgetState extends State<LyricsWidget> {
             fontSize: settings.lyricsFontSize,
             height: 1.8,
           ),
-          // 激活歌词样式（当前演唱的歌词）
           activeStyle: TextStyle(
             color: isDark
                 ? Colors.white.withOpacity(1.0 * settings.lyricsOpacity)
@@ -137,7 +137,6 @@ class _LyricsWidgetState extends State<LyricsWidget> {
             fontWeight: FontWeight.bold,
             height: 1.8,
           ),
-          // 翻译歌词样式
           translationStyle: TextStyle(
             color: isDark
                 ? Colors.white.withOpacity(0.35 * settings.lyricsOpacity)
@@ -145,32 +144,19 @@ class _LyricsWidgetState extends State<LyricsWidget> {
             fontSize: 14,
             height: 1.5,
           ),
-          // 选中歌词样式
           selectedColor: isDark ? Colors.white : Colors.black,
           selectedTranslationColor: isDark ? Colors.white : Colors.black,
-          // 歌词对齐方式
           lineTextAlign: _getTextAlign(settings.lyricsAlignment),
-          // 歌词行间距
           lineGap: settings.lyricsLineGap.toDouble(),
-          // 翻译歌词行间距
           translationLineGap: 4.0,
-          // 内容对齐方式
           contentAlignment: _getCrossAxisAlignment(settings.lyricsAlignment),
-          // 选中锚点位置
           selectionAnchorPosition: 0.5,
-          // 选中锚点对齐方式
           selectionAlignment: MainAxisAlignment.center,
-          // 滚动动画时长 - 使用更长的时长实现更平滑的过渡
-          scrollDuration: const Duration(milliseconds: 500),
-          // 选中行自动恢复时长 - 增加时长使过渡更平滑
-          selectionAutoResumeDuration: const Duration(milliseconds: 400),
-          // 播放行自动恢复时长 - 增加时长使过渡更平滑
-          activeAutoResumeDuration: const Duration(milliseconds: 3500),
-          // 滚动动画曲线 - 使用更平滑的曲线
+          scrollDuration: const Duration(milliseconds: 300),
+          selectionAutoResumeDuration: const Duration(milliseconds: 200),
+          activeAutoResumeDuration: const Duration(milliseconds: 5000),
           scrollCurve: Curves.easeInOutCubic,
-          // 禁用触摸事件 - 由GestureDetector处理
           disableTouchEvent: false,
-          // 选中行自动恢复模式 - 停止选择后再恢复
           selectionAutoResumeMode: SelectionAutoResumeMode.afterSelecting,
         );
 
@@ -180,28 +166,37 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           ),
           child: Stack(
             children: [
-              // 歌词视图 - 支持滚轮滚动
+              // 歌词视图 - 使用Listener处理滚轮滚动
               Listener(
-                onPointerSignal: (pointerSignal) {
-                  if (pointerSignal is PointerScrollEvent) {
-                    // 触发拖动状态，让LyricView知道用户正在手动滚动
-                    _lyricController.isSelectingNotifier.value = true;
-                    // 获取当前高亮的歌词行
+                behavior: HitTestBehavior.deferToChild,
+                onPointerSignal: (event) {
+                  if (event is PointerScrollEvent) {
+                    // 将滚轮滚动转为歌词拖动偏移
+                    final dy = event.scrollDelta.dy;
+                    // 触发拖动状态
+                    if (!_lyricController.isSelectingNotifier.value) {
+                      _lyricController.isSelectingNotifier.value = true;
+                    }
+                    // 重置自动恢复定时器
+                    _resetResumeTimer();
+                    // 通过设置选中索引来滚动歌词
                     final currentIndex = _lyricController.activeIndexNotifiter.value;
-                    // 根据滚轮方向调整歌词行
-                    final delta = pointerSignal.scrollDelta.dy;
-                    final newIndex = delta > 0 
-                        ? currentIndex + 1 
-                        : currentIndex - 1;
-                    // 确保新索引在有效范围内
                     final lyricModel = _lyricController.lyricNotifier.value;
-                    if (lyricModel != null && newIndex >= 0 && newIndex < lyricModel.lines.length) {
-                      // 更新高亮的歌词行
-                      _lyricController.activeIndexNotifiter.value = newIndex;
-                      // 延迟恢复到播放行
-                      Future.delayed(const Duration(seconds: 3), () {
-                        _lyricController.isSelectingNotifier.value = false;
-                      });
+                    if (lyricModel != null && lyricModel.lines.isNotEmpty) {
+                      // 计算新的索引
+                      int newIndex = currentIndex;
+                      // 根据滚动方向和速度调整
+                      if (dy > 0) {
+                        // 向下滚动
+                        newIndex = (currentIndex + 1).clamp(0, lyricModel.lines.length - 1);
+                      } else {
+                        // 向上滚动
+                        newIndex = (currentIndex - 1).clamp(0, lyricModel.lines.length - 1);
+                      }
+                      // 更新选中索引
+                      if (newIndex != currentIndex) {
+                        _lyricController.activeIndexNotifiter.value = newIndex;
+                      }
                     }
                   }
                 },
