@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:ui' as ui;
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/music_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/player_provider.dart';
@@ -36,6 +36,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
   bool _isTitleHovered = false;
   // 按钮悬停状态
   bool _isSortHovered = false;
+  // 拼音缓存
+  final Map<String, String> _pinyinCache = {};
 
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
@@ -81,17 +83,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
   // 搜索状态
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  Timer? _searchDebounceTimer; // 搜索防抖定时器
-
-  // 缓存排序后的专辑列表
-  List<String>? _cachedSortedAlbums;
-  String? _cachedSortBy;
-  bool? _cachedIsAscending;
-  String? _cachedSearchQuery;
-
-  // 图片缓存
-  final Map<String, Uint8List> _imageCache = {};
-  final Map<String, ui.Image> _decodedImageCache = {};
+  Timer? _searchDebounce;
+  Timer? _sortDebounce; // 排序节流
 
   @override
   void initState() {
@@ -102,6 +95,27 @@ class _AlbumsPageState extends State<AlbumsPage> {
         _scrollToAlbum(widget.navigateToAlbum!);
       });
     }
+  }
+
+// 获取拼音（带缓存）
+  String _getPinyin(String text) {
+    if (_pinyinCache.containsKey(text)) {
+      return _pinyinCache[text]!;
+    }
+    final pinyin =
+        PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE)
+            .toUpperCase();
+    _pinyinCache[text] = pinyin;
+    return pinyin;
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _sortDebounce?.cancel();
+    _searchController.dispose();
+    _pinyinCache.clear();
+    super.dispose();
   }
 
   /// 获取主题色的相反颜色
@@ -134,44 +148,15 @@ class _AlbumsPageState extends State<AlbumsPage> {
   /// 滚动到指定专辑
   void _scrollToAlbum(String albumName) {
     final musicProvider = Provider.of<MusicProvider>(context, listen: false);
-
-    // 使用缓存方法获取排序和过滤后的专辑列表
-    final sortedAlbums = _getSortedAlbums(musicProvider);
-
-    // 查找目标专辑的索引
-    final targetIndex = sortedAlbums.indexOf(albumName);
-    if (targetIndex != -1) {
-      _scrollToIndex(targetIndex);
-      // 展开该专辑
-      setState(() {
-        _expandedAlbums.add(albumName);
-      });
-    }
-  }
-
-  /// 获取排序和过滤后的专辑列表（带缓存）
-  List<String> _getSortedAlbums(MusicProvider musicProvider) {
-    // 检查缓存是否有效
-    if (_cachedSortedAlbums != null &&
-        _cachedSortBy == _sortBy &&
-        _cachedIsAscending == _isAscending &&
-        _cachedSearchQuery == _searchQuery) {
-      return _cachedSortedAlbums!;
-    }
-
-    // 获取专辑列表
-    List<String> sortedAlbums = List.from(musicProvider.albums);
+    final albums = musicProvider.albums;
 
     // 对专辑进行排序
+    List<String> sortedAlbums = List.from(albums);
     switch (_sortBy) {
       case 'name':
         sortedAlbums.sort((a, b) {
-          final aPinyin =
-              PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE)
-                  .toUpperCase();
-          final bPinyin =
-              PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE)
-                  .toUpperCase();
+          final aPinyin = _getPinyin(a);
+          final bPinyin = _getPinyin(b);
           return _isAscending
               ? aPinyin.compareTo(bPinyin)
               : bPinyin.compareTo(aPinyin);
@@ -198,13 +183,15 @@ class _AlbumsPageState extends State<AlbumsPage> {
       }).toList();
     }
 
-    // 更新缓存
-    _cachedSortedAlbums = sortedAlbums;
-    _cachedSortBy = _sortBy;
-    _cachedIsAscending = _isAscending;
-    _cachedSearchQuery = _searchQuery;
-
-    return sortedAlbums;
+    // 查找目标专辑的索引
+    final targetIndex = sortedAlbums.indexOf(albumName);
+    if (targetIndex != -1) {
+      _scrollToIndex(targetIndex);
+      // 展开该专辑
+      setState(() {
+        _expandedAlbums.add(albumName);
+      });
+    }
   }
 
   /// 格式化时长
@@ -232,17 +219,6 @@ class _AlbumsPageState extends State<AlbumsPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchDebounceTimer?.cancel();
-    // 清理图片缓存
-    _imageCache.clear();
-    _decodedImageCache.values.forEach((image) => image.dispose());
-    _decodedImageCache.clear();
-    super.dispose();
   }
 
   /// 显示音乐详情对话框
@@ -657,7 +633,12 @@ class _AlbumsPageState extends State<AlbumsPage> {
               border: OutlineInputBorder(),
             ),
             onChanged: (value) {
-              playlistName = value;
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                setState(() {
+                  _searchQuery = value;
+                });
+              });
             },
           ),
           actions: [
@@ -834,17 +815,12 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                 fontSize: 14,
                               ),
                               onChanged: (value) {
-                                // 取消之前的防抖定时器
-                                _searchDebounceTimer?.cancel();
-
-                                // 设置新的防抖定时器（300ms后执行搜索）
-                                _searchDebounceTimer = Timer(
-                                    const Duration(milliseconds: 300), () {
-                                  if (mounted) {
-                                    setState(() {
-                                      _searchQuery = value;
-                                    });
-                                  }
+                                _searchDebounce?.cancel();
+                                _searchDebounce = Timer(
+                                    const Duration(milliseconds: 200), () {
+                                  setState(() {
+                                    _searchQuery = value;
+                                  });
                                 });
                               },
                             ),
@@ -923,13 +899,20 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             ],
                           ).then((value) {
                             if (value != null) {
-                              setState(() {
-                                if (value == 'asc' || value == 'desc') {
-                                  _isAscending = value == 'asc';
-                                } else {
-                                  _sortBy = value;
-                                }
-                              });
+                              // 使用节流来避免频繁排序
+                              _sortDebounce?.cancel();
+                              _sortDebounce = Timer(
+                                const Duration(milliseconds: 100),
+                                () {
+                                  setState(() {
+                                    if (value == 'asc' || value == 'desc') {
+                                      _isAscending = value == 'asc';
+                                    } else {
+                                      _sortBy = value;
+                                    }
+                                  });
+                                },
+                              );
                             }
                           });
                         },
@@ -966,8 +949,42 @@ class _AlbumsPageState extends State<AlbumsPage> {
               builder: (context, musicProvider, child) {
                 final albums = musicProvider.albums;
 
-                // 使用缓存方法获取排序和过滤后的专辑列表
-                List<String> sortedAlbums = _getSortedAlbums(musicProvider);
+                // 对专辑进行排序
+                List<String> sortedAlbums = List.from(albums);
+                switch (_sortBy) {
+                  case 'name':
+                    sortedAlbums.sort((a, b) {
+                      final aPinyin = PinyinHelper.getPinyinE(a,
+                              format: PinyinFormat.WITHOUT_TONE)
+                          .toUpperCase();
+                      final bPinyin = PinyinHelper.getPinyinE(b,
+                              format: PinyinFormat.WITHOUT_TONE)
+                          .toUpperCase();
+                      return _isAscending
+                          ? aPinyin.compareTo(bPinyin)
+                          : bPinyin.compareTo(aPinyin);
+                    });
+                    break;
+                  case 'count':
+                    sortedAlbums.sort((a, b) {
+                      final aCount = musicProvider.getMusicByAlbum(a).length;
+                      final bCount = musicProvider.getMusicByAlbum(b).length;
+                      return _isAscending
+                          ? aCount.compareTo(bCount)
+                          : bCount.compareTo(aCount);
+                    });
+                    break;
+                  default:
+                    break;
+                }
+
+                // 根据搜索查询过滤专辑列表
+                if (_searchQuery.isNotEmpty) {
+                  final searchLower = _searchQuery.toLowerCase();
+                  sortedAlbums = sortedAlbums.where((album) {
+                    return album.toLowerCase().contains(searchLower);
+                  }).toList();
+                }
 
                 if (albums.isEmpty) {
                   return Center(
@@ -1014,6 +1031,10 @@ class _AlbumsPageState extends State<AlbumsPage> {
                     ScrollablePositionedList.builder(
                       itemScrollController: _scrollController,
                       itemCount: sortedAlbums.length + 1, // 添加一个额外的项作为底部占位
+                      // 性能优化配置
+                      addSemanticIndexes: false, // 禁用语义索引，提高滚动性能
+                      addAutomaticKeepAlives: true, // 保持Widget状态，避免重建
+                      addRepaintBoundaries: true, // 添加重绘边界，减少重绘范围
                       itemBuilder: (context, index) {
                         // 如果是最后一项，显示底部占位区域
                         if (index == sortedAlbums.length) {
@@ -1027,306 +1048,312 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             ? albumMusics.first.coverArt
                             : null;
 
-                        // 使用缓存的图片数据
-                        Widget buildCoverImage() {
-                          if (coverArt == null) {
-                            return const Icon(
-                              CupertinoIcons.music_albums,
-                              size: 56,
+                        return _AlbumItem(
+                          key: ValueKey('album_$index'),
+                          album: album,
+                          albumMusics: albumMusics,
+                          coverArt: coverArt,
+                          index: index,
+                          isSelected: _touchedIndex == index,
+                          isExpanded: _expandedAlbums.contains(album),
+                          onTap: () {
+                            setState(() {
+                              _touchedIndex =
+                                  _touchedIndex == index ? -1 : index;
+                              if (_expandedAlbums.contains(album)) {
+                                _expandedAlbums.remove(album);
+                              } else {
+                                _expandedAlbums.add(album);
+                              }
+                            });
+                          },
+                          accentColor: albumMusics.isNotEmpty &&
+                                  albumMusics.first.coverColor != null
+                              ? Color(albumMusics.first.coverColor!)
+                              : null,
+                          onPlaySong: (musicIndex) {
+                            final playerProvider = Provider.of<PlayerProvider>(
+                              context,
+                              listen: false,
                             );
-                          }
-
-                          return RepaintBoundary(
-                            child: Image.memory(
-                              coverArt,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
-                              gaplessPlayback: true,
-                              filterQuality: FilterQuality.low,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  CupertinoIcons.music_albums,
-                                  size: 56,
-                                );
-                              },
-                            ),
-                          );
-                        }
-
-                        return RepaintBoundary(
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _touchedIndex =
-                                      _touchedIndex == index ? -1 : index;
-                                });
-                              },
-                              onHover: (isHovering) {
-                                setState(() {
-                                  _hoveredIndex = isHovering ? index : -1;
-                                });
-                              },
-                              splashColor: Colors.transparent,
-                              hoverColor: Colors.transparent,
-                              child: MaskCard(
-                                isSelected: _touchedIndex == index,
-                                isHovered: _hoveredIndex == index,
-                                accentColor: albumMusics.isNotEmpty &&
-                                        albumMusics.first.coverColor != null
-                                    ? Color(albumMusics.first.coverColor!)
-                                    : null,
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: buildCoverImage(),
-                                      title: Text(
-                                        album,
-                                        style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                            playerProvider.playPlaylist(
+                              albumMusics,
+                              startIndex: musicIndex,
+                            );
+                          },
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                    leading: coverArt != null
+                                        ? Image.memory(
+                                            coverArt,
+                                            width: 56,
+                                            height: 56,
+                                            fit: BoxFit.cover,
+                                            gaplessPlayback: true, // 减少图片切换时的闪烁
+                                            filterQuality: FilterQuality.low, // 使用低质量滤镜提高性能
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Icon(
+                                                CupertinoIcons.music_albums,
+                                                size: 56,
+                                                color: Theme.of(context)
+                                                    .iconTheme
+                                                    .color
+                                                    ?.withOpacity(0.5),
+                                              );
+                                            },
+                                          )
+                                        : Icon(
+                                            CupertinoIcons.music_albums,
+                                            size: 56,
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color
+                                                ?.withOpacity(0.5),
+                                          ),
+                                    title: Text(
+                                      album,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      subtitle: Text(
-                                        '${albumMusics.length} 首歌曲',
-                                        style: TextStyle(
-                                          color: Theme.of(context)
-                                              .iconTheme
-                                              .color
-                                              ?.withOpacity(0.7),
-                                        ),
-                                      ),
-                                      trailing: AnimatedRotation(
-                                        turns: _expandedAlbums.contains(album)
-                                            ? 0.5
-                                            : 0,
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        child: Icon(
-                                          CupertinoIcons.chevron_down,
-                                          color: Theme.of(context)
-                                              .iconTheme
-                                              .color
-                                              ?.withOpacity(0.5),
-                                        ),
-                                      ),
-                                      onTap: () {
-                                        setState(() {
-                                          if (_expandedAlbums.contains(album)) {
-                                            _expandedAlbums.remove(album);
-                                          } else {
-                                            _expandedAlbums.add(album);
-                                          }
-                                          _touchedIndex =
-                                              _expandedAlbums.contains(album)
-                                                  ? index
-                                                  : -1;
-                                        });
-                                      },
                                     ),
-                                    AnimatedContainer(
+                                    subtitle: Text(
+                                      '${albumMusics.length} 首歌曲',
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .iconTheme
+                                            .color
+                                            ?.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    trailing: AnimatedRotation(
+                                      turns: _expandedAlbums.contains(album)
+                                          ? 0.5
+                                          : 0,
                                       duration:
                                           const Duration(milliseconds: 300),
-                                      curve: Curves.easeInOut,
-                                      height: _expandedAlbums.contains(album)
-                                          ? albumMusics.length * 72.0
-                                          : 0,
-                                      child: _expandedAlbums.contains(album)
-                                          ? ListView.builder(
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              shrinkWrap: true,
-                                              itemCount: albumMusics.length,
-                                              itemBuilder:
-                                                  (context, musicIndex) {
-                                                final music =
-                                                    albumMusics[musicIndex];
-                                                return ListTile(
-                                                  leading: music.coverArt !=
-                                                          null
-                                                      ? Image.memory(
-                                                          music.coverArt!,
-                                                          width: 48,
-                                                          height: 48,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (context, error,
-                                                                  stackTrace) {
-                                                            return Icon(
-                                                              CupertinoIcons
-                                                                  .music_note,
-                                                              size: 48,
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.5),
-                                                            );
-                                                          },
-                                                        )
-                                                      : Icon(
-                                                          CupertinoIcons
-                                                              .music_note,
-                                                          size: 48,
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.5),
-                                                        ),
-                                                  title: Text(
-                                                    music.title,
-                                                    style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .onSurface,
-                                                    ),
-                                                  ),
-                                                  subtitle: Text(
-                                                    music.artist,
-                                                    style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .iconTheme
-                                                          .color
-                                                          ?.withOpacity(0.7),
-                                                    ),
-                                                  ),
-                                                  onTap: () {
-                                                    final playerProvider =
-                                                        Provider.of<
-                                                                PlayerProvider>(
-                                                            context,
-                                                            listen: false);
-                                                    final musicList =
-                                                        musicProvider
-                                                            .getMusicByAlbum(
-                                                                album);
-                                                    final index = musicList
-                                                        .indexWhere((m) =>
-                                                            m.id == music.id);
-                                                    if (index != -1) {
-                                                      playerProvider
-                                                          .setPlaylist(
-                                                        musicList: musicList,
-                                                        source: PlaylistSource
-                                                            .album,
-                                                        identifier: album,
-                                                        startIndex: index,
-                                                      );
-                                                      playerProvider
-                                                          .playAtIndex(index);
-                                                    }
-                                                  },
-                                                  trailing: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        _formatDuration(
-                                                            music.duration),
-                                                        style: TextStyle(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.7),
-                                                          fontSize: 12,
-                                                        ),
+                                      child: Icon(
+                                        CupertinoIcons.chevron_down,
+                                        color: Theme.of(context)
+                                            .iconTheme
+                                            .color
+                                            ?.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        if (_expandedAlbums.contains(album)) {
+                                          _expandedAlbums.remove(album);
+                                        } else {
+                                          _expandedAlbums.add(album);
+                                        }
+                                        _touchedIndex =
+                                            _expandedAlbums.contains(album)
+                                                ? index
+                                                : -1;
+                                      });
+                                    },
+                                  ),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                    height: _expandedAlbums.contains(album)
+                                        ? albumMusics.length * 72.0
+                                        : 0,
+                                    // 性能优化：使用clipBehavior代替ClipRect
+                                    clipBehavior: Clip.none,
+                                    child: _expandedAlbums.contains(album)
+                                        ? ListView.builder(
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            shrinkWrap: true,
+                                            // 性能优化配置
+                                            addSemanticIndexes: false, // 禁用语义索引
+                                            addAutomaticKeepAlives: true, // 保持Widget状态
+                                            addRepaintBoundaries: true, // 添加重绘边界
+                                            itemCount: albumMusics.length,
+                                            itemBuilder: (context, musicIndex) {
+                                              final music =
+                                                  albumMusics[musicIndex];
+                                              return ListTile(
+                                                leading: music.coverArt != null
+                                                    ? Image.memory(
+                                                        music.coverArt!,
+                                                        width: 48,
+                                                        height: 48,
+                                                        fit: BoxFit.cover,
+                                                        gaplessPlayback: true, // 减少图片切换时的闪烁
+                                                        filterQuality: FilterQuality.low, // 使用低质量滤镜提高性能
+                                                        errorBuilder: (context,
+                                                            error, stackTrace) {
+                                                          return Icon(
+                                                            CupertinoIcons
+                                                                .music_note,
+                                                            size: 48,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .iconTheme
+                                                                .color
+                                                                ?.withOpacity(
+                                                                    0.5),
+                                                          );
+                                                        },
+                                                      )
+                                                    : Icon(
+                                                        CupertinoIcons
+                                                            .music_note,
+                                                        size: 48,
+                                                        color: Theme.of(context)
+                                                            .iconTheme
+                                                            .color
+                                                            ?.withOpacity(0.5),
                                                       ),
-                                                      const SizedBox(width: 8),
-                                                      Material(
-                                                        color:
-                                                            Colors.transparent,
-                                                        child: InkWell(
-                                                          onTap: () {
-                                                            _showMusicDetailDialog(
-                                                                music);
-                                                          },
-                                                          onHover:
-                                                              (isHovering) {
-                                                            setState(() {
+                                                title: Text(
+                                                  music.title,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
+                                                  ),
+                                                ),
+                                                subtitle: Text(
+                                                  music.artist,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .iconTheme
+                                                        .color
+                                                        ?.withOpacity(0.7),
+                                                  ),
+                                                ),
+                                                onTap: () {
+                                                  final playerProvider =
+                                                      Provider.of<
+                                                              PlayerProvider>(
+                                                          context,
+                                                          listen: false);
+                                                  final musicList =
+                                                      musicProvider
+                                                          .getMusicByAlbum(
+                                                              album);
+                                                  final index = musicList
+                                                      .indexWhere((m) =>
+                                                          m.id == music.id);
+                                                  if (index != -1) {
+                                                    playerProvider.setPlaylist(
+                                                      musicList: musicList,
+                                                      source:
+                                                          PlaylistSource.album,
+                                                      identifier: album,
+                                                      startIndex: index,
+                                                    );
+                                                    playerProvider
+                                                        .playAtIndex(index);
+                                                  }
+                                                },
+                                                trailing: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      _formatDuration(
+                                                          music.duration),
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .iconTheme
+                                                            .color
+                                                            ?.withOpacity(0.7),
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    MouseRegion(
+                                                      cursor: SystemMouseCursors
+                                                          .click,
+                                                      onEnter: (_) => setState(
+                                                          () =>
                                                               _detailHoveredIndex =
-                                                                  isHovering
-                                                                      ? index
-                                                                      : -1;
-                                                            });
-                                                          },
-                                                          splashColor: Colors
-                                                              .transparent,
-                                                          hoverColor: Colors
-                                                              .transparent,
-                                                          child:
-                                                              AnimatedContainer(
+                                                                  index),
+                                                      onExit: (_) => setState(() =>
+                                                          _detailHoveredIndex =
+                                                              -1),
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          _showMusicDetailDialog(
+                                                              music);
+                                                        },
+                                                        child:
+                                                            AnimatedContainer(
+                                                          duration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      200),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors
+                                                                .transparent,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: AnimatedScale(
+                                                            scale:
+                                                                _detailHoveredIndex ==
+                                                                        index
+                                                                    ? 1.2
+                                                                    : 1.0,
                                                             duration:
                                                                 const Duration(
                                                                     milliseconds:
                                                                         200),
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(8),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: Colors
-                                                                  .transparent,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8),
-                                                            ),
-                                                            child:
-                                                                AnimatedScale(
-                                                              scale:
-                                                                  _detailHoveredIndex ==
-                                                                          index
-                                                                      ? 1.2
-                                                                      : 1.0,
-                                                              duration:
-                                                                  const Duration(
-                                                                      milliseconds:
-                                                                          200),
-                                                              child: Icon(
-                                                                CupertinoIcons
-                                                                    .ellipsis,
-                                                                color: _detailHoveredIndex ==
-                                                                        index
-                                                                    ? Theme.of(
-                                                                            context)
-                                                                        .colorScheme
-                                                                        .primary
-                                                                    : Theme.of(
-                                                                            context)
-                                                                        .iconTheme
-                                                                        .color
-                                                                        ?.withOpacity(
-                                                                            0.5),
-                                                                size: 20,
-                                                              ),
+                                                            child: Icon(
+                                                              CupertinoIcons
+                                                                  .ellipsis,
+                                                              color: _detailHoveredIndex ==
+                                                                      index
+                                                                  ? Theme.of(
+                                                                          context)
+                                                                      .colorScheme
+                                                                      .primary
+                                                                  : Theme.of(
+                                                                          context)
+                                                                      .iconTheme
+                                                                      .color
+                                                                      ?.withOpacity(
+                                                                          0.5),
+                                                              size: 20,
                                                             ),
                                                           ),
                                                         ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            )
-                                          : const SizedBox.shrink(),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                ],
+                        )
                         );
                       },
+                                              ),
+                                                                              ],
+
+                        );
+
+                      },
                     ),
+                                        ),
+
                     // 字母索引栏（只在按名称排序时显示）
                     if (_sortBy == 'name')
                       Positioned(
@@ -1346,9 +1373,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                               final letter = alphabet[index];
                               // 检查是否有以该字母开头的专辑
                               final hasAlbums = sortedAlbums.any((album) {
-                                final pinyin = PinyinHelper.getPinyinE(album,
-                                        format: PinyinFormat.WITHOUT_TONE)
-                                    .toUpperCase();
+                                final pinyin = _getPinyin(album);
                                 if (letter == '0') {
                                   return RegExp(r'^[0-9]').hasMatch(album);
                                 } else if (letter == '#') {
@@ -1363,10 +1388,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                   // 滚动到对应字母的位置
                                   final targetIndex =
                                       sortedAlbums.indexWhere((album) {
-                                    final pinyin = PinyinHelper.getPinyinE(
-                                            album,
-                                            format: PinyinFormat.WITHOUT_TONE)
-                                        .toUpperCase();
+                                    final pinyin = _getPinyin(album);
                                     if (letter == '0') {
                                       return RegExp(r'^[0-9]').hasMatch(album);
                                     } else if (letter == '#') {
@@ -1408,11 +1430,200 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         ),
                       ),
                   ],
-                );
-              },
+                ),
+    ],
             ),
+  
+      
+    );
+  }
+}
+
+/// 专辑列表项Widget，使用const构造函数优化性能
+class _AlbumItem extends StatefulWidget {
+  final String album;
+  final List<dynamic> albumMusics;
+  final Uint8List? coverArt;
+  final int index;
+  final bool isSelected;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final Color? accentColor;
+  final Function(int) onPlaySong;
+
+  const _AlbumItem({
+    Key? key,
+    required this.album,
+    required this.albumMusics,
+    required this.coverArt,
+    required this.index,
+    required this.isSelected,
+    required this.isExpanded,
+    required this.onTap,
+    required this.accentColor,
+    required this.onPlaySong,
+  }) : super(key: key);
+
+  @override
+  State<_AlbumItem> createState() => _AlbumItemState();
+}
+
+class _AlbumItemState extends State<_AlbumItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: MaskCard(
+          isSelected: widget.isSelected,
+          isHovered: _isHovered,
+          accentColor: widget.accentColor,
+          child: Column(
+            children: [
+              ListTile(
+                leading: widget.coverArt != null
+                    ? Image.memory(
+                        widget.coverArt!,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        filterQuality: FilterQuality.low,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            CupertinoIcons.music_albums,
+                            size: 56,
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
+                          );
+                        },
+                      )
+                    : Icon(
+                        CupertinoIcons.music_albums,
+                        size: 56,
+                        color: Theme.of(context)
+                            .iconTheme
+                            .color
+                            ?.withOpacity(0.5),
+                      ),
+                title: Text(
+                  widget.album,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.titleLarge?.color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  '${widget.albumMusics.length} 首歌曲',
+                  style: TextStyle(
+                    color: Theme.of(context)
+                        .iconTheme
+                        .color
+                        ?.withOpacity(0.5),
+                    fontSize: 14,
+                  ),
+                ),
+                trailing: Icon(
+                  widget.isExpanded
+                      ? CupertinoIcons.chevron_up
+                      : CupertinoIcons.chevron_down,
+                  color: Theme.of(context)
+                      .iconTheme
+                      .color
+                      ?.withOpacity(0.5),
+                ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                height: widget.isExpanded
+                    ? widget.albumMusics.length * 72.0
+                    : 0,
+                clipBehavior: Clip.none,
+                child: widget.isExpanded
+                    ? ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        addSemanticIndexes: false,
+                        addAutomaticKeepAlives: true,
+                        addRepaintBoundaries: true,
+                        itemCount: widget.albumMusics.length,
+                        itemBuilder: (context, musicIndex) {
+                          final music = widget.albumMusics[musicIndex];
+                          return ListTile(
+                            leading: music.coverArt != null
+                                ? Image.memory(
+                                    music.coverArt!,
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.cover,
+                                    gaplessPlayback: true,
+                                    filterQuality: FilterQuality.low,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        CupertinoIcons.music_note,
+                                        size: 48,
+                                        color: Theme.of(context)
+                                            .iconTheme
+                                            .color
+                                            ?.withOpacity(0.3),
+                                      );
+                                    },
+                                  )
+                                : Icon(
+                                    CupertinoIcons.music_note,
+                                    size: 48,
+                                    color: Theme.of(context)
+                                        .iconTheme
+                                        .color
+                                        ?.withOpacity(0.3),
+                                  ),
+                            title: Text(
+                              music.title ?? '未知歌曲',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.color,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              music.artist ?? '未知艺术家',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.5),
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onTap: () {
+                              // 播放歌曲
+                              widget.onPlaySong(musicIndex);
+                            },
+                          );
+                        },
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
