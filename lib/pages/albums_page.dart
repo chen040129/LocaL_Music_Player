@@ -143,6 +143,24 @@ class _AlbumsPageState extends State<AlbumsPage> {
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
   }
+
+  /// 构建颜色圆点
+  Widget _buildColorDot(int? colorValue) {
+    if (colorValue == null) return const SizedBox.shrink();
+    final color = Color(colorValue);
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Theme.of(context).iconTheme.color?.withOpacity(0.2) ?? Colors.grey,
+          width: 1,
+        ),
+      ),
+    );
+  }
   
   @override
   void dispose() {
@@ -216,12 +234,49 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             ),
                           ),
                         ),
-                        Text(
-                          music.album,
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              music.album,
+                              style: TextStyle(
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (music.coverColor != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.coverColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.secondaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.secondaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.tertiaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.tertiaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),

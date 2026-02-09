@@ -538,7 +538,7 @@ class _SongsPageState extends State<SongsPage> {
                                         child: Icon(
                                           CupertinoIcons.ellipsis,
                                           color: _detailHoveredIndex == index
-                                              ? Theme.of(context).colorScheme.primary
+                                              ? animationColor
                                               : Theme.of(context).iconTheme.color?.withOpacity(0.5),
                                           size: 20,
                                         ),
@@ -877,6 +877,11 @@ class _SongsPageState extends State<SongsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // 获取歌曲主题色
+        final themeColor = music.coverColor != null
+            ? Color(music.coverColor!)
+            : Theme.of(context).colorScheme.primary;
+
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -938,12 +943,49 @@ class _SongsPageState extends State<SongsPage> {
                             ),
                           ),
                         ),
-                        Text(
-                          music.album,
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              music.album,
+                              style: TextStyle(
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (music.coverColor != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.coverColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.secondaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.secondaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.tertiaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.tertiaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),

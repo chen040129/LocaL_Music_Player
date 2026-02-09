@@ -214,12 +214,49 @@ class _ArtistsPageState extends State<ArtistsPage> {
                             ),
                           ),
                         ),
-                        Text(
-                          music.album,
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              music.album,
+                              style: TextStyle(
+                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (music.coverColor != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.coverColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.secondaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.secondaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (music.tertiaryColor != null) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(music.tertiaryColor!),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),

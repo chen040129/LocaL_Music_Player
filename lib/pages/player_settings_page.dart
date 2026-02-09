@@ -383,6 +383,18 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   ),
                   const Divider(height: 32),
                   _buildSliderTile(
+                    title: '流体球大小',
+                    subtitle: '调整流体背景中球的大小',
+                    icon: CupertinoIcons.circle,
+                    value: settings.fluidBubblesSize,
+                    min: 100.0,
+                    max: 1000.0,
+                    divisions: 90,
+                    label: '${settings.fluidBubblesSize.toInt()}',
+                    onChanged: (value) => settings.setFluidBubblesSize(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
                     title: '流体偏移量',
                     subtitle: '调整流体效果的偏移程度',
                     icon: CupertinoIcons.move,

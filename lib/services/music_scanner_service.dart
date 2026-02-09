@@ -27,6 +27,8 @@ class MusicInfo {
   int playCount;
   Map<String, int> playHistory; // 记录每天的播放次数，格式：{'2024-01-15': 3}
   final int? coverColor; // 封面主要颜色，使用 ARGB 格式存储
+  final int? secondaryColor; // 封面次要颜色，使用 ARGB 格式存储
+  final int? tertiaryColor; // 封面更次要颜色，使用 ARGB 格式存储
   int actualPlayDuration; // 实际播放时长（秒），用于统计总播放时长
 
   MusicInfo({
@@ -43,6 +45,8 @@ class MusicInfo {
     this.fileSize = 0,
     this.playCount = 0,
     this.coverColor,
+    this.secondaryColor,
+    this.tertiaryColor,
     Map<String, int>? playHistory,
     this.actualPlayDuration = 0,
   }) : playHistory = playHistory ?? {};
@@ -63,6 +67,8 @@ class MusicInfo {
       'playCount': playCount,
       'playHistory': playHistory,
       'coverColor': coverColor,
+      'secondaryColor': secondaryColor,
+      'tertiaryColor': tertiaryColor,
       'actualPlayDuration': actualPlayDuration,
     };
   }
@@ -89,6 +95,8 @@ class MusicInfo {
           ? Map<String, int>.from(json['playHistory'])
           : null,
       coverColor: json['coverColor'],
+      secondaryColor: json['secondaryColor'],
+      tertiaryColor: json['tertiaryColor'],
       actualPlayDuration: json['actualPlayDuration'] ?? 0,
     );
   }
@@ -130,7 +138,7 @@ class MusicScannerService {
   }
 
   /// 异步提取封面颜色
-  Future<int?> _extractCoverColor(Uint8List coverArt) async {
+  Future<Map<String, int?>> _extractCoverColor(Uint8List coverArt) async {
     try {
       // 解码图片并缩小尺寸以提高性能
       final codec = await ui.instantiateImageCodec(
@@ -143,7 +151,11 @@ class MusicScannerService {
 
       // 将图像转换为字节数组
       final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      if (byteData == null) return null;
+      if (byteData == null) return {
+        'coverColor': null,
+        'secondaryColor': null,
+        'tertiaryColor': null,
+      };
 
       final pixels = byteData.buffer.asUint8List();
       final width = image.width;
@@ -169,7 +181,7 @@ class MusicScannerService {
       ];
       
       // 在每个采样点周围采样
-      const sampleRadius = 3; // 采样半径
+      const sampleRadius = 10; // 采样半径
       for (final (centerX, centerY) in samplePoints) {
         for (int y = centerY - sampleRadius; y <= centerY + sampleRadius; y++) {
           for (int x = centerX - sampleRadius; x <= centerX + sampleRadius; x++) {
@@ -191,18 +203,65 @@ class MusicScannerService {
         }
       }
 
-      // 找出出现次数最多的颜色
+      // 找出出现次数最多的三个颜色
       if (colorCounts.isNotEmpty) {
-        final dominantColor = colorCounts.entries
-            .reduce((a, b) => a.value > b.value ? a : b)
-            .key;
-        return dominantColor;
+        final sortedColors = colorCounts.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+        // 提取三个不同的颜色，确保颜色之间有足够的差异
+        final List<int> distinctColors = [];
+        final minColorDistance = 30; // 颜色差异阈值
+
+        for (final entry in sortedColors) {
+          if (distinctColors.length >= 3) break;
+
+          final color = entry.key;
+          final r = (color >> 16) & 0xFF;
+          final g = (color >> 8) & 0xFF;
+          final b = color & 0xFF;
+
+          // 检查颜色是否与已有颜色有足够差异
+          bool isDistinct = true;
+          for (final existingColor in distinctColors) {
+            final er = (existingColor >> 16) & 0xFF;
+            final eg = (existingColor >> 8) & 0xFF;
+            final eb = existingColor & 0xFF;
+
+            final distance = ((r - er).abs() + (g - eg).abs() + (b - eb).abs()) / 3;
+            if (distance < minColorDistance) {
+              isDistinct = false;
+              break;
+            }
+          }
+
+          if (isDistinct) {
+            distinctColors.add(color);
+          }
+        }
+
+        final coverColor = distinctColors.isNotEmpty ? distinctColors[0] : null;
+        final secondaryColor = distinctColors.length > 1 ? distinctColors[1] : null;
+        final tertiaryColor = distinctColors.length > 2 ? distinctColors[2] : null;
+
+        return {
+          'coverColor': coverColor,
+          'secondaryColor': secondaryColor,
+          'tertiaryColor': tertiaryColor,
+        };
       }
 
-      return null;
+      return {
+        'coverColor': null,
+        'secondaryColor': null,
+        'tertiaryColor': null,
+      };
     } catch (e) {
       debugPrint('提取封面颜色失败: $e');
-      return null;
+      return {
+        'coverColor': null,
+        'secondaryColor': null,
+        'tertiaryColor': null,
+      };
     }
   }
 
@@ -278,8 +337,8 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
   /// 异步提取封面颜色并更新音乐信息
   Future<void> _extractCoverColorAsync(String musicId, Uint8List coverArt) async {
     try {
-      final color = await _extractCoverColor(coverArt);
-      if (color != null) {
+      final colors = await _extractCoverColor(coverArt);
+      if (colors['coverColor'] != null) {
         // 查找并更新音乐信息
         final index = _scannedMusic.indexWhere((m) => m.id == musicId);
         if (index != -1) {
@@ -297,7 +356,9 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
             fileSize: _scannedMusic[index].fileSize,
             playCount: _scannedMusic[index].playCount,
             playHistory: _scannedMusic[index].playHistory,
-            coverColor: color,
+            coverColor: colors['coverColor'],
+            secondaryColor: colors['secondaryColor'],
+            tertiaryColor: colors['tertiaryColor'],
           );
           _scannedMusic[index] = updatedMusic;
           debugPrint('成功提取封面颜色: ${updatedMusic.title}');
@@ -306,7 +367,9 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
           if (!_coverColorController.isClosed) {
             _coverColorController.add({
               'musicId': musicId,
-              'coverColor': color,
+              'coverColor': colors['coverColor'],
+              'secondaryColor': colors['secondaryColor'],
+              'tertiaryColor': colors['tertiaryColor'],
             });
           }
         }
@@ -442,9 +505,13 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
 
       
       // 同步提取封面颜色
-      int? coverColor;
+      Map<String, int?> colors = {
+        'coverColor': null,
+        'secondaryColor': null,
+        'tertiaryColor': null,
+      };
       if (musicInfo.coverArt != null) {
-        coverColor = await _extractCoverColor(musicInfo.coverArt!);
+        colors = await _extractCoverColor(musicInfo.coverArt!);
       }
 
       // 创建带有封面颜色的 MusicInfo
@@ -462,11 +529,13 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
         fileSize: musicInfo.fileSize,
         playCount: musicInfo.playCount,
         playHistory: musicInfo.playHistory,
-        coverColor: coverColor,
+        coverColor: colors['coverColor'],
+        secondaryColor: colors['secondaryColor'],
+        tertiaryColor: colors['tertiaryColor'],
       );
 
       _scannedMusic.add(musicInfoWithColor);
-      debugPrint('成功添加音乐: ${musicInfo.title} ${coverColor != null ? '(封面颜色: $coverColor)' : ''}');
+      debugPrint('成功添加音乐: ${musicInfo.title} ${colors['coverColor'] != null ? '(封面颜色: ${colors['coverColor']})' : ''}');
     } catch (e) {
       debugPrint('处理音乐文件失败: $filePath, 错误: $e');
     }
