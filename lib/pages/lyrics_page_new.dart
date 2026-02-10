@@ -877,7 +877,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                         // 次级控制行（音量、播放列表、定时播放、循环模式）
                                                         SizedBox(
                                                           width: 400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
-                                                          height: 20, // 固定高度，防止音量控制条展开时上方构件移动
+                                                          height: 36, // 增加高度以容纳音量键和音量控制条
                                                           child: Row(
                                                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                             children: [
@@ -887,6 +887,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                 onExit: (_) => setState(() => _showVolumeControl = false),
                                                                 child: Row(
                                                                   mainAxisSize: MainAxisSize.min,
+                                                                  crossAxisAlignment: CrossAxisAlignment.center,
                                                                   children: [
                                                                     Listener(
                                                                       onPointerSignal: (pointerSignal) {
@@ -919,30 +920,35 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           }
                                                                           return KeyEventResult.ignored;
                                                                         },
-                                                                        child: IconButton(
-                                                                          splashColor: Colors.transparent,
-                                                                          highlightColor: Colors.transparent,
-                                                                          hoverColor: Colors.transparent,
-                                                                          icon: AnimatedScale(
-                                                                            scale: _showVolumeControl ? _hoverScale : _normalScale,
-                                                                            duration: _animationDuration,
-                                                                            child: Icon(
-                                                                              _volume > 0
-                                                                                  ? CupertinoIcons.speaker_2_fill
-                                                                                  : CupertinoIcons.speaker_slash,
-                                                                              color: _showVolumeControl
-                                                                                  ? colorScheme.primary
-                                                                                  : colorScheme.onSurface.withOpacity(0.7),
+                                                                        child: Container(
+                                                                          alignment: Alignment.center,
+                                                                          height: 36, // 与右侧元素的高度一致（8*2 padding + 20 icon size）
+                                                                          child: IconButton(
+                                                                            splashColor: Colors.transparent,
+                                                                            highlightColor: Colors.transparent,
+                                                                            hoverColor: Colors.transparent,
+                                                                            icon: AnimatedScale(
+                                                                              scale: _showVolumeControl ? _hoverScale : _normalScale,
+                                                                              duration: _animationDuration,
+                                                                              child: Icon(
+                                                                                _volume > 0
+                                                                                    ? CupertinoIcons.speaker_2_fill
+                                                                                    : CupertinoIcons.speaker_slash,
+                                                                                color: _showVolumeControl
+                                                                                    ? colorScheme.primary
+                                                                                    : colorScheme.onSurface.withOpacity(0.7),
+                                                                                size: 20, // 与右侧元素的图标大小一致
+                                                                              ),
                                                                             ),
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                _volume = _volume > 0 ? 0.0 : 0.7;
+                                                                              });
+                                                                              playerProvider.setVolume(_volume);
+                                                                            },
+                                                                            padding: EdgeInsets.zero,
+                                                                            constraints: const BoxConstraints(),
                                                                           ),
-                                                                          onPressed: () {
-                                                                            setState(() {
-                                                                              _volume = _volume > 0 ? 0.0 : 0.7;
-                                                                            });
-                                                                            playerProvider.setVolume(_volume);
-                                                                          },
-                                                                          padding: EdgeInsets.zero,
-                                                                          constraints: const BoxConstraints(),
                                                                         ),
                                                                       ),
                                                                     ),
