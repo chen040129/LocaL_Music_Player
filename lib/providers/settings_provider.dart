@@ -11,10 +11,30 @@ enum SettingsCategory {
 
 /// 歌曲页面背景类型枚举
 enum SongPageBackgroundType {
+  transparent,  // 透明背景
   fluid,        // 流体背景
   blur,         // 模糊背景
   gradient,     // 渐变背景
   solid,        // 纯色背景
+  customImage,  // 自定义图片背景
+}
+
+/// 图片布局方式枚举
+enum ImageFitType {
+  fill,         // 填充（拉伸）
+  cover,        // 覆盖（保持比例）
+  contain,      // 包含（保持比例）
+  fitWidth,     // 适应宽度
+  fitHeight,    // 适应高度
+  none,         // 原始大小
+}
+
+/// 用户界面背景类型枚举
+enum UIBackgroundType {
+  normal,       // 默认背景
+  fluid,        // 流体背景（当前播放歌曲）
+  gradient,     // 渐变背景（当前播放歌曲）
+  customImage,  // 自定义图片背景
 }
 
 /// 渐变类型枚举
@@ -41,6 +61,14 @@ class SettingsProvider with ChangeNotifier {
   double _borderRadius = 8.0;          // 主页面边框弧度值
   double _windowBorderRadius = 12.0;   // 窗口边框弧度值
   double _windowOpacity = 0.85;        // 窗口背景透明度
+  double _cardOpacity = 0.85;           // 音乐卡片透明度
+  UIBackgroundType _uiBackgroundType = UIBackgroundType.normal;  // 用户界面背景类型
+  String _uiCustomImagePath = '';       // 用户界面自定义背景图片路径
+  ImageFitType _uiImageFitType = ImageFitType.fill;  // 用户界面自定义背景图片布局方式
+  bool _syncBackgroundImages = false;  // 是否同步用户界面和歌曲界面的背景图片
+  bool _syncGradientSettings = false;  // 是否同步用户界面和歌曲界面的渐变设置
+  GradientType _uiGradientType = GradientType.static;  // 用户界面渐变类型
+  double _uiGradientSongColorRatio = 0.7;  // 用户界面渐变中歌曲主题色占比（0.0-1.0）
 
   // 歌词设置
   LyricsAlignment _lyricsAlignment = LyricsAlignment.center;  // 歌词对齐方式
@@ -67,6 +95,8 @@ class SettingsProvider with ChangeNotifier {
   double _blurAmount = 30.0;          // 模糊程度
   double _pageOpacity = 1.0;          // 页面透明度
   double _gradientSongColorRatio = 0.7;  // 渐变中歌曲主题色占比（0.0-1.0）
+  String _customImagePath = '';       // 自定义背景图片路径
+  ImageFitType _imageFitType = ImageFitType.cover;  // 图片布局方式
 
   // 流体背景参数
   double _fluidBubblesSize = 400.0;          // 流体气泡大小
@@ -93,6 +123,14 @@ class SettingsProvider with ChangeNotifier {
   double get borderRadius => _borderRadius;
   double get windowBorderRadius => _windowBorderRadius;
   double get windowOpacity => _windowOpacity;
+  double get cardOpacity => _cardOpacity;
+  UIBackgroundType get uiBackgroundType => _uiBackgroundType;
+  String get uiCustomImagePath => _uiCustomImagePath;
+  ImageFitType get uiImageFitType => _uiImageFitType;
+  bool get syncBackgroundImages => _syncBackgroundImages;
+  bool get syncGradientSettings => _syncGradientSettings;
+  GradientType get uiGradientType => _uiGradientType;
+  double get uiGradientSongColorRatio => _uiGradientSongColorRatio;
 
   // 歌词设置 getters
   LyricsAlignment get lyricsAlignment => _lyricsAlignment;
@@ -110,6 +148,8 @@ class SettingsProvider with ChangeNotifier {
   double get blurAmount => _blurAmount;
   double get pageOpacity => _pageOpacity;
   double get gradientSongColorRatio => _gradientSongColorRatio;
+  String get customImagePath => _customImagePath;
+  ImageFitType get imageFitType => _imageFitType;
 
   // 流体背景参数 getters
   double get fluidBubblesSize => _fluidBubblesSize;
@@ -135,6 +175,17 @@ class SettingsProvider with ChangeNotifier {
     _borderRadius = prefs.getDouble('border_radius') ?? 8.0;
     _windowBorderRadius = prefs.getDouble('window_border_radius') ?? 12.0;
     _windowOpacity = prefs.getDouble('window_opacity') ?? 0.85;
+    _cardOpacity = prefs.getDouble('card_opacity') ?? 0.85;
+    final uiBackgroundTypeIndex = prefs.getInt('ui_background_type') ?? 0;
+    _uiBackgroundType = UIBackgroundType.values[uiBackgroundTypeIndex];
+    _uiCustomImagePath = prefs.getString('ui_custom_image_path') ?? '';
+    final uiImageFitTypeIndex = prefs.getInt('ui_image_fit_type') ?? 0;
+    _uiImageFitType = ImageFitType.values[uiImageFitTypeIndex];
+    _syncBackgroundImages = prefs.getBool('sync_background_images') ?? false;
+    _syncGradientSettings = prefs.getBool('sync_gradient_settings') ?? false;
+    final uiGradientTypeIndex = prefs.getInt('ui_gradient_type') ?? 0;
+    _uiGradientType = GradientType.values[uiGradientTypeIndex];
+    _uiGradientSongColorRatio = prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
 
     // 加载歌词设置
     final alignmentIndex = prefs.getInt('lyrics_alignment') ?? 1;
@@ -164,6 +215,9 @@ class SettingsProvider with ChangeNotifier {
     _blurAmount = prefs.getDouble('blur_amount') ?? 30.0;
     _pageOpacity = prefs.getDouble('page_opacity') ?? 1.0;
     _gradientSongColorRatio = prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
+    _customImagePath = prefs.getString('custom_image_path') ?? '';
+    final imageFitTypeIndex = prefs.getInt('image_fit_type') ?? 1;
+    _imageFitType = ImageFitType.values[imageFitTypeIndex];
 
     // 加载流体背景参数
     _fluidBubblesSize = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
@@ -235,6 +289,76 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setWindowOpacity(double value) async {
     _windowOpacity = value.clamp(0.3, 1.0);
     await _saveSetting('window_opacity', _windowOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setCardOpacity(double value) async {
+    _cardOpacity = value.clamp(0.3, 1.0);
+    await _saveSetting('card_opacity', _cardOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setUIBackgroundType(UIBackgroundType value) async {
+    _uiBackgroundType = value;
+    await _saveSetting('ui_background_type', _uiBackgroundType.index);
+    notifyListeners();
+  }
+
+  Future<void> setUICustomImagePath(String value) async {
+    _uiCustomImagePath = value;
+    await _saveSetting('ui_custom_image_path', _uiCustomImagePath);
+    // 如果启用了同步，同时更新歌曲界面的背景图片
+    if (_syncBackgroundImages) {
+      _customImagePath = value;
+      await _saveSetting('custom_image_path', _customImagePath);
+    }
+    notifyListeners();
+  }
+
+  Future<void> setSyncBackgroundImages(bool value) async {
+    _syncBackgroundImages = value;
+    await _saveSetting('sync_background_images', _syncBackgroundImages);
+    notifyListeners();
+  }
+
+  Future<void> setSyncGradientSettings(bool value) async {
+    _syncGradientSettings = value;
+    await _saveSetting('sync_gradient_settings', _syncGradientSettings);
+    // 如果启用同步，将用户界面的渐变设置同步到歌曲页面
+    if (value) {
+      _gradientType = _uiGradientType;
+      await _saveSetting('gradient_type', _gradientType.index);
+      _gradientSongColorRatio = _uiGradientSongColorRatio;
+      await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
+    }
+    notifyListeners();
+  }
+
+  Future<void> setUIImageFitType(ImageFitType value) async {
+    _uiImageFitType = value;
+    await _saveSetting('ui_image_fit_type', _uiImageFitType.index);
+    notifyListeners();
+  }
+
+  Future<void> setUIGradientType(GradientType value) async {
+    _uiGradientType = value;
+    await _saveSetting('ui_gradient_type', _uiGradientType.index);
+    // 如果启用了同步，同时更新歌曲页面的渐变类型
+    if (_syncGradientSettings) {
+      _gradientType = value;
+      await _saveSetting('gradient_type', _gradientType.index);
+    }
+    notifyListeners();
+  }
+
+  Future<void> setUIGradientSongColorRatio(double value) async {
+    _uiGradientSongColorRatio = value.clamp(0.0, 1.0);
+    await _saveSetting('ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
+    // 如果启用了同步，同时更新歌曲页面的歌曲主题色占比
+    if (_syncGradientSettings) {
+      _gradientSongColorRatio = value;
+      await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
+    }
     notifyListeners();
   }
 
@@ -336,6 +460,11 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setGradientType(GradientType value) async {
     _gradientType = value;
     await _saveSetting('gradient_type', value.index);
+    // 如果启用了同步，同时更新用户界面的渐变类型
+    if (_syncGradientSettings) {
+      _uiGradientType = value;
+      await _saveSetting('ui_gradient_type', _uiGradientType.index);
+    }
     notifyListeners();
   }
 
@@ -360,6 +489,28 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setGradientSongColorRatio(double value) async {
     _gradientSongColorRatio = value.clamp(0.0, 1.0);
     await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
+    // 如果启用了同步，同时更新用户界面的歌曲主题色占比
+    if (_syncGradientSettings) {
+      _uiGradientSongColorRatio = value;
+      await _saveSetting('ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
+    }
+    notifyListeners();
+  }
+
+  Future<void> setCustomImagePath(String value) async {
+    _customImagePath = value;
+    await _saveSetting('custom_image_path', _customImagePath);
+    // 如果启用了同步，同时更新用户界面的背景图片
+    if (_syncBackgroundImages) {
+      _uiCustomImagePath = value;
+      await _saveSetting('ui_custom_image_path', _uiCustomImagePath);
+    }
+    notifyListeners();
+  }
+
+  Future<void> setImageFitType(ImageFitType value) async {
+    _imageFitType = value;
+    await _saveSetting('image_fit_type', _imageFitType.index);
     notifyListeners();
   }
 
@@ -407,6 +558,7 @@ class SettingsProvider with ChangeNotifier {
     await prefs.remove('border_radius');
     await prefs.remove('window_border_radius');
     await prefs.remove('window_opacity');
+    await prefs.remove('card_opacity');
 
     // 重置歌词设置
     await prefs.remove('lyrics_alignment');

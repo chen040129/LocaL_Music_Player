@@ -94,10 +94,7 @@ class _MaskCardState extends State<MaskCard>
               margin: widget.margin ??
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surface
-                    .withOpacity(settings.windowOpacity),
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 boxShadow: [
                   // 柔和的阴影，使边界更模糊
@@ -129,6 +126,19 @@ class _MaskCardState extends State<MaskCard>
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 child: Stack(
                   children: [
+                    // 半透明蒙版层
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surface
+                              .withOpacity(settings.cardOpacity),
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                        ),
+                      ),
+                    ),
                     // 歌曲主题色蒙罩层（放在底部，不阻挡交互）
                     if (isActive)
                       Positioned.fill(

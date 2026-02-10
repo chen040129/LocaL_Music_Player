@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 
 class PlayerSettingsPage extends StatefulWidget {
@@ -107,6 +108,7 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
       builder: (context, settings, child) {
         return Card(
           elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -118,25 +120,25 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 显示专辑封面开关
-                _buildSwitchTile(
-                  title: '显示专辑封面',
-                  subtitle: '在播放器中显示专辑封面',
-                  icon: CupertinoIcons.music_albums,
-                  value: settings.showAlbumArt,
-                  onChanged: (value) => settings.setShowAlbumArt(value),
-                ),
-                const Divider(height: 32),
+                // TODO: 显示专辑封面开关（后续版本实现）
+                // _buildSwitchTile(
+                //   title: '显示专辑封面',
+                //   subtitle: '在播放器中显示专辑封面',
+                //   icon: CupertinoIcons.music_albums,
+                //   value: settings.showAlbumArt,
+                //   onChanged: (value) => settings.setShowAlbumArt(value),
+                // ),
+                // const Divider(height: 32),
 
-                // 播放器中显示歌词开关
-                _buildSwitchTile(
-                  title: '播放器中显示歌词',
-                  subtitle: '在播放器界面中显示歌词',
-                  icon: CupertinoIcons.music_note,
-                  value: settings.showLyricsInPlayer,
-                  onChanged: (value) => settings.setShowLyricsInPlayer(value),
-                ),
-                const Divider(height: 32),
+                // TODO: 播放器中显示歌词开关（后续版本实现）
+                // _buildSwitchTile(
+                //   title: '播放器中显示歌词',
+                //   subtitle: '在播放器界面中显示歌词',
+                //   icon: CupertinoIcons.music_note,
+                //   value: settings.showLyricsInPlayer,
+                //   onChanged: (value) => settings.setShowLyricsInPlayer(value),
+                // ),
+                // const Divider(height: 32),
 
                 // 自动播放下一首开关
                 _buildSwitchTile(
@@ -155,16 +157,6 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   icon: CupertinoIcons.bookmark,
                   value: settings.savePlayProgress,
                   onChanged: (value) => settings.setSavePlayProgress(value),
-                ),
-                const Divider(height: 32),
-
-                // 显示播放次数开关
-                _buildSwitchTile(
-                  title: '显示播放次数',
-                  subtitle: '在歌曲列表中显示播放次数',
-                  icon: CupertinoIcons.chart_bar,
-                  value: settings.showPlayCount,
-                  onChanged: (value) => settings.setShowPlayCount(value),
                 ),
                 const Divider(height: 32),
 
@@ -367,6 +359,7 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
       builder: (context, settings, child) {
         return Card(
           elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -460,6 +453,20 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                 if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
                   _buildGradientTypeTile(context, settings),
                   const Divider(height: 32),
+                  SwitchListTile(
+                    title: const Text('同步渐变设置'),
+                    subtitle: const Text('与用户界面的渐变设置保持一致'),
+                    value: settings.syncGradientSettings,
+                    onChanged: (value) {
+                      settings.setSyncGradientSettings(value);
+                      // 如果启用同步，立即同步当前设置
+                      if (value) {
+                        settings.setGradientType(settings.gradientType);
+                        settings.setGradientSongColorRatio(settings.gradientSongColorRatio);
+                      }
+                    },
+                  ),
+                  const Divider(height: 32),
                   _buildSliderTile(
                     title: '歌曲主题色占比',
                     subtitle: '调整渐变中歌曲主题色的占比',
@@ -474,18 +481,7 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                   const Divider(height: 32),
                 ],
                 
-                // 页面透明度
-                _buildSliderTile(
-                  title: '页面透明度',
-                  subtitle: '调整歌曲页面的透明度',
-                  icon: CupertinoIcons.eye,
-                  value: settings.pageOpacity,
-                  min: 0.3,
-                  max: 1.0,
-                  divisions: 70,
-                  label: '${(settings.pageOpacity * 100).toInt()}%',
-                  onChanged: (value) => settings.setPageOpacity(value),
-                ),
+
               ],
             ),
           ),
@@ -543,6 +539,11 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
         SegmentedButton<SongPageBackgroundType>(
           segments: const [
             ButtonSegment(
+              value: SongPageBackgroundType.transparent,
+              label: Text('透明'),
+              icon: Icon(CupertinoIcons.eye_slash),
+            ),
+            ButtonSegment(
               value: SongPageBackgroundType.fluid,
               label: Text('流体'),
               icon: Icon(CupertinoIcons.waveform_path),
@@ -562,12 +563,151 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
               label: Text('纯色'),
               icon: Icon(CupertinoIcons.circle_fill),
             ),
+            ButtonSegment(
+              value: SongPageBackgroundType.customImage,
+              label: Text('自定义图片'),
+              icon: Icon(CupertinoIcons.photo_on_rectangle),
+            ),
           ],
           selected: {settings.songPageBackgroundType},
           onSelectionChanged: (Set<SongPageBackgroundType> newSelection) {
             settings.setSongPageBackgroundType(newSelection.first);
           },
         ),
+        // 透明背景类型的设置
+        if (settings.songPageBackgroundType == SongPageBackgroundType.transparent)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 页面透明度滑块
+                _buildSliderTile(
+                  title: '页面透明度',
+                  subtitle: '调整歌曲页面的透明度',
+                  icon: CupertinoIcons.eye,
+                  value: settings.pageOpacity,
+                  min: 0.3,
+                  max: 1.0,
+                  divisions: 70,
+                  label: '${(settings.pageOpacity * 100).toInt()}%',
+                  onChanged: (value) => settings.setPageOpacity(value),
+                ),
+              ],
+            ),
+          ),
+        // 自定义图片路径选择
+        if (settings.songPageBackgroundType == SongPageBackgroundType.customImage)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: '自定义图片路径',
+                      hintText: '请输入图片路径',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    controller: TextEditingController(text: settings.customImagePath),
+                    onChanged: (value) {
+                      settings.setCustomImagePath(value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.folder),
+                  onPressed: () async {
+                    FilePickerResult? result = await FilePicker.platform.pickFiles(
+                      type: FileType.image,
+                      allowMultiple: false,
+                    );
+                    if (result != null && result.files.single.path != null) {
+                      settings.setCustomImagePath(result.files.single.path!);
+                    }
+                  },
+                  tooltip: '选择图片',
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.arrow_left_square),
+                  onPressed: () async {
+                    // 将歌词页面背景图片同步到用户界面
+                    if (settings.customImagePath.isNotEmpty) {
+                      await settings.setUICustomImagePath(settings.customImagePath);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('已将背景图片同步到用户界面'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('请先选择一张图片'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  tooltip: '同步到用户界面',
+                ),
+              ],
+            ),
+          ),
+        // 图片布局方式选择
+        if (settings.songPageBackgroundType == SongPageBackgroundType.customImage)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('图片布局方式'),
+                const SizedBox(height: 8),
+                SegmentedButton<ImageFitType>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ImageFitType.fill,
+                      label: Text('拉伸'),
+                      icon: Icon(CupertinoIcons.arrow_up_right),
+                    ),
+                    ButtonSegment(
+                      value: ImageFitType.cover,
+                      label: Text('覆盖'),
+                      icon: Icon(CupertinoIcons.rectangle),
+                    ),
+                    ButtonSegment(
+                      value: ImageFitType.contain,
+                      label: Text('包含'),
+                      icon: Icon(CupertinoIcons.square_list),
+                    ),
+                    ButtonSegment(
+                      value: ImageFitType.fitWidth,
+                      label: Text('适应宽度'),
+                      icon: Icon(CupertinoIcons.arrow_left_right),
+                    ),
+                    ButtonSegment(
+                      value: ImageFitType.fitHeight,
+                      label: Text('适应高度'),
+                      icon: Icon(CupertinoIcons.arrow_up_down),
+                    ),
+                    ButtonSegment(
+                      value: ImageFitType.none,
+                      label: Text('原始'),
+                      icon: Icon(CupertinoIcons.photo),
+                    ),
+                  ],
+                  selected: {settings.imageFitType},
+                  onSelectionChanged: (Set<ImageFitType> newSelection) {
+                    settings.setImageFitType(newSelection.first);
+                  },
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

@@ -86,6 +86,20 @@ class _SongsPageState extends State<SongsPage> {
   final Map<String, ui.Image> _decodedImageCache = {};
 
   @override
+  void initState() {
+    super.initState();
+    // 清除缓存，确保使用最新数据
+    _clearCache();
+  }
+
+  void _clearCache() {
+    _cachedSortedSongs = null;
+    _cachedSortBy = null;
+    _cachedIsAscending = null;
+    _cachedSearchQuery = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.transparent,
@@ -401,12 +415,15 @@ class _SongsPageState extends State<SongsPage> {
           Expanded(
             child: Consumer<MusicProvider>(
               builder: (context, musicProvider, child) {
+                // 如果正在加载，显示加载提示
+                if (musicProvider.isLoading) {
+                  return const Center(
+                    child: Text('正在加载歌曲库...'),
+                  );
+                }
+
                 // 使用缓存方法获取排序和过滤后的歌曲列表
                 final musicList = _getSortedSongs(musicProvider);
-
-                musicList.sort((a, b) => _isAscending
-                    ? a.duration.compareTo(b.duration)
-                    : b.duration.compareTo(a.duration));
 
                 if (musicList.isEmpty) {
                   return Center(
@@ -971,10 +988,12 @@ class _SongsPageState extends State<SongsPage> {
   /// 获取排序和过滤后的歌曲列表（带缓存）
   List<MusicInfo> _getSortedSongs(MusicProvider musicProvider) {
     // 检查缓存是否有效
+    // 添加对musicList长度的检查，确保数据源没有变化
     if (_cachedSortedSongs != null &&
         _cachedSortBy == _sortBy &&
         _cachedIsAscending == _isAscending &&
-        _cachedSearchQuery == _searchQuery) {
+        _cachedSearchQuery == _searchQuery &&
+        _cachedSortedSongs!.length == musicProvider.musicList.length) {
       return _cachedSortedSongs!;
     }
 

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
+import '../services/storage_service.dart';
 import 'package:path/path.dart' as path;
 import 'music_provider.dart';
 import 'settings_provider.dart';
@@ -30,6 +31,7 @@ class PlayerProvider with ChangeNotifier {
   final AudioPlayer _audioPlayer = AudioPlayer();
   MusicProvider? _musicProvider; // 添加MusicProvider引用
   SettingsProvider? _settingsProvider; // 添加SettingsProvider引用
+  final StorageService _storageService = StorageService(); // 添加StorageService实例
 
   // 播放状态
   bool _isPlaying = false;
@@ -80,6 +82,66 @@ class PlayerProvider with ChangeNotifier {
   /// 设置SettingsProvider引用
   void setSettingsProvider(SettingsProvider settingsProvider) {
     _settingsProvider = settingsProvider;
+  }
+
+  /// 恢复播放进度
+  /// [autoPlay] 是否自动播放，默认为false（暂停状态）
+  Future<void> restorePlayProgress({bool autoPlay = false}) async {
+    if (!(_settingsProvider?.savePlayProgress ?? true)) {
+      debugPrint('未启用播放进度保存功能');
+      return;
+    }
+
+    final progressData = await _storageService.loadPlayProgress();
+    if (progressData == null) {
+      debugPrint('未找到播放进度');
+      return;
+    }
+
+    final musicId = progressData['musicId'] as String;
+    final positionMs = progressData['position'] as int;
+    final filePath = progressData['filePath'] as String;
+
+    // 在音乐列表中查找该音乐
+    final allMusic = _musicProvider?.musicList ?? [];
+    MusicInfo? music;
+    
+    try {
+      music = allMusic.firstWhere(
+        (m) => m.id == musicId || m.filePath == filePath,
+      );
+    } catch (e) {
+      // 如果找不到，尝试通过文件名匹配
+      try {
+        music = allMusic.firstWhere(
+          (m) => path.basename(m.filePath) == path.basename(filePath),
+        );
+      } catch (e) {
+        debugPrint('未找到上次播放的音乐');
+        return;
+      }
+    }
+
+    // 在当前播放列表中查找该音乐
+    if (music == null) {
+      debugPrint('未找到上次播放的音乐');
+      return;
+    }
+    
+    final index = _playlist.indexWhere((m) => m.id == music!.id);
+    if (index != -1) {
+      // 如果在播放列表中，直接恢复播放
+      final position = Duration(milliseconds: positionMs);
+      await playAtIndex(index, startPosition: position, autoPlay: autoPlay);
+      debugPrint('已恢复播放进度: ${music!.title} - ${position.inSeconds}秒');
+    } else {
+      // 如果不在播放列表中，添加到列表并恢复播放
+      _playlist.add(music!);
+      _currentIndex = _playlist.length - 1;
+      final position = Duration(milliseconds: positionMs);
+      await playAtIndex(_currentIndex, startPosition: position, autoPlay: autoPlay);
+      debugPrint('已恢复播放进度(新添加): ${music!.title} - ${position.inSeconds}秒');
+    }
   }
 
   /// 初始化播放器
@@ -164,7 +226,30 @@ class PlayerProvider with ChangeNotifier {
     _playerCompleteSubscription?.cancel();
     _timer?.cancel(); // 取消倒计时定时器
     _audioPlayer.dispose();
+    _savePlayProgressOnExit(); // 保存播放进度
     super.dispose();
+  }
+
+  /// 保存播放进度
+  Future<void> savePlayProgress() async {
+    if (_settingsProvider?.savePlayProgress ?? true && _currentMusic != null) {
+      await _storageService.savePlayProgress(
+        musicId: _currentMusic!.id,
+        position: _position,
+        filePath: _currentMusic!.filePath,
+      );
+    }
+  }
+
+  /// 退出时保存播放进度
+  Future<void> _savePlayProgressOnExit() async {
+    if (_settingsProvider?.savePlayProgress ?? true && _currentMusic != null) {
+      await _storageService.savePlayProgress(
+        musicId: _currentMusic!.id,
+        position: _position,
+        filePath: _currentMusic!.filePath,
+      );
+    }
   }
 
   // Getters
@@ -213,7 +298,8 @@ class PlayerProvider with ChangeNotifier {
   }
 
   /// 播放指定索引的音乐
-  Future<void> playAtIndex(int index) async {
+  /// [autoPlay] 是否自动播放，默认为true
+  Future<void> playAtIndex(int index, {Duration? startPosition, bool autoPlay = true}) async {
     if (index < 0 || index >= _playlist.length) {
       debugPrint('播放索引超出范围: $index, 播放列表长度: ${_playlist.length}');
       return;
@@ -230,6 +316,9 @@ class PlayerProvider with ChangeNotifier {
     debugPrint('专辑: ${music.album}');
     debugPrint('文件路径: ${music.filePath}');
     debugPrint('时长: ${music.duration.inSeconds}秒');
+    if (startPosition != null) {
+      debugPrint('起始位置: ${startPosition.inSeconds}秒');
+    }
 
     try {
       debugPrint('创建音频源...');
@@ -240,25 +329,36 @@ class PlayerProvider with ChangeNotifier {
 
       // 初始化记录时间和位置（在播放前设置）
       _lastRecordTime = DateTime.now();
-      _lastRecordedPosition = Duration.zero;
+      _lastRecordedPosition = startPosition ?? Duration.zero;
 
       // 应用淡入淡出效果
       if (_settingsProvider?.enableFadeEffect ?? true) {
         final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
         await _audioPlayer.setVolume(0);
-        await _audioPlayer.play(source);
+        if (autoPlay) {
+          await _audioPlayer.play(source);
+        } else {
+          await _audioPlayer.setSource(source);
+        }
+        if (startPosition != null) {
+          await _audioPlayer.seek(startPosition);
+        }
         await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
             ? (_settingsProvider!.defaultVolume / 100) 
             : 0.7);
       } else {
-        await _audioPlayer.play(source);
+        if (autoPlay) {
+          await _audioPlayer.play(source);
+        } else {
+          await _audioPlayer.setSource(source);
+        }
         await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
             ? (_settingsProvider!.defaultVolume / 100) 
             : 0.7);
       }
 
       debugPrint('播放命令已发送');
-      _isPlaying = true;
+      _isPlaying = autoPlay;
 
       // 记录播放统计
       _musicProvider?.recordPlay(music);
@@ -276,13 +376,14 @@ class PlayerProvider with ChangeNotifier {
   }
 
   /// 播放指定音乐（通过音乐对象）
-  Future<void> playMusic(MusicInfo music) async {
+  /// [autoPlay] 是否自动播放，默认为true
+  Future<void> playMusic(MusicInfo music, {Duration? startPosition, bool autoPlay = true}) async {
     // 在当前播放列表中查找该音乐
     final index = _playlist.indexWhere((m) => m.id == music.id);
 
     if (index != -1) {
       // 如果在播放列表中找到，直接播放
-      await playAtIndex(index);
+      await playAtIndex(index, startPosition: startPosition, autoPlay: autoPlay);
     } else {
       // 如果不在播放列表中，添加到列表并播放
       _playlist.add(music);
@@ -295,13 +396,16 @@ class PlayerProvider with ChangeNotifier {
       debugPrint('专辑: ${music.album}');
       debugPrint('文件路径: ${music.filePath}');
       debugPrint('时长: ${music.duration.inSeconds}秒');
+      if (startPosition != null) {
+        debugPrint('起始位置: ${startPosition.inSeconds}秒');
+      }
 
       try {
         final source = DeviceFileSource(music.filePath);
 
         // 初始化记录时间和位置（在播放前设置）
         _lastRecordTime = DateTime.now();
-        _lastRecordedPosition = Duration.zero;
+        _lastRecordedPosition = startPosition ?? Duration.zero;
 
         // 应用淡入淡出效果
         if (_settingsProvider?.enableFadeEffect ?? true) {
@@ -313,12 +417,15 @@ class PlayerProvider with ChangeNotifier {
               : 0.7);
         } else {
           await _audioPlayer.play(source);
+          if (startPosition != null) {
+            await _audioPlayer.seek(startPosition);
+          }
           await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
               ? (_settingsProvider!.defaultVolume / 100) 
               : 0.7);
         }
 
-        _isPlaying = true;
+        _isPlaying = autoPlay;
 
         // 记录播放统计
         _musicProvider?.recordPlay(music);

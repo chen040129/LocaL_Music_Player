@@ -8,6 +8,7 @@ import 'music_scanner_service.dart';
 class StorageService {
   static const String _musicDataFileName = 'music_data.json';
   static const String _foldersFileName = 'scanned_folders.json';
+  static const String _playProgressFileName = 'play_progress.json';
 
   /// 保存音乐列表到本地
   Future<void> saveMusicList(List<MusicInfo> musicList) async {
@@ -141,5 +142,68 @@ class StorageService {
 
     // 移动平台使用应用文档目录
     return await getApplicationDocumentsDirectory();
+  }
+
+  /// 保存播放进度
+  Future<void> savePlayProgress({
+    required String musicId,
+    required Duration position,
+    required String filePath,
+  }) async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_playProgressFileName');
+
+      final progressData = {
+        'musicId': musicId,
+        'position': position.inMilliseconds,
+        'filePath': filePath,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      final jsonData = jsonEncode(progressData);
+      await file.writeAsString(jsonData);
+
+      debugPrint('播放进度已保存');
+    } catch (e) {
+      debugPrint('保存播放进度失败: $e');
+    }
+  }
+
+  /// 加载播放进度
+  Future<Map<String, dynamic>?> loadPlayProgress() async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_playProgressFileName');
+
+      if (!await file.exists()) {
+        debugPrint('未找到播放进度文件');
+        return null;
+      }
+
+      final jsonData = await file.readAsString();
+      final progressData = jsonDecode(jsonData) as Map<String, dynamic>;
+
+      debugPrint('已加载播放进度');
+      return progressData;
+    } catch (e) {
+      debugPrint('加载播放进度失败: $e');
+      return null;
+    }
+  }
+
+  /// 清除播放进度
+  Future<void> clearPlayProgress() async {
+    try {
+      final directory = await _getAppDirectory();
+      final file = File('${directory.path}/$_playProgressFileName');
+
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('已清除播放进度');
+      }
+    } catch (e) {
+      debugPrint('清除播放进度失败: $e');
+    }
   }
 }

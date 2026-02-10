@@ -103,6 +103,7 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
       builder: (context, settings, child) {
         return Card(
           elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
