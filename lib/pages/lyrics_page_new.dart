@@ -168,6 +168,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   void dispose() {
     _fadeController.dispose();
     _pageSwitchController.dispose();
+    // 恢复窗口透明度
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.setOpacity(1.0);
+    }
     super.dispose();
   }
 
@@ -388,11 +392,14 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         final colorScheme = theme.colorScheme;
 
         return Scaffold(
+          backgroundColor: Colors.transparent,
           body: Consumer<SettingsProvider>(
             builder: (context, settings, child) {
               return Container(
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
+                  color: settings.songPageBackgroundType == SongPageBackgroundType.transparent 
+                      ? Colors.transparent 
+                      : colorScheme.surface,
                 ),
                 child: Stack(
                   children: [
@@ -402,18 +409,16 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                         builder: (context, player, settings, child) {
                           switch (settings.songPageBackgroundType) {
                             case SongPageBackgroundType.transparent:
+                              // 透明背景：完全透明背景
                               return Container(
                                 color: Colors.transparent,
                               );
                             case SongPageBackgroundType.fluid:
-                              return Opacity(
-                                opacity: settings.pageOpacity,
-                                child: _buildFluidBackground(player, settings),
-                              );
+                              return _buildFluidBackground(player, settings);
                             case SongPageBackgroundType.blur:
                               if (currentMusic?.coverArt != null) {
                                 return Opacity(
-                                  opacity: 0.3 * settings.pageOpacity,
+                                  opacity: 0.3,
                                   child: ImageFiltered(
                                     imageFilter: ui.ImageFilter.blur(
                                       sigmaX: settings.blurAmount,
@@ -430,17 +435,11 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                 color: colorScheme.surface,
                               );
                             case SongPageBackgroundType.gradient:
-                              return Opacity(
-                                opacity: settings.pageOpacity,
-                                child: _buildGradientBackground(
-                                    playerProvider, settings, colorScheme),
-                              );
+                              return _buildGradientBackground(
+                                  playerProvider, settings, colorScheme);
                             case SongPageBackgroundType.solid:
-                              return Opacity(
-                                opacity: settings.pageOpacity,
-                                child: _buildSolidBackground(
-                                    playerProvider, colorScheme),
-                              );
+                              return _buildSolidBackground(
+                                  playerProvider, colorScheme);
                             case SongPageBackgroundType.customImage:
                               if (settings.customImagePath.isNotEmpty) {
                                 BoxFit boxFit;
@@ -464,15 +463,12 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                     boxFit = BoxFit.fill;
                                     break;
                                 }
-                                return Opacity(
-                                  opacity: settings.pageOpacity,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                        settings.windowBorderRadius),
-                                    child: Image.file(
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                      settings.windowBorderRadius),
+                                  child: Image.file(
                                     File(settings.customImagePath),
                                     fit: boxFit,
-                                    ),
                                   ),
                                 );
                               }
@@ -485,842 +481,891 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                     ),
                     // 主内容区域
                     SafeArea(
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: Column(
-                            children: [
-                              // 顶部信息栏
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 32, left: 16, right: 16),
-                                child: Row(
-                                  children: [
-                                    // 回退按钮
-                                    IconButton(
-                                      icon: const Icon(CupertinoIcons.back),
-                                      color: colorScheme.onSurface,
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // 歌曲信息
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            currentMusic?.title ?? '未播放',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: colorScheme.onSurface,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Column(
+                          children: [
+                            // 顶部信息栏
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  top: 32, left: 16, right: 16),
+                              child: Row(
+                                children: [
+                                  // 回退按钮
+                                  IconButton(
+                                    icon: const Icon(CupertinoIcons.back),
+                                    color: colorScheme.onSurface,
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // 歌曲信息
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          currentMusic?.title ?? '未播放',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onSurface,
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            currentMusic?.artist ?? '未知艺术家',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: colorScheme.onSurface
-                                                  .withOpacity(0.7),
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          currentMusic?.artist ?? '未知艺术家',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.7),
                                           ),
-                                        ],
-                                      ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 32),
-                              // 主内容区：左侧封面和控制区 + 右侧歌词区
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    // 左侧封面和控制区
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 48),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            // 根据当前页面显示不同内容
-                                            _currentPage == 0
-                                                ? Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                        // 专辑封面
-                                                        Consumer<
-                                                            SettingsProvider>(
-                                                          builder: (context,
-                                                              settings, child) {
-                                                            if (!settings
-                                                                .showAlbumArt) {
-                                                              return const SizedBox
-                                                                  .shrink();
-                                                            }
-                                                            return LayoutBuilder(
-                                                              builder: (context,
-                                                                  constraints) {
-                                                                // 获取整个窗口的宽度
-                                                                final windowWidth =
-                                                                    MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width;
-                                                                // 根据窗口宽度计算封面大小，使用更平滑的比例
-                                                                final size =
-                                                                    (windowWidth *
-                                                                            0.25)
-                                                                        .clamp(
-                                                                            330.0,
-                                                                            700.0);
-                                                                return GestureDetector(
-                                                                  onHorizontalDragStart:
-                                                                      (details) {
-                                                                    setState(
-                                                                        () {
-                                                                      _coverDragStartX =
-                                                                          details
-                                                                              .globalPosition
-                                                                              .dx;
-                                                                      _coverDragCurrentX =
-                                                                          details
-                                                                              .globalPosition
-                                                                              .dx;
-                                                                      _coverDragOffset =
-                                                                          0.0;
-                                                                    });
-                                                                  },
-                                                                  onHorizontalDragUpdate:
-                                                                      (details) {
-                                                                    setState(
-                                                                        () {
-                                                                      _coverDragCurrentX =
-                                                                          details
-                                                                              .globalPosition
-                                                                              .dx;
-                                                                      final dragDistance =
-                                                                          _coverDragCurrentX -
-                                                                              _coverDragStartX;
-                                                                      // 只允许向右拖动，限制偏移量在 0 到 200 之间
-                                                                      _coverDragOffset =
-                                                                          dragDistance.clamp(
-                                                                              0.0,
-                                                                              200.0);
-                                                                    });
-                                                                  },
-                                                                  onHorizontalDragEnd:
-                                                                      (details) {
+                            ),
+                            const SizedBox(height: 32),
+                            // 主内容区：左侧封面和控制区 + 右侧歌词区
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  // 左侧封面和控制区
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 48),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          // 根据当前页面显示不同内容
+                                          _currentPage == 0
+                                              ? Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                      // 专辑封面
+                                                      Consumer<
+                                                          SettingsProvider>(
+                                                        builder: (context,
+                                                            settings, child) {
+                                                          if (!settings
+                                                              .showAlbumArt) {
+                                                            return const SizedBox
+                                                                .shrink();
+                                                          }
+                                                          return LayoutBuilder(
+                                                            builder: (context,
+                                                                constraints) {
+                                                              // 获取整个窗口的宽度
+                                                              final windowWidth =
+                                                                  MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width;
+                                                              // 根据窗口宽度计算封面大小，使用更平滑的比例
+                                                              final size =
+                                                                  (windowWidth *
+                                                                          0.25)
+                                                                      .clamp(
+                                                                          330.0,
+                                                                          700.0);
+                                                              return GestureDetector(
+                                                                onHorizontalDragStart:
+                                                                    (details) {
+                                                                  setState(() {
+                                                                    _coverDragStartX =
+                                                                        details
+                                                                            .globalPosition
+                                                                            .dx;
+                                                                    _coverDragCurrentX =
+                                                                        details
+                                                                            .globalPosition
+                                                                            .dx;
+                                                                    _coverDragOffset =
+                                                                        0.0;
+                                                                  });
+                                                                },
+                                                                onHorizontalDragUpdate:
+                                                                    (details) {
+                                                                  setState(() {
+                                                                    _coverDragCurrentX =
+                                                                        details
+                                                                            .globalPosition
+                                                                            .dx;
                                                                     final dragDistance =
                                                                         _coverDragCurrentX -
                                                                             _coverDragStartX;
-                                                                    if (dragDistance >
-                                                                        100) {
-                                                                      // 向右拖动，切换到播放列表
-                                                                      setState(
-                                                                          () {
-                                                                        _currentPage =
-                                                                            1;
-                                                                        _coverDragOffset =
-                                                                            0.0;
-                                                                      });
-                                                                    }
+                                                                    // 只允许向右拖动，限制偏移量在 0 到 200 之间
+                                                                    _coverDragOffset =
+                                                                        dragDistance.clamp(
+                                                                            0.0,
+                                                                            200.0);
+                                                                  });
+                                                                },
+                                                                onHorizontalDragEnd:
+                                                                    (details) {
+                                                                  final dragDistance =
+                                                                      _coverDragCurrentX -
+                                                                          _coverDragStartX;
+                                                                  if (dragDistance >
+                                                                      100) {
+                                                                    // 向右拖动，切换到播放列表
                                                                     setState(
                                                                         () {
-                                                                      _coverDragStartX =
-                                                                          0.0;
-                                                                      _coverDragCurrentX =
-                                                                          0.0;
+                                                                      _currentPage =
+                                                                          1;
                                                                       _coverDragOffset =
                                                                           0.0;
                                                                     });
+                                                                  }
+                                                                  setState(() {
+                                                                    _coverDragStartX =
+                                                                        0.0;
+                                                                    _coverDragCurrentX =
+                                                                        0.0;
+                                                                    _coverDragOffset =
+                                                                        0.0;
+                                                                  });
+                                                                },
+                                                                child:
+                                                                    AnimatedBuilder(
+                                                                  animation:
+                                                                      _pageSwitchAnimation,
+                                                                  builder:
+                                                                      (context,
+                                                                          child) {
+                                                                    return Transform
+                                                                        .scale(
+                                                                      scale: 1.0 -
+                                                                          _pageSwitchAnimation.value *
+                                                                              0.2,
+                                                                      child:
+                                                                          Opacity(
+                                                                        opacity:
+                                                                            1.0 -
+                                                                                _pageSwitchAnimation.value * 0.8,
+                                                                        child: Transform
+                                                                            .translate(
+                                                                          offset: Offset(
+                                                                              _coverDragOffset * 0.3,
+                                                                              0),
+                                                                          child:
+                                                                              Opacity(
+                                                                            opacity:
+                                                                                1 - (_coverDragOffset.abs() / 400),
+                                                                            child:
+                                                                                child,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    );
                                                                   },
                                                                   child:
-                                                                      AnimatedBuilder(
-                                                                    animation:
-                                                                        _pageSwitchAnimation,
-                                                                    builder:
-                                                                        (context,
-                                                                            child) {
-                                                                      return Transform
-                                                                          .scale(
-                                                                        scale: 1.0 -
-                                                                            _pageSwitchAnimation.value *
-                                                                                0.2,
-                                                                        child:
-                                                                            Opacity(
-                                                                          opacity:
-                                                                              1.0 - _pageSwitchAnimation.value * 0.8,
-                                                                          child:
-                                                                              Transform.translate(
-                                                                            offset:
-                                                                                Offset(_coverDragOffset * 0.3, 0),
-                                                                            child:
-                                                                                Opacity(
-                                                                              opacity: 1 - (_coverDragOffset.abs() / 400),
-                                                                              child: child,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    },
+                                                                      SizedBox(
+                                                                    width: size,
+                                                                    height:
+                                                                        size,
                                                                     child:
-                                                                        SizedBox(
-                                                                      width:
-                                                                          size,
-                                                                      height:
-                                                                          size,
+                                                                        Container(
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(16),
+                                                                        boxShadow: [
+                                                                          BoxShadow(
+                                                                            color:
+                                                                                Colors.black.withOpacity(0.2),
+                                                                            blurRadius:
+                                                                                20,
+                                                                            offset:
+                                                                                const Offset(0, 8),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                       child:
-                                                                          Container(
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(16),
-                                                                          boxShadow: [
-                                                                            BoxShadow(
-                                                                              color: Colors.black.withOpacity(0.2),
-                                                                              blurRadius: 20,
-                                                                              offset: const Offset(0, 8),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        child:
-                                                                            ClipRRect(
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(16),
-                                                                          child: currentMusic?.coverArt != null
-                                                                              ? Image.memory(
-                                                                                  currentMusic!.coverArt!,
-                                                                                  fit: BoxFit.cover,
-                                                                                )
-                                                                              : Container(
-                                                                                  color: colorScheme.surfaceContainerHighest,
-                                                                                  child: Icon(
-                                                                                    AppIcons.musicNote,
-                                                                                    size: 80,
-                                                                                    color: colorScheme.onSurface.withOpacity(0.3),
-                                                                                  ),
+                                                                          ClipRRect(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(16),
+                                                                        child: currentMusic?.coverArt !=
+                                                                                null
+                                                                            ? Image.memory(
+                                                                                currentMusic!.coverArt!,
+                                                                                fit: BoxFit.cover,
+                                                                              )
+                                                                            : Container(
+                                                                                color: colorScheme.surfaceContainerHighest,
+                                                                                child: Icon(
+                                                                                  AppIcons.musicNote,
+                                                                                  size: 80,
+                                                                                  color: colorScheme.onSurface.withOpacity(0.3),
                                                                                 ),
-                                                                        ),
+                                                                              ),
                                                                       ),
                                                                     ),
-                                                                  ),
-                                                                );
-                                                              },
-                                                            );
-                                                          },
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 32),
-                                                        // 控制区
-                                                        Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            // 进度条
-                                                            MouseRegion(
-                                                              onEnter: (_) =>
-                                                                  setState(() =>
-                                                                      _isHoveringProgress =
-                                                                          true),
-                                                              onExit: (_) =>
-                                                                  setState(() =>
-                                                                      _isHoveringProgress =
-                                                                          false),
-                                                              child: Listener(
-                                                                onPointerSignal:
-                                                                    (pointerSignal) {
-                                                                  if (pointerSignal
-                                                                          is PointerScrollEvent &&
-                                                                      _showVolumeControl) {
-                                                                    // 限制单次滚动的最大调整量，防止快速滚动时超出范围
-                                                                    final delta = (pointerSignal.scrollDelta.dy *
-                                                                            0.001)
-                                                                        .clamp(
-                                                                            -0.1,
-                                                                            0.1);
-                                                                    final newProgress = (progress -
-                                                                            delta)
-                                                                        .clamp(
-                                                                            0.0,
-                                                                            1.0);
-                                                                    playerProvider
-                                                                        .seekToPercent(
-                                                                            newProgress);
-                                                                  }
-                                                                },
-                                                                child: Focus(
-                                                                  onKeyEvent:
-                                                                      (node,
-                                                                          event) {
-                                                                    if (_showVolumeControl &&
-                                                                        event
-                                                                            is KeyDownEvent) {
-                                                                      if (event
-                                                                              .logicalKey ==
-                                                                          LogicalKeyboardKey
-                                                                              .arrowLeft) {
-                                                                        final newProgress = (progress - 0.05).clamp(
-                                                                            0.0,
-                                                                            1.0);
-                                                                        playerProvider
-                                                                            .seekToPercent(newProgress);
-                                                                        return KeyEventResult
-                                                                            .handled;
-                                                                      } else if (event
-                                                                              .logicalKey ==
-                                                                          LogicalKeyboardKey
-                                                                              .arrowRight) {
-                                                                        final newProgress = (progress + 0.05).clamp(
-                                                                            0.0,
-                                                                            1.0);
-                                                                        playerProvider
-                                                                            .seekToPercent(newProgress);
-                                                                        return KeyEventResult
-                                                                            .handled;
-                                                                      }
-                                                                    }
-                                                                    return KeyEventResult
-                                                                        .ignored;
-                                                                  },
-                                                                  child: Row(
-                                                                    children: [
-                                                                      AnimatedOpacity(
-                                                                        opacity: _isHoveringProgress
-                                                                            ? 1.0
-                                                                            : 0.0,
-                                                                        duration:
-                                                                            const Duration(milliseconds: 200),
-                                                                        child:
-                                                                            Text(
-                                                                          _formatDuration(
-                                                                              position),
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize:
-                                                                                12,
-                                                                            color:
-                                                                                colorScheme.onSurface.withOpacity(0.6),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                          width:
-                                                                              12),
-                                                                      Expanded(
-                                                                        child:
-                                                                            SliderTheme(
-                                                                          data:
-                                                                              SliderTheme.of(context).copyWith(
-                                                                            trackHeight:
-                                                                                3,
-                                                                            thumbShape:
-                                                                                const RoundSliderThumbShape(enabledThumbRadius: 0),
-                                                                            overlayShape:
-                                                                                const RoundSliderOverlayShape(overlayRadius: 0),
-                                                                            activeTrackColor: currentMusic?.coverColor != null
-                                                                                ? Color(currentMusic!.coverColor!)
-                                                                                : colorScheme.primary,
-                                                                            inactiveTrackColor:
-                                                                                colorScheme.onSurface.withOpacity(0.2),
-                                                                            thumbColor:
-                                                                                Colors.transparent,
-                                                                            overlayColor:
-                                                                                Colors.transparent,
-                                                                          ),
-                                                                          child:
-                                                                              Slider(
-                                                                            value: _isDragging
-                                                                                ? _dragPosition.clamp(0.0, 1.0)
-                                                                                : progress.clamp(0.0, 1.0),
-                                                                            onChanged:
-                                                                                (value) {
-                                                                              setState(() {
-                                                                                _isDragging = true;
-                                                                                _dragPosition = value.clamp(0.0, 1.0);
-                                                                              });
-                                                                            },
-                                                                            onChangeEnd:
-                                                                                (value) {
-                                                                              setState(() {
-                                                                                _isDragging = false;
-                                                                              });
-                                                                              playerProvider.seekToPercent(value.clamp(0.0, 1.0));
-                                                                            },
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                          width:
-                                                                              12),
-                                                                      AnimatedOpacity(
-                                                                        opacity: _isHoveringProgress
-                                                                            ? 1.0
-                                                                            : 0.0,
-                                                                        duration:
-                                                                            const Duration(milliseconds: 200),
-                                                                        child:
-                                                                            Text(
-                                                                          _formatDuration(
-                                                                              duration),
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize:
-                                                                                12,
-                                                                            color:
-                                                                                colorScheme.onSurface.withOpacity(0.6),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
                                                                   ),
                                                                 ),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 0),
-                                                            // 播放控制按钮
-                                                            Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                // 主播放控制行（上一曲、播放/暂停、下一曲）
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .center,
-                                                                  mainAxisSize:
-                                                                      MainAxisSize
-                                                                          .min,
+                                                              );
+                                                            },
+                                                          );
+                                                        },
+                                                      ),
+                                                      const SizedBox(
+                                                          height: 32),
+                                                      // 控制区
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          // 进度条
+                                                          MouseRegion(
+                                                            onEnter: (_) =>
+                                                                setState(() =>
+                                                                    _isHoveringProgress =
+                                                                        true),
+                                                            onExit: (_) =>
+                                                                setState(() =>
+                                                                    _isHoveringProgress =
+                                                                        false),
+                                                            child: Listener(
+                                                              onPointerSignal:
+                                                                  (pointerSignal) {
+                                                                if (pointerSignal
+                                                                        is PointerScrollEvent &&
+                                                                    _showVolumeControl) {
+                                                                  // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                                  final delta = (pointerSignal
+                                                                              .scrollDelta
+                                                                              .dy *
+                                                                          0.001)
+                                                                      .clamp(
+                                                                          -0.1,
+                                                                          0.1);
+                                                                  final newProgress =
+                                                                      (progress -
+                                                                              delta)
+                                                                          .clamp(
+                                                                              0.0,
+                                                                              1.0);
+                                                                  playerProvider
+                                                                      .seekToPercent(
+                                                                          newProgress);
+                                                                }
+                                                              },
+                                                              child: Focus(
+                                                                onKeyEvent:
+                                                                    (node,
+                                                                        event) {
+                                                                  if (_showVolumeControl &&
+                                                                      event
+                                                                          is KeyDownEvent) {
+                                                                    if (event
+                                                                            .logicalKey ==
+                                                                        LogicalKeyboardKey
+                                                                            .arrowLeft) {
+                                                                      final newProgress = (progress -
+                                                                              0.05)
+                                                                          .clamp(
+                                                                              0.0,
+                                                                              1.0);
+                                                                      playerProvider
+                                                                          .seekToPercent(
+                                                                              newProgress);
+                                                                      return KeyEventResult
+                                                                          .handled;
+                                                                    } else if (event
+                                                                            .logicalKey ==
+                                                                        LogicalKeyboardKey
+                                                                            .arrowRight) {
+                                                                      final newProgress = (progress +
+                                                                              0.05)
+                                                                          .clamp(
+                                                                              0.0,
+                                                                              1.0);
+                                                                      playerProvider
+                                                                          .seekToPercent(
+                                                                              newProgress);
+                                                                      return KeyEventResult
+                                                                          .handled;
+                                                                    }
+                                                                  }
+                                                                  return KeyEventResult
+                                                                      .ignored;
+                                                                },
+                                                                child: Row(
                                                                   children: [
-                                                                    // 上一曲
-                                                                    MouseRegion(
-                                                                      onEnter: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringPrevious = true),
-                                                                      onExit: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringPrevious = false),
+                                                                    AnimatedOpacity(
+                                                                      opacity: _isHoveringProgress
+                                                                          ? 1.0
+                                                                          : 0.0,
+                                                                      duration: const Duration(
+                                                                          milliseconds:
+                                                                              200),
                                                                       child:
-                                                                          InkWell(
-                                                                        onTap: () =>
-                                                                            playerProvider.playPrevious(),
-                                                                        splashColor:
-                                                                            Colors.transparent,
-                                                                        highlightColor:
-                                                                            Colors.transparent,
-                                                                        hoverColor:
-                                                                            Colors.transparent,
-                                                                        child:
-                                                                            AnimatedScale(
-                                                                          scale: _isHoveringPrevious
-                                                                              ? _hoverScale
-                                                                              : _normalScale,
-                                                                          duration:
-                                                                              _animationDuration,
-                                                                          child:
-                                                                              Icon(
-                                                                            CupertinoIcons.backward_end_fill,
-                                                                            color: _isHoveringPrevious
-                                                                                ? colorScheme.primary
-                                                                                : colorScheme.onSurface.withOpacity(0.8),
-                                                                            size:
-                                                                                32,
-                                                                          ),
+                                                                          Text(
+                                                                        _formatDuration(
+                                                                            position),
+                                                                        style:
+                                                                            TextStyle(
+                                                                          fontSize:
+                                                                              12,
+                                                                          color: colorScheme
+                                                                              .onSurface
+                                                                              .withOpacity(0.6),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                     const SizedBox(
                                                                         width:
-                                                                            20),
-                                                                    // 播放/暂停
-                                                                    MouseRegion(
-                                                                      onEnter: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringPlayPause = true),
-                                                                      onExit: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringPlayPause = false),
+                                                                            12),
+                                                                    Expanded(
                                                                       child:
-                                                                          InkWell(
-                                                                        onTap:
-                                                                            () {
-                                                                          playerProvider
-                                                                              .togglePlayPause();
-                                                                        },
-                                                                        splashColor:
-                                                                            Colors.transparent,
-                                                                        highlightColor:
-                                                                            Colors.transparent,
-                                                                        hoverColor:
-                                                                            Colors.transparent,
+                                                                          SliderTheme(
+                                                                        data: SliderTheme.of(context)
+                                                                            .copyWith(
+                                                                          trackHeight:
+                                                                              3,
+                                                                          thumbShape:
+                                                                              const RoundSliderThumbShape(enabledThumbRadius: 0),
+                                                                          overlayShape:
+                                                                              const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                          activeTrackColor: currentMusic?.coverColor != null
+                                                                              ? Color(currentMusic!.coverColor!)
+                                                                              : colorScheme.primary,
+                                                                          inactiveTrackColor: colorScheme
+                                                                              .onSurface
+                                                                              .withOpacity(0.2),
+                                                                          thumbColor:
+                                                                              Colors.transparent,
+                                                                          overlayColor:
+                                                                              Colors.transparent,
+                                                                        ),
                                                                         child:
-                                                                            AnimatedScale(
-                                                                          scale: _isHoveringPlayPause
-                                                                              ? _hoverScale
-                                                                              : _normalScale,
-                                                                          duration:
-                                                                              _animationDuration,
-                                                                          child:
-                                                                              Icon(
-                                                                            isPlaying
-                                                                                ? CupertinoIcons.pause_fill
-                                                                                : CupertinoIcons.play_fill,
-                                                                            color: _isHoveringPlayPause
-                                                                                ? colorScheme.primary
-                                                                                : colorScheme.onSurface.withOpacity(0.8),
-                                                                            size:
-                                                                                44,
-                                                                          ),
+                                                                            Slider(
+                                                                          value: _isDragging
+                                                                              ? _dragPosition.clamp(0.0, 1.0)
+                                                                              : progress.clamp(0.0, 1.0),
+                                                                          onChanged:
+                                                                              (value) {
+                                                                            setState(() {
+                                                                              _isDragging = true;
+                                                                              _dragPosition = value.clamp(0.0, 1.0);
+                                                                            });
+                                                                          },
+                                                                          onChangeEnd:
+                                                                              (value) {
+                                                                            setState(() {
+                                                                              _isDragging = false;
+                                                                            });
+                                                                            playerProvider.seekToPercent(value.clamp(0.0,
+                                                                                1.0));
+                                                                          },
                                                                         ),
                                                                       ),
                                                                     ),
                                                                     const SizedBox(
                                                                         width:
-                                                                            20),
-                                                                    // 下一曲
-                                                                    MouseRegion(
-                                                                      onEnter: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringNext = true),
-                                                                      onExit: (_) =>
-                                                                          setState(() =>
-                                                                              _isHoveringNext = false),
+                                                                            12),
+                                                                    AnimatedOpacity(
+                                                                      opacity: _isHoveringProgress
+                                                                          ? 1.0
+                                                                          : 0.0,
+                                                                      duration: const Duration(
+                                                                          milliseconds:
+                                                                              200),
                                                                       child:
-                                                                          InkWell(
-                                                                        onTap: () =>
-                                                                            playerProvider.playNext(),
-                                                                        splashColor:
-                                                                            Colors.transparent,
-                                                                        highlightColor:
-                                                                            Colors.transparent,
-                                                                        hoverColor:
-                                                                            Colors.transparent,
-                                                                        child:
-                                                                            AnimatedScale(
-                                                                          scale: _isHoveringNext
-                                                                              ? _hoverScale
-                                                                              : _normalScale,
-                                                                          duration:
-                                                                              _animationDuration,
-                                                                          child:
-                                                                              Icon(
-                                                                            CupertinoIcons.forward_end_fill,
-                                                                            color: _isHoveringNext
-                                                                                ? colorScheme.primary
-                                                                                : colorScheme.onSurface.withOpacity(0.8),
-                                                                            size:
-                                                                                32,
-                                                                          ),
+                                                                          Text(
+                                                                        _formatDuration(
+                                                                            duration),
+                                                                        style:
+                                                                            TextStyle(
+                                                                          fontSize:
+                                                                              12,
+                                                                          color: colorScheme
+                                                                              .onSurface
+                                                                              .withOpacity(0.6),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                                const SizedBox(
-                                                                    height: 12),
-                                                                // 次级控制行（音量、播放列表、定时播放、循环模式）
-                                                                SizedBox(
-                                                                  width:
-                                                                      400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
-                                                                  height:
-                                                                      36, // 增加高度以容纳音量键和音量控制条
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceEvenly,
-                                                                    children: [
-                                                                      // 音量调节
-                                                                      MouseRegion(
-                                                                        onEnter:
-                                                                            (_) =>
-                                                                                setState(() => _showVolumeControl = true),
-                                                                        onExit: (_) =>
-                                                                            setState(() =>
-                                                                                _showVolumeControl = false),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              height: 0),
+                                                          // 播放控制按钮
+                                                          Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              // 主播放控制行（上一曲、播放/暂停、下一曲）
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  // 上一曲
+                                                                  MouseRegion(
+                                                                    onEnter: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringPrevious =
+                                                                                true),
+                                                                    onExit: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringPrevious =
+                                                                                false),
+                                                                    child:
+                                                                        InkWell(
+                                                                      onTap: () =>
+                                                                          playerProvider
+                                                                              .playPrevious(),
+                                                                      splashColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      highlightColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      hoverColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      child:
+                                                                          AnimatedScale(
+                                                                        scale: _isHoveringPrevious
+                                                                            ? _hoverScale
+                                                                            : _normalScale,
+                                                                        duration:
+                                                                            _animationDuration,
                                                                         child:
-                                                                            Row(
-                                                                          mainAxisSize:
-                                                                              MainAxisSize.min,
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.center,
-                                                                          children: [
-                                                                            Listener(
-                                                                              onPointerSignal: (pointerSignal) {
-                                                                                if (pointerSignal is PointerScrollEvent) {
-                                                                                  // 限制单次滚动的最大调整量，防止快速滚动时超出范围
-                                                                                  final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
-                                                                                  final newVolume = (_volume - delta).clamp(0.0, 1.0);
-                                                                                  setState(() {
-                                                                                    _volume = newVolume;
-                                                                                  });
-                                                                                  playerProvider.setVolume(newVolume);
-                                                                                }
-                                                                              },
-                                                                              child: Focus(
-                                                                                onKeyEvent: (node, event) {
-                                                                                  if (event is KeyDownEvent) {
-                                                                                    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                                                                                      setState(() {
-                                                                                        _volume = (_volume - 0.05).clamp(0.0, 1.0);
-                                                                                      });
-                                                                                      playerProvider.setVolume(_volume);
-                                                                                      return KeyEventResult.handled;
-                                                                                    } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                                                                                      setState(() {
-                                                                                        _volume = (_volume + 0.05).clamp(0.0, 1.0);
-                                                                                      });
-                                                                                      playerProvider.setVolume(_volume);
-                                                                                      return KeyEventResult.handled;
-                                                                                    }
-                                                                                  }
-                                                                                  return KeyEventResult.ignored;
-                                                                                },
-                                                                                child: Container(
-                                                                                  alignment: Alignment.center,
-                                                                                  height: 36, // 与右侧元素的高度一致（8*2 padding + 20 icon size）
-                                                                                  child: IconButton(
-                                                                                    splashColor: Colors.transparent,
-                                                                                    highlightColor: Colors.transparent,
-                                                                                    hoverColor: Colors.transparent,
-                                                                                    icon: AnimatedScale(
-                                                                                      scale: _showVolumeControl ? _hoverScale : _normalScale,
-                                                                                      duration: _animationDuration,
-                                                                                      child: Icon(
-                                                                                        _volume > 0 ? CupertinoIcons.speaker_2_fill : CupertinoIcons.speaker_slash,
-                                                                                        color: _showVolumeControl ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
-                                                                                        size: 20, // 与右侧元素的图标大小一致
-                                                                                      ),
-                                                                                    ),
-                                                                                    onPressed: () {
-                                                                                      setState(() {
-                                                                                        _volume = _volume > 0 ? 0.0 : 0.7;
-                                                                                      });
-                                                                                      playerProvider.setVolume(_volume);
-                                                                                    },
-                                                                                    padding: EdgeInsets.zero,
-                                                                                    constraints: const BoxConstraints(),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            // 音量控制条
-                                                                            if (_showVolumeControl)
-                                                                              Padding(
-                                                                                padding: const EdgeInsets.only(left: 8),
-                                                                                child: SizedBox(
-                                                                                  width: 280,
-                                                                                  child: SliderTheme(
-                                                                                    data: SliderThemeData(
-                                                                                      trackHeight: 3,
-                                                                                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                                                                                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                                                                                      activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
-                                                                                      inactiveTrackColor: colorScheme.onSurface.withOpacity(0.3),
-                                                                                      thumbColor: Colors.transparent,
-                                                                                      overlayColor: Colors.transparent,
-                                                                                    ),
-                                                                                    child: Slider(
-                                                                                      value: _volume.clamp(0.0, 1.0),
-                                                                                      onChanged: (value) {
-                                                                                        setState(() {
-                                                                                          _volume = value.clamp(0.0, 1.0);
-                                                                                        });
-                                                                                        playerProvider.setVolume(value.clamp(0.0, 1.0));
-                                                                                      },
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                          ],
+                                                                            Icon(
+                                                                          CupertinoIcons
+                                                                              .backward_end_fill,
+                                                                          color: _isHoveringPrevious
+                                                                              ? colorScheme.primary
+                                                                              : colorScheme.onSurface.withOpacity(0.8),
+                                                                          size:
+                                                                              32,
                                                                         ),
                                                                       ),
-                                                                      // 播放列表、定时播放、循环模式（仅在音量控制条未展开时显示）
-                                                                      if (!_showVolumeControl) ...[
-                                                                        // 播放列表
-                                                                        MouseRegion(
-                                                                          cursor:
-                                                                              SystemMouseCursors.click,
-                                                                          onEnter: (_) =>
-                                                                              setState(() => _isPlaylistHovered = true),
-                                                                          onExit: (_) =>
-                                                                              setState(() => _isPlaylistHovered = false),
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              _pageSwitchController.forward(from: 0).then((_) {
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width:
+                                                                          20),
+                                                                  // 播放/暂停
+                                                                  MouseRegion(
+                                                                    onEnter: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringPlayPause =
+                                                                                true),
+                                                                    onExit: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringPlayPause =
+                                                                                false),
+                                                                    child:
+                                                                        InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        playerProvider
+                                                                            .togglePlayPause();
+                                                                      },
+                                                                      splashColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      highlightColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      hoverColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      child:
+                                                                          AnimatedScale(
+                                                                        scale: _isHoveringPlayPause
+                                                                            ? _hoverScale
+                                                                            : _normalScale,
+                                                                        duration:
+                                                                            _animationDuration,
+                                                                        child:
+                                                                            Icon(
+                                                                          isPlaying
+                                                                              ? CupertinoIcons.pause_fill
+                                                                              : CupertinoIcons.play_fill,
+                                                                          color: _isHoveringPlayPause
+                                                                              ? colorScheme.primary
+                                                                              : colorScheme.onSurface.withOpacity(0.8),
+                                                                          size:
+                                                                              44,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width:
+                                                                          20),
+                                                                  // 下一曲
+                                                                  MouseRegion(
+                                                                    onEnter: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringNext =
+                                                                                true),
+                                                                    onExit: (_) =>
+                                                                        setState(() =>
+                                                                            _isHoveringNext =
+                                                                                false),
+                                                                    child:
+                                                                        InkWell(
+                                                                      onTap: () =>
+                                                                          playerProvider
+                                                                              .playNext(),
+                                                                      splashColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      highlightColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      hoverColor:
+                                                                          Colors
+                                                                              .transparent,
+                                                                      child:
+                                                                          AnimatedScale(
+                                                                        scale: _isHoveringNext
+                                                                            ? _hoverScale
+                                                                            : _normalScale,
+                                                                        duration:
+                                                                            _animationDuration,
+                                                                        child:
+                                                                            Icon(
+                                                                          CupertinoIcons
+                                                                              .forward_end_fill,
+                                                                          color: _isHoveringNext
+                                                                              ? colorScheme.primary
+                                                                              : colorScheme.onSurface.withOpacity(0.8),
+                                                                          size:
+                                                                              32,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 12),
+                                                              // 次级控制行（音量、播放列表、定时播放、循环模式）
+                                                              SizedBox(
+                                                                width:
+                                                                    400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
+                                                                height:
+                                                                    36, // 增加高度以容纳音量键和音量控制条
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceEvenly,
+                                                                  children: [
+                                                                    // 音量调节
+                                                                    MouseRegion(
+                                                                      onEnter: (_) =>
+                                                                          setState(() =>
+                                                                              _showVolumeControl = true),
+                                                                      onExit: (_) =>
+                                                                          setState(() =>
+                                                                              _showVolumeControl = false),
+                                                                      child:
+                                                                          Row(
+                                                                        mainAxisSize:
+                                                                            MainAxisSize.min,
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.center,
+                                                                        children: [
+                                                                          Listener(
+                                                                            onPointerSignal:
+                                                                                (pointerSignal) {
+                                                                              if (pointerSignal is PointerScrollEvent) {
+                                                                                // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                                                final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
+                                                                                final newVolume = (_volume - delta).clamp(0.0, 1.0);
                                                                                 setState(() {
-                                                                                  _currentPage = 1;
+                                                                                  _volume = newVolume;
                                                                                 });
-                                                                                _pageSwitchController.reset();
-                                                                              });
+                                                                                playerProvider.setVolume(newVolume);
+                                                                              }
                                                                             },
                                                                             child:
-                                                                                AnimatedContainer(
-                                                                              duration: const Duration(milliseconds: 200),
-                                                                              padding: const EdgeInsets.all(8),
-                                                                              decoration: BoxDecoration(
-                                                                                color: Colors.transparent,
-                                                                                borderRadius: BorderRadius.circular(8),
-                                                                              ),
-                                                                              child: AnimatedScale(
-                                                                                scale: _isPlaylistHovered ? _hoverScale : _normalScale,
-                                                                                duration: _animationDuration,
-                                                                                child: Icon(
-                                                                                  CupertinoIcons.list_bullet,
-                                                                                  color: _isPlaylistHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
-                                                                                  size: 20,
+                                                                                Focus(
+                                                                              onKeyEvent: (node, event) {
+                                                                                if (event is KeyDownEvent) {
+                                                                                  if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                                                                                    setState(() {
+                                                                                      _volume = (_volume - 0.05).clamp(0.0, 1.0);
+                                                                                    });
+                                                                                    playerProvider.setVolume(_volume);
+                                                                                    return KeyEventResult.handled;
+                                                                                  } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                                                                                    setState(() {
+                                                                                      _volume = (_volume + 0.05).clamp(0.0, 1.0);
+                                                                                    });
+                                                                                    playerProvider.setVolume(_volume);
+                                                                                    return KeyEventResult.handled;
+                                                                                  }
+                                                                                }
+                                                                                return KeyEventResult.ignored;
+                                                                              },
+                                                                              child: Container(
+                                                                                alignment: Alignment.center,
+                                                                                height: 36, // 与右侧元素的高度一致（8*2 padding + 20 icon size）
+                                                                                child: IconButton(
+                                                                                  splashColor: Colors.transparent,
+                                                                                  highlightColor: Colors.transparent,
+                                                                                  hoverColor: Colors.transparent,
+                                                                                  icon: AnimatedScale(
+                                                                                    scale: _showVolumeControl ? _hoverScale : _normalScale,
+                                                                                    duration: _animationDuration,
+                                                                                    child: Icon(
+                                                                                      _volume > 0 ? CupertinoIcons.speaker_2_fill : CupertinoIcons.speaker_slash,
+                                                                                      color: _showVolumeControl ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
+                                                                                      size: 20, // 与右侧元素的图标大小一致
+                                                                                    ),
+                                                                                  ),
+                                                                                  onPressed: () {
+                                                                                    setState(() {
+                                                                                      _volume = _volume > 0 ? 0.0 : 0.7;
+                                                                                    });
+                                                                                    playerProvider.setVolume(_volume);
+                                                                                  },
+                                                                                  padding: EdgeInsets.zero,
+                                                                                  constraints: const BoxConstraints(),
                                                                                 ),
                                                                               ),
                                                                             ),
                                                                           ),
+                                                                          // 音量控制条
+                                                                          if (_showVolumeControl)
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.only(left: 8),
+                                                                              child: SizedBox(
+                                                                                width: 280,
+                                                                                child: SliderTheme(
+                                                                                  data: SliderThemeData(
+                                                                                    trackHeight: 3,
+                                                                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                                                                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                                    activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
+                                                                                    inactiveTrackColor: colorScheme.onSurface.withOpacity(0.3),
+                                                                                    thumbColor: Colors.transparent,
+                                                                                    overlayColor: Colors.transparent,
+                                                                                  ),
+                                                                                  child: Slider(
+                                                                                    value: _volume.clamp(0.0, 1.0),
+                                                                                    onChanged: (value) {
+                                                                                      setState(() {
+                                                                                        _volume = value.clamp(0.0, 1.0);
+                                                                                      });
+                                                                                      playerProvider.setVolume(value.clamp(0.0, 1.0));
+                                                                                    },
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                    // 播放列表、定时播放、循环模式（仅在音量控制条未展开时显示）
+                                                                    if (!_showVolumeControl) ...[
+                                                                      // 播放列表
+                                                                      MouseRegion(
+                                                                        cursor:
+                                                                            SystemMouseCursors.click,
+                                                                        onEnter:
+                                                                            (_) =>
+                                                                                setState(() => _isPlaylistHovered = true),
+                                                                        onExit: (_) =>
+                                                                            setState(() =>
+                                                                                _isPlaylistHovered = false),
+                                                                        child:
+                                                                            GestureDetector(
+                                                                          onTap:
+                                                                              () {
+                                                                            _pageSwitchController.forward(from: 0).then((_) {
+                                                                              setState(() {
+                                                                                _currentPage = 1;
+                                                                              });
+                                                                              _pageSwitchController.reset();
+                                                                            });
+                                                                          },
+                                                                          child:
+                                                                              AnimatedContainer(
+                                                                            duration:
+                                                                                const Duration(milliseconds: 200),
+                                                                            padding:
+                                                                                const EdgeInsets.all(8),
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              color: Colors.transparent,
+                                                                              borderRadius: BorderRadius.circular(8),
+                                                                            ),
+                                                                            child:
+                                                                                AnimatedScale(
+                                                                              scale: _isPlaylistHovered ? _hoverScale : _normalScale,
+                                                                              duration: _animationDuration,
+                                                                              child: Icon(
+                                                                                CupertinoIcons.list_bullet,
+                                                                                color: _isPlaylistHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
+                                                                                size: 20,
+                                                                              ),
+                                                                            ),
+                                                                          ),
                                                                         ),
-                                                                        // 定时播放
-                                                                        playerProvider.timerMinutes !=
-                                                                                null
-                                                                            ? _buildTimerWidget(context,
-                                                                                colorScheme)
-                                                                            : MouseRegion(
-                                                                                cursor: SystemMouseCursors.click,
-                                                                                onEnter: (_) => setState(() => _isTimerHovered = true),
-                                                                                onExit: (_) => setState(() => _isTimerHovered = false),
-                                                                                child: GestureDetector(
-                                                                                  onTap: () {
-                                                                                    _showTimerDialog(context);
-                                                                                  },
-                                                                                  child: AnimatedContainer(
-                                                                                    duration: const Duration(milliseconds: 200),
-                                                                                    padding: const EdgeInsets.all(8),
-                                                                                    decoration: BoxDecoration(
-                                                                                      color: Colors.transparent,
-                                                                                      borderRadius: BorderRadius.circular(8),
-                                                                                    ),
-                                                                                    child: AnimatedScale(
-                                                                                      scale: _isTimerHovered ? _hoverScale : _normalScale,
-                                                                                      duration: _animationDuration,
-                                                                                      child: Icon(
-                                                                                        CupertinoIcons.clock,
-                                                                                        color: _isTimerHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
-                                                                                        size: 20,
-                                                                                      ),
+                                                                      ),
+                                                                      // 定时播放
+                                                                      playerProvider.timerMinutes !=
+                                                                              null
+                                                                          ? _buildTimerWidget(
+                                                                              context,
+                                                                              colorScheme)
+                                                                          : MouseRegion(
+                                                                              cursor: SystemMouseCursors.click,
+                                                                              onEnter: (_) => setState(() => _isTimerHovered = true),
+                                                                              onExit: (_) => setState(() => _isTimerHovered = false),
+                                                                              child: GestureDetector(
+                                                                                onTap: () {
+                                                                                  _showTimerDialog(context);
+                                                                                },
+                                                                                child: AnimatedContainer(
+                                                                                  duration: const Duration(milliseconds: 200),
+                                                                                  padding: const EdgeInsets.all(8),
+                                                                                  decoration: BoxDecoration(
+                                                                                    color: Colors.transparent,
+                                                                                    borderRadius: BorderRadius.circular(8),
+                                                                                  ),
+                                                                                  child: AnimatedScale(
+                                                                                    scale: _isTimerHovered ? _hoverScale : _normalScale,
+                                                                                    duration: _animationDuration,
+                                                                                    child: Icon(
+                                                                                      CupertinoIcons.clock,
+                                                                                      color: _isTimerHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
+                                                                                      size: 20,
                                                                                     ),
                                                                                   ),
                                                                                 ),
                                                                               ),
-                                                                        // 循环模式
-                                                                        MouseRegion(
-                                                                          cursor:
-                                                                              SystemMouseCursors.click,
-                                                                          onEnter: (_) =>
-                                                                              setState(() => _isPlayModeHovered = true),
-                                                                          onExit: (_) =>
-                                                                              setState(() => _isPlayModeHovered = false),
+                                                                            ),
+                                                                      // 循环模式
+                                                                      MouseRegion(
+                                                                        cursor:
+                                                                            SystemMouseCursors.click,
+                                                                        onEnter:
+                                                                            (_) =>
+                                                                                setState(() => _isPlayModeHovered = true),
+                                                                        onExit: (_) =>
+                                                                            setState(() =>
+                                                                                _isPlayModeHovered = false),
+                                                                        child:
+                                                                            GestureDetector(
+                                                                          onTap: () =>
+                                                                              playerProvider.togglePlayMode(),
                                                                           child:
-                                                                              GestureDetector(
-                                                                            onTap: () =>
-                                                                                playerProvider.togglePlayMode(),
+                                                                              AnimatedContainer(
+                                                                            duration:
+                                                                                const Duration(milliseconds: 200),
+                                                                            padding:
+                                                                                const EdgeInsets.all(8),
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              color: Colors.transparent,
+                                                                              borderRadius: BorderRadius.circular(8),
+                                                                            ),
                                                                             child:
-                                                                                AnimatedContainer(
-                                                                              duration: const Duration(milliseconds: 200),
-                                                                              padding: const EdgeInsets.all(8),
-                                                                              decoration: BoxDecoration(
-                                                                                color: Colors.transparent,
-                                                                                borderRadius: BorderRadius.circular(8),
-                                                                              ),
-                                                                              child: AnimatedScale(
-                                                                                scale: _isPlayModeHovered ? _hoverScale : _normalScale,
-                                                                                duration: _animationDuration,
-                                                                                child: Icon(
-                                                                                  _getPlayModeIcon(playMode),
-                                                                                  color: _isPlayModeHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
-                                                                                  size: 20,
-                                                                                ),
+                                                                                AnimatedScale(
+                                                                              scale: _isPlayModeHovered ? _hoverScale : _normalScale,
+                                                                              duration: _animationDuration,
+                                                                              child: Icon(
+                                                                                _getPlayModeIcon(playMode),
+                                                                                color: _isPlayModeHovered ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.7),
+                                                                                size: 20,
                                                                               ),
                                                                             ),
                                                                           ),
                                                                         ),
-                                                                      ],
+                                                                      ),
                                                                     ],
-                                                                  ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ])
-                                                : _buildPlaylistPage(
-                                                    playerProvider),
-                                          ],
-                                        ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ])
+                                              : _buildPlaylistPage(
+                                                  playerProvider),
+                                        ],
                                       ),
                                     ),
-                                    // 右侧歌词区
-                                    Expanded(
-                                      child: Consumer<SettingsProvider>(
-                                        builder: (context, settings, child) {
-                                          // 根据设置决定是否显示歌词
-                                          if (!settings.showLyricsInPlayer) {
-                                            return Center(
-                                              child: Text(
-                                                '歌词显示已关闭',
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  color: colorScheme.onSurface
-                                                      .withOpacity(0.5),
-                                                ),
+                                  ),
+                                  // 右侧歌词区
+                                  Expanded(
+                                    child: Consumer<SettingsProvider>(
+                                      builder: (context, settings, child) {
+                                        // 根据设置决定是否显示歌词
+                                        if (!settings.showLyricsInPlayer) {
+                                          return Center(
+                                            child: Text(
+                                              '歌词显示已关闭',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                color: colorScheme.onSurface
+                                                    .withOpacity(0.5),
                                               ),
-                                            );
-                                          }
+                                            ),
+                                          );
+                                        }
 
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 48,
-                                                right: 48,
-                                                bottom: 80),
-                                            child: playerProvider
-                                                        .currentLyrics !=
-                                                    null
-                                                ? lyrics_widgets.LyricsWidget(
-                                                    lyrics: playerProvider
-                                                        .currentLyrics!,
-                                                    position: position,
-                                                    onLineTap: (duration) {
-                                                      playerProvider
-                                                          .seekTo(duration);
-                                                    },
-                                                  )
-                                                : Center(
-                                                    child: Text(
-                                                      '暂无歌词',
-                                                      style: TextStyle(
-                                                        fontSize: 18,
-                                                        color: colorScheme
-                                                            .onSurface
-                                                            .withOpacity(0.5),
-                                                      ),
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 48, right: 48, bottom: 80),
+                                          child: playerProvider.currentLyrics !=
+                                                  null
+                                              ? lyrics_widgets.LyricsWidget(
+                                                  lyrics: playerProvider
+                                                      .currentLyrics!,
+                                                  position: position,
+                                                  onLineTap: (duration) {
+                                                    playerProvider
+                                                        .seekTo(duration);
+                                                  },
+                                                )
+                                              : Center(
+                                                  child: Text(
+                                                    '暂无歌词',
+                                                    style: TextStyle(
+                                                      fontSize: 18,
+                                                      color: colorScheme
+                                                          .onSurface
+                                                          .withOpacity(0.5),
                                                     ),
                                                   ),
-                                          );
-                                        },
-                                      ),
+                                                ),
+                                        );
+                                      },
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
                     ),
                     // 透明标题栏
                     Positioned(
@@ -1372,7 +1417,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ],
-              ),
+                ),
               );
             },
           ),

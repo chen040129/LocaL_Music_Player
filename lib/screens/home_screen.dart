@@ -329,9 +329,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
-        // 监听窗口边框弧度变化
+        // 监听窗口边框弧度变化和透明度变化
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _updateWindowBorderRadius(settings.windowBorderRadius);
+          // 根据用户界面背景类型设置窗口透明度
+          if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+            if (settings.uiBackgroundType == UIBackgroundType.normal) {
+              windowManager.setOpacity(settings.windowOpacity);
+            } else {
+              windowManager.setOpacity(1.0);
+            }
+          }
         });
 
         return Material(
