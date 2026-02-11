@@ -409,9 +409,9 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                         builder: (context, player, settings, child) {
                           switch (settings.songPageBackgroundType) {
                             case SongPageBackgroundType.transparent:
-                              // 透明背景：完全透明背景
+                              // 透明背景：使用设置的透明度
                               return Container(
-                                color: Colors.transparent,
+                                color: Colors.black.withOpacity(1.0 - settings.pageOpacity),
                               );
                             case SongPageBackgroundType.fluid:
                               return _buildFluidBackground(player, settings);

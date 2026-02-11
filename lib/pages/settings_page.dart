@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'ui_settings_page.dart';
 import 'lyrics_settings_page.dart';
 import 'player_settings_page.dart';
+import 'system_settings_page.dart';
 import '../providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -169,6 +170,14 @@ class _SettingsPageState extends State<SettingsPage> {
           Colors.orange,
           2,
         ),
+        _buildSettingsCard(
+          context,
+          '系统',
+          '导入和导出配置文件',
+          CupertinoIcons.gear_solid,
+          Colors.purple,
+          3,
+        ),
       ],
     );
   }
@@ -308,6 +317,17 @@ class _SettingsPageState extends State<SettingsPage> {
       case 2:
         setState(() {
           _currentPage = PlayerSettingsPage(
+            onBack: () {
+              setState(() {
+                _currentPage = null;
+              });
+            },
+          );
+        });
+        break;
+      case 3:
+        setState(() {
+          _currentPage = SystemSettingsPage(
             onBack: () {
               setState(() {
                 _currentPage = null;
