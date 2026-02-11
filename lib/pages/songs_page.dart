@@ -512,6 +512,7 @@ class _SongsPageState extends State<SongsPage> {
                                 isHovered: isHovered,
                                 accentColor: animationColor,
                                 child: ListTile(
+                                  hoverColor: Colors.transparent,
                                   leading: music.coverArt != null
                                       ? RepaintBoundary(
                                           child: Image.memory(

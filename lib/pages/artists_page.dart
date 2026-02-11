@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -19,7 +18,8 @@ class ArtistsPage extends StatefulWidget {
   final String? navigateToArtist;
   final VoidCallback? onSidebarToggle;
 
-  const ArtistsPage({Key? key, this.navigateToArtist, this.onSidebarToggle}) : super(key: key);
+  const ArtistsPage({Key? key, this.navigateToArtist, this.onSidebarToggle})
+      : super(key: key);
 
   @override
   State<ArtistsPage> createState() => _ArtistsPageState();
@@ -33,14 +33,40 @@ class _ArtistsPageState extends State<ArtistsPage> {
   bool _isTitleHovered = false;
   // 按钮悬停状态
   bool _isSortHovered = false;
-  
+
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
   final List<String> _alphabet = [
-    '0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+    '0',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+    '#'
   ];
-  
+
   // 展开的艺术家
   final Set<String> _expandedArtists = <String>{};
 
@@ -48,7 +74,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
   int _hoveredIndex = -1;
   int _touchedIndex = -1;
   int _detailHoveredIndex = -1;
-  
+
   // 搜索状态
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -68,7 +94,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
   Color _getThemeOppositeColor(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    
+
     // 计算相反颜色
     return Color.fromARGB(
       primaryColor.alpha,
@@ -77,7 +103,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
       255 - primaryColor.blue,
     );
   }
-  
+
   /// 滚动到指定索引
   void _scrollToIndex(int index) {
     if (_scrollController.isAttached) {
@@ -99,16 +125,24 @@ class _ArtistsPageState extends State<ArtistsPage> {
     switch (_sortBy) {
       case 'name':
         sortedArtists.sort((a, b) {
-          final aPinyin = PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-          final bPinyin = PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-          return _isAscending ? aPinyin.compareTo(bPinyin) : bPinyin.compareTo(aPinyin);
+          final aPinyin =
+              PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE)
+                  .toUpperCase();
+          final bPinyin =
+              PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE)
+                  .toUpperCase();
+          return _isAscending
+              ? aPinyin.compareTo(bPinyin)
+              : bPinyin.compareTo(aPinyin);
         });
         break;
       case 'count':
         sortedArtists.sort((a, b) {
           final aCount = musicProvider.getMusicByArtist(a).length;
           final bCount = musicProvider.getMusicByArtist(b).length;
-          return _isAscending ? aCount.compareTo(bCount) : bCount.compareTo(aCount);
+          return _isAscending
+              ? aCount.compareTo(bCount)
+              : bCount.compareTo(aCount);
         });
         break;
       default:
@@ -133,7 +167,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
       });
     }
   }
-  
+
   /// 格式化时长
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -141,7 +175,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -183,14 +217,20 @@ class _ArtistsPageState extends State<ArtistsPage> {
                               return Icon(
                                 CupertinoIcons.music_note,
                                 size: 56,
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.5),
                               );
                             },
                           )
                         : Icon(
                             CupertinoIcons.music_note,
                             size: 56,
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                           ),
                     title: Text(
                       music.title,
@@ -219,7 +259,10 @@ class _ArtistsPageState extends State<ArtistsPage> {
                             Text(
                               music.album,
                               style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.5),
                                 fontSize: 12,
                               ),
                             ),
@@ -263,7 +306,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     trailing: Text(
                       _formatDuration(music.duration),
                       style: TextStyle(
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                         fontSize: 12,
                       ),
                     ),
@@ -276,7 +320,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ListTile(
                       leading: Icon(
                         CupertinoIcons.person,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('艺术家'),
                       onTap: () {
@@ -287,20 +332,24 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ListTile(
                       leading: Icon(
                         CupertinoIcons.music_albums,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('专辑'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // 使用NavigationProvider切换到专辑页面
-                        final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                        final navigationProvider =
+                            Provider.of<NavigationProvider>(context,
+                                listen: false);
                         navigationProvider.navigateToAlbum(music.album);
                       },
                     ),
                     ListTile(
                       leading: Icon(
                         AppIcons.addCircled,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('添加到歌单'),
                       onTap: () {
@@ -311,7 +360,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ListTile(
                       leading: Icon(
                         AppIcons.playCircle,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('下一首播放'),
                       onTap: () {
@@ -322,7 +372,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ListTile(
                       leading: Icon(
                         CupertinoIcons.music_note,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
                       title: const Text('歌曲信息'),
                       onTap: () {
@@ -378,7 +429,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                 _buildCopyableInfoRow('艺术家', music.artist),
                 _buildCopyableInfoRow('专辑', music.album),
                 _buildCopyableInfoRow('时长', _formatDuration(music.duration)),
-                if (music.quality != null) _buildCopyableInfoRow('音质', music.quality!),
+                if (music.quality != null)
+                  _buildCopyableInfoRow('音质', music.quality!),
                 _buildCopyableInfoRow('文件路径', music.filePath),
               ],
             ),
@@ -478,7 +530,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                   itemCount: playlists.length,
                   itemBuilder: (context, index) {
                     final playlist = playlists[index];
-                    final isMusicInPlaylist = playlist.musicIds.contains(musicId);
+                    final isMusicInPlaylist =
+                        playlist.musicIds.contains(musicId);
                     return ListTile(
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
@@ -487,7 +540,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
-                          await playlistService.removeMusicFromPlaylist(playlist.id, musicId);
+                          await playlistService.removeMusicFromPlaylist(
+                              playlist.id, musicId);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('已从 "${playlist.name}" 中移除'),
@@ -495,7 +549,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                             ),
                           );
                         } else {
-                          await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                          await playlistService.addMusicToPlaylist(
+                              playlist.id, musicId);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('已添加到 "${playlist.name}"'),
@@ -552,9 +607,12 @@ class _ArtistsPageState extends State<ArtistsPage> {
             TextButton(
               onPressed: () async {
                 if (playlistName.isNotEmpty) {
-                  final playlistService = Provider.of<PlaylistService>(context, listen: false);
-                  final playlist = await playlistService.createPlaylist(playlistName);
-                  await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                  final playlistService =
+                      Provider.of<PlaylistService>(context, listen: false);
+                  final playlist =
+                      await playlistService.createPlaylist(playlistName);
+                  await playlistService.addMusicToPlaylist(
+                      playlist.id, musicId);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -571,7 +629,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
       },
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -582,218 +640,252 @@ class _ArtistsPageState extends State<ArtistsPage> {
           Consumer<SettingsProvider>(
             builder: (context, settings, child) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 3,
-                  offset: const Offset(0, 2),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 3,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                MouseRegion(
-                  onEnter: (_) => setState(() => _isTitleHovered = true),
-                  onExit: (_) => setState(() => _isTitleHovered = false),
-                  child: GestureDetector(
-                    onTap: () {
-                      // 通知父组件展开侧边栏并导航到艺术家页面
-                      final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-                      navigationProvider.changePage(AppPage.artists);
-                      // 需要父组件实现展开侧边栏的逻辑
-                      if (widget.onSidebarToggle != null) {
-                        widget.onSidebarToggle!();
-                      }
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    MouseRegion(
+                      onEnter: (_) => setState(() => _isTitleHovered = true),
+                      onExit: (_) => setState(() => _isTitleHovered = false),
+                      child: GestureDetector(
+                        onTap: () {
+                          // 通知父组件展开侧边栏并导航到艺术家页面
+                          final navigationProvider =
+                              Provider.of<NavigationProvider>(context,
+                                  listen: false);
+                          navigationProvider.changePage(AppPage.artists);
+                          // 需要父组件实现展开侧边栏的逻辑
+                          if (widget.onSidebarToggle != null) {
+                            widget.onSidebarToggle!();
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _isTitleHovered
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.person,
+                                color: _isTitleHovered
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                        .iconTheme
+                                        .color
+                                        ?.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '艺术家',
+                                style: TextStyle(
+                                  color: _isTitleHovered
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context)
+                                          .iconTheme
+                                          .color
+                                          ?.withOpacity(0.7),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Consumer<MusicProvider>(
+                      builder: (context, musicProvider, child) {
+                        return Text(
+                          ' ${musicProvider.artists.length}',
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
+                            fontSize: 14,
+                          ),
+                        );
+                      },
+                    ),
+                    const Spacer(),
+                    // 搜索框
+                    Container(
+                      width: 200,
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: _isTitleHovered 
-                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            CupertinoIcons.person, 
-                            color: _isTitleHovered 
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '艺术家',
-                            style: TextStyle(
-                              color: _isTitleHovered 
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Consumer<MusicProvider>(
-                  builder: (context, musicProvider, child) {
-                    return Text(
-                      ' ${musicProvider.artists.length}',
-                      style: TextStyle(
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                        fontSize: 14,
-                      ),
-                    );
-                  },
-                ),
-                const Spacer(),
-                // 搜索框
-                Container(
-                  width: 200,
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        AppIcons.search,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: '搜索',
-                            hintStyle: TextStyle(
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                              fontSize: 14,
-                            ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                          },
-                        ),
-                      ),
-                      if (_searchQuery.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _searchQuery = '';
-                              _searchController.clear();
-                            });
-                          },
-                          child: Icon(
-                            AppIcons.clearCircledSolid,
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            AppIcons.search,
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             size: 18,
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 排序按钮
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  onEnter: (_) => setState(() => _isSortHovered = true),
-                  onExit: (_) => setState(() => _isSortHovered = false),
-                  child: GestureDetector(
-                    onTapDown: (details) {
-                      final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-                      final Offset position = overlay.globalToLocal(details.globalPosition);
-                      showMenu<String>(
-                        context: context,
-                        position: RelativeRect.fromLTRB(
-                          position.dx,
-                          position.dy,
-                          position.dx,
-                          position.dy,
-                        ),
-                        items: [
-                          const PopupMenuItem<String>(
-                            value: 'name',
-                            child: Text('按名称排序'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'count',
-                            child: Text('按歌曲数量排序'),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem<String>(
-                            value: 'asc',
-                            child: Row(
-                              children: [
-                                Icon(AppIcons.arrowUpward, size: 16),
-                                const SizedBox(width: 8),
-                                const Text('升序'),
-                              ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: '搜索',
+                                hintStyle: TextStyle(
+                                  color: Theme.of(context)
+                                      .iconTheme
+                                      .color
+                                      ?.withOpacity(0.5),
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.7),
+                                fontSize: 14,
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
                             ),
                           ),
-                          PopupMenuItem<String>(
-                            value: 'desc',
-                            child: Row(
-                              children: [
-                                Icon(AppIcons.arrowDownward, size: 16),
-                                const SizedBox(width: 8),
-                                const Text('降序'),
-                              ],
+                          if (_searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _searchQuery = '';
+                                  _searchController.clear();
+                                });
+                              },
+                              child: Icon(
+                                AppIcons.clearCircledSolid,
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.5),
+                                size: 18,
+                              ),
                             ),
-                          ),
                         ],
-                      ).then((value) {
-                        if (value != null) {
-                          setState(() {
-                            if (value == 'asc' || value == 'desc') {
-                              _isAscending = value == 'asc';
-                            } else {
-                              _sortBy = value;
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // 排序按钮
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      onEnter: (_) => setState(() => _isSortHovered = true),
+                      onExit: (_) => setState(() => _isSortHovered = false),
+                      child: GestureDetector(
+                        onTapDown: (details) {
+                          final RenderBox overlay = Overlay.of(context)
+                              .context
+                              .findRenderObject() as RenderBox;
+                          final Offset position =
+                              overlay.globalToLocal(details.globalPosition);
+                          showMenu<String>(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                              position.dx,
+                              position.dy,
+                              position.dx,
+                              position.dy,
+                            ),
+                            items: [
+                              const PopupMenuItem<String>(
+                                value: 'name',
+                                child: Text('按名称排序'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'count',
+                                child: Text('按歌曲数量排序'),
+                              ),
+                              const PopupMenuDivider(),
+                              PopupMenuItem<String>(
+                                value: 'asc',
+                                child: Row(
+                                  children: [
+                                    Icon(AppIcons.arrowUpward, size: 16),
+                                    const SizedBox(width: 8),
+                                    const Text('升序'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'desc',
+                                child: Row(
+                                  children: [
+                                    Icon(AppIcons.arrowDownward, size: 16),
+                                    const SizedBox(width: 8),
+                                    const Text('降序'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ).then((value) {
+                            if (value != null) {
+                              setState(() {
+                                if (value == 'asc' || value == 'desc') {
+                                  _isAscending = value == 'asc';
+                                } else {
+                                  _sortBy = value;
+                                }
+                              });
                             }
                           });
-                        }
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: AnimatedScale(
-                        scale: _isSortHovered ? 1.2 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          AppIcons.sort,
-                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                          size: 20,
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: AnimatedScale(
+                            scale: _isSortHovered ? 1.2 : 1.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              AppIcons.sort,
+                              color: Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  ?.withOpacity(0.7),
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
+              );
             },
           ),
           // 艺术家列表
@@ -801,22 +893,30 @@ class _ArtistsPageState extends State<ArtistsPage> {
             child: Consumer<MusicProvider>(
               builder: (context, musicProvider, child) {
                 final artists = musicProvider.artists;
-                
+
                 // 对艺术家进行排序
                 List<String> sortedArtists = List.from(artists);
                 switch (_sortBy) {
                   case 'name':
                     sortedArtists.sort((a, b) {
-                      final aPinyin = PinyinHelper.getPinyinE(a, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-                      final bPinyin = PinyinHelper.getPinyinE(b, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
-                      return _isAscending ? aPinyin.compareTo(bPinyin) : bPinyin.compareTo(aPinyin);
+                      final aPinyin = PinyinHelper.getPinyinE(a,
+                              format: PinyinFormat.WITHOUT_TONE)
+                          .toUpperCase();
+                      final bPinyin = PinyinHelper.getPinyinE(b,
+                              format: PinyinFormat.WITHOUT_TONE)
+                          .toUpperCase();
+                      return _isAscending
+                          ? aPinyin.compareTo(bPinyin)
+                          : bPinyin.compareTo(aPinyin);
                     });
                     break;
                   case 'count':
                     sortedArtists.sort((a, b) {
                       final aCount = musicProvider.getMusicByArtist(a).length;
                       final bCount = musicProvider.getMusicByArtist(b).length;
-                      return _isAscending ? aCount.compareTo(bCount) : bCount.compareTo(aCount);
+                      return _isAscending
+                          ? aCount.compareTo(bCount)
+                          : bCount.compareTo(aCount);
                     });
                     break;
                   default:
@@ -839,13 +939,19 @@ class _ArtistsPageState extends State<ArtistsPage> {
                         Icon(
                           CupertinoIcons.person,
                           size: 64,
-                          color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
+                          color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              ?.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           '暂无艺术家',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             fontSize: 16,
                           ),
                         ),
@@ -853,7 +959,10 @@ class _ArtistsPageState extends State<ArtistsPage> {
                         Text(
                           '扫描音乐后将自动显示艺术家',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.4),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.4),
                             fontSize: 14,
                           ),
                         ),
@@ -874,185 +983,296 @@ class _ArtistsPageState extends State<ArtistsPage> {
                         }
 
                         final artist = sortedArtists[index];
-                        final artistMusics = musicProvider.getMusicByArtist(artist);
+                        final artistMusics =
+                            musicProvider.getMusicByArtist(artist);
 
                         // 艺术家首字母
-                        String initial = artist.isNotEmpty ? artist[0].toUpperCase() : '';
+                        String initial =
+                            artist.isNotEmpty ? artist[0].toUpperCase() : '';
 
-                        return MouseRegion(
-                          onEnter: (_) {
-                            setState(() {
-                              _hoveredIndex = index;
-                            });
-                          },
-                          onExit: (_) {
-                            setState(() {
-                              _hoveredIndex = -1;
-                            });
-                          },
-                          child: GestureDetector(
-                            onTap: () {
+                        return RepaintBoundary(
+                          child: MouseRegion(
+                            onEnter: (_) {
                               setState(() {
-                                _touchedIndex = _touchedIndex == index ? -1 : index;
+                                _hoveredIndex = index;
                               });
                             },
-                            child: MaskCard(
-                              isSelected: _touchedIndex == index,
-                              isHovered: _hoveredIndex == index,
-                              accentColor: artistMusics.isNotEmpty && artistMusics.first.coverColor != null
-                                  ? Color(artistMusics.first.coverColor!)
-                                  : null,
-                              child: Column(
-                                children: [
-                                  ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                  child: Text(
-                                    initial,
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
+                            onExit: (_) {
+                              setState(() {
+                                _hoveredIndex = -1;
+                              });
+                            },
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _touchedIndex =
+                                      _touchedIndex == index ? -1 : index;
+                                });
+                              },
+                              child: MaskCard(
+                                isSelected: _touchedIndex == index,
+                                isHovered: _hoveredIndex == index,
+                                accentColor: artistMusics.isNotEmpty &&
+                                        artistMusics.first.coverColor != null
+                                    ? Color(artistMusics.first.coverColor!)
+                                    : null,
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      hoverColor: Colors.transparent,
+                                      leading: CircleAvatar(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.1),
+                                        child: Text(
+                                          initial,
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        artist,
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${artistMusics.length} 首歌曲',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.7),
+                                        ),
+                                      ),
+                                      trailing: AnimatedRotation(
+                                        turns: _expandedArtists.contains(artist)
+                                            ? 0.5
+                                            : 0,
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        child: Icon(
+                                          CupertinoIcons.chevron_down,
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.5),
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          if (_expandedArtists
+                                              .contains(artist)) {
+                                            _expandedArtists.remove(artist);
+                                          } else {
+                                            _expandedArtists.add(artist);
+                                          }
+                                          _touchedIndex =
+                                              _expandedArtists.contains(artist)
+                                                  ? index
+                                                  : -1;
+                                        });
+                                      },
                                     ),
-                                  ),
-                                ),
-                                title: Text(
-                                  artist,
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '${artistMusics.length} 首歌曲',
-                                  style: TextStyle(
-                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                  ),
-                                ),
-                                trailing: AnimatedRotation(
-                                  turns: _expandedArtists.contains(artist) ? 0.5 : 0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Icon(
-                                    CupertinoIcons.chevron_down,
-                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                  ),
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    if (_expandedArtists.contains(artist)) {
-                                      _expandedArtists.remove(artist);
-                                    } else {
-                                      _expandedArtists.add(artist);
-                                    }
-                                    _touchedIndex = _expandedArtists.contains(artist) ? index : -1;
-                                  });
-                                },
-                              ),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                height: _expandedArtists.contains(artist) ? artistMusics.length * 72.0 : 0,
-                                child: _expandedArtists.contains(artist)
-                                    ? ListView.builder(
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        shrinkWrap: true,
-                                        itemCount: artistMusics.length,
-                                        itemBuilder: (context, musicIndex) {
-                                          final music = artistMusics[musicIndex];
-                                          return ListTile(
-                                            leading: music.coverArt != null
-                                                ? Image.memory(
-                                                    music.coverArt!,
-                                                    width: 48,
-                                                    height: 48,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) {
-                                                      return Icon(
-                                                        CupertinoIcons.music_note,
-                                                        size: 48,
-                                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                                      );
-                                                    },
-                                                  )
-                                                : Icon(
-                                                    CupertinoIcons.music_note,
-                                                    size: 48,
-                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                                  ),
-                                            title: Text(
-                                              music.title,
-                                              style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                            ),
-                                            subtitle: Text(
-                                              music.album,
-                                              style: TextStyle(
-                                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                              ),
-                                            ),
-                                            onTap: () {
-                                              final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-                                              final musicList = musicProvider.getMusicByArtist(artist);
-                                              final index = musicList.indexWhere((m) => m.id == music.id);
-                                              if (index != -1) {
-                                                playerProvider.setPlaylist(
-                                                  musicList: musicList,
-                                                  source: PlaylistSource.artist,
-                                                  identifier: artist,
-                                                  startIndex: index,
-                                                );
-                                                playerProvider.playAtIndex(index);
-                                              }
-                                            },
-                                            trailing: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  _formatDuration(music.duration),
-                                                  style: TextStyle(
-                                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                MouseRegion(
-                                                  cursor: SystemMouseCursors.click,
-                                                  onEnter: (_) => setState(() => _detailHoveredIndex = index),
-                                                  onExit: (_) => setState(() => _detailHoveredIndex = -1),
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      _showMusicDetailDialog(music);
-                                                    },
-                                                    child: AnimatedContainer(
-                                                      duration: const Duration(milliseconds: 200),
-                                                      padding: const EdgeInsets.all(8),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.transparent,
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                      child: AnimatedScale(
-                                                        scale: _detailHoveredIndex == index ? 1.2 : 1.0,
-                                                        duration: const Duration(milliseconds: 200),
-                                                        child: Icon(
-                                                          CupertinoIcons.ellipsis,
-                                                          color: _detailHoveredIndex == index
-                                                              ? Theme.of(context).colorScheme.primary
-                                                              : Theme.of(context).iconTheme.color?.withOpacity(0.5),
-                                                          size: 20,
+                                    AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                      height: _expandedArtists.contains(artist)
+                                          ? artistMusics.length * 72.0
+                                          : 0,
+                                      child: _expandedArtists.contains(artist)
+                                          ? ListView.builder(
+                                              physics:
+                                                  const NeverScrollableScrollPhysics(),
+                                              shrinkWrap: true,
+                                              itemCount: artistMusics.length,
+                                              itemBuilder:
+                                                  (context, musicIndex) {
+                                                final music =
+                                                    artistMusics[musicIndex];
+                                                return ListTile(
+                                                  hoverColor: Colors.transparent,
+                                                  leading: music.coverArt !=
+                                                          null
+                                                      ? Image.memory(
+                                                          music.coverArt!,
+                                                          width: 48,
+                                                          height: 48,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (context, error,
+                                                                  stackTrace) {
+                                                            return Icon(
+                                                              CupertinoIcons
+                                                                  .music_note,
+                                                              size: 48,
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .iconTheme
+                                                                  .color
+                                                                  ?.withOpacity(
+                                                                      0.5),
+                                                            );
+                                                          },
+                                                        )
+                                                      : Icon(
+                                                          CupertinoIcons
+                                                              .music_note,
+                                                          size: 48,
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .iconTheme
+                                                                  .color
+                                                                  ?.withOpacity(
+                                                                      0.5),
                                                         ),
-                                                      ),
+                                                  title: Text(
+                                                    music.title,
+                                                    style: TextStyle(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface,
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : const SizedBox.shrink(),
+                                                  subtitle: Text(
+                                                    music.album,
+                                                    style: TextStyle(
+                                                      color: Theme.of(context)
+                                                          .iconTheme
+                                                          .color
+                                                          ?.withOpacity(0.7),
+                                                    ),
+                                                  ),
+                                                  onTap: () {
+                                                    final playerProvider =
+                                                        Provider.of<
+                                                                PlayerProvider>(
+                                                            context,
+                                                            listen: false);
+                                                    final musicList =
+                                                        musicProvider
+                                                            .getMusicByArtist(
+                                                                artist);
+                                                    final index = musicList
+                                                        .indexWhere((m) =>
+                                                            m.id == music.id);
+                                                    if (index != -1) {
+                                                      playerProvider
+                                                          .setPlaylist(
+                                                        musicList: musicList,
+                                                        source: PlaylistSource
+                                                            .artist,
+                                                        identifier: artist,
+                                                        startIndex: index,
+                                                      );
+                                                      playerProvider
+                                                          .playAtIndex(index);
+                                                    }
+                                                  },
+                                                  trailing: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        _formatDuration(
+                                                            music.duration),
+                                                        style: TextStyle(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .iconTheme
+                                                                  .color
+                                                                  ?.withOpacity(
+                                                                      0.7),
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      MouseRegion(
+                                                        cursor:
+                                                            SystemMouseCursors
+                                                                .click,
+                                                        onEnter: (_) =>
+                                                            setState(() =>
+                                                                _detailHoveredIndex =
+                                                                    index),
+                                                        onExit: (_) => setState(
+                                                            () =>
+                                                                _detailHoveredIndex =
+                                                                    -1),
+                                                        child: GestureDetector(
+                                                          onTap: () {
+                                                            _showMusicDetailDialog(
+                                                                music);
+                                                          },
+                                                          child:
+                                                              AnimatedContainer(
+                                                            duration:
+                                                                const Duration(
+                                                                    milliseconds:
+                                                                        200),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(8),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .transparent,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                            ),
+                                                            child:
+                                                                AnimatedScale(
+                                                              scale:
+                                                                  _detailHoveredIndex ==
+                                                                          index
+                                                                      ? 1.2
+                                                                      : 1.0,
+                                                              duration:
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          200),
+                                                              child: Icon(
+                                                                CupertinoIcons
+                                                                    .ellipsis,
+                                                                color: _detailHoveredIndex ==
+                                                                        index
+                                                                    ? Theme.of(
+                                                                            context)
+                                                                        .colorScheme
+                                                                        .primary
+                                                                    : Theme.of(
+                                                                            context)
+                                                                        .iconTheme
+                                                                        .color
+                                                                        ?.withOpacity(
+                                                                            0.5),
+                                                                size: 20,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : const SizedBox.shrink(),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
                             ),
                           ),
                         );
@@ -1077,7 +1297,9 @@ class _ArtistsPageState extends State<ArtistsPage> {
                               final letter = alphabet[index];
                               // 检查是否有以该字母开头的艺术家
                               final hasArtists = sortedArtists.any((artist) {
-                                final pinyin = PinyinHelper.getPinyinE(artist, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                final pinyin = PinyinHelper.getPinyinE(artist,
+                                        format: PinyinFormat.WITHOUT_TONE)
+                                    .toUpperCase();
                                 if (letter == '0') {
                                   return RegExp(r'^[0-9]').hasMatch(artist);
                                 } else if (letter == '#') {
@@ -1090,12 +1312,17 @@ class _ArtistsPageState extends State<ArtistsPage> {
                               return GestureDetector(
                                 onTap: () {
                                   // 滚动到对应字母的位置
-                                  final targetIndex = sortedArtists.indexWhere((artist) {
-                                    final pinyin = PinyinHelper.getPinyinE(artist, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+                                  final targetIndex =
+                                      sortedArtists.indexWhere((artist) {
+                                    final pinyin = PinyinHelper.getPinyinE(
+                                            artist,
+                                            format: PinyinFormat.WITHOUT_TONE)
+                                        .toUpperCase();
                                     if (letter == '0') {
                                       return RegExp(r'^[0-9]').hasMatch(artist);
                                     } else if (letter == '#') {
-                                      return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                      return !RegExp(r'^[A-Z0-9]')
+                                          .hasMatch(pinyin);
                                     } else {
                                       return pinyin.startsWith(letter);
                                     }
@@ -1113,9 +1340,16 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                     style: TextStyle(
                                       fontSize: hasArtists ? 12 : 10,
                                       color: hasArtists
-                                          ? Theme.of(context).colorScheme.primary
-                                          : Theme.of(context).iconTheme.color?.withOpacity(0.3),
-                                      fontWeight: hasArtists ? FontWeight.bold : FontWeight.normal,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.3),
+                                      fontWeight: hasArtists
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                 ),

@@ -1055,22 +1055,24 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         }
 
                         return RepaintBoundary(
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
+                          child: MouseRegion(
+                            onEnter: (_) {
+                              setState(() {
+                                _hoveredIndex = index;
+                              });
+                            },
+                            onExit: (_) {
+                              setState(() {
+                                _hoveredIndex = -1;
+                              });
+                            },
+                            child: GestureDetector(
                               onTap: () {
                                 setState(() {
                                   _touchedIndex =
                                       _touchedIndex == index ? -1 : index;
                                 });
                               },
-                              onHover: (isHovering) {
-                                setState(() {
-                                  _hoveredIndex = isHovering ? index : -1;
-                                });
-                              },
-                              splashColor: Colors.transparent,
-                              hoverColor: Colors.transparent,
                               child: MaskCard(
                                 isSelected: _touchedIndex == index,
                                 isHovered: _hoveredIndex == index,
@@ -1081,6 +1083,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                 child: Column(
                                   children: [
                                     ListTile(
+                                      hoverColor: Colors.transparent,
                                       leading: buildCoverImage(),
                                       title: Text(
                                         album,
@@ -1146,6 +1149,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                                 final music =
                                                     albumMusics[musicIndex];
                                                 return ListTile(
+                                                  hoverColor: Colors.transparent,
                                                   leading: music.coverArt !=
                                                           null
                                                       ? Image.memory(

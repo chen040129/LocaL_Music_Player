@@ -173,6 +173,9 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           disableTouchEvent: false,
           // 选中行自动恢复模式 - 停止选择后再恢复
           selectionAutoResumeMode: SelectionAutoResumeMode.afterSelecting,
+          // 禁用高亮效果 - 去除悬停时的浅灰色矩形边缘
+          activeHighlightColor: null,
+          activeHighlightGradient: null,
         );
 
         return Container(
@@ -207,9 +210,20 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                 child: Stack(
                   children: [
                     // 歌词视图
-                    LyricView(
-                      controller: _lyricController,
-                      style: adjustedStyle,
+                    Material(
+                      color: Colors.transparent,
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        hoverColor: Colors.transparent,
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () {},
+                        child: LyricView(
+                          controller: _lyricController,
+                          style: adjustedStyle,
+                        ),
+                      ),
                     ),
                     // 上下高斯模糊蒙版
                     if (settings.enableLyricsBlur)

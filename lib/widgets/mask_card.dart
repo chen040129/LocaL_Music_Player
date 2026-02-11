@@ -109,7 +109,7 @@ class _MaskCardState extends State<MaskCard>
                     BoxShadow(
                       color: accentColor.withOpacity(0.2 * _animation.value),
                       blurRadius: 25,
-                      spreadRadius: 3,
+                      spreadRadius: 0,
                       offset: const Offset(0, 5),
                     ),
                   // 软件主题色阴影（与歌曲主题色相反）
@@ -117,7 +117,7 @@ class _MaskCardState extends State<MaskCard>
                     BoxShadow(
                       color: themeColor.withOpacity(0.1 * _animation.value),
                       blurRadius: 20,
-                      spreadRadius: 2,
+                      spreadRadius: 0,
                       offset: const Offset(0, -3),
                     ),
                 ],
