@@ -40,6 +40,7 @@ class PlaylistsPagePlayerHelper {
         source: PlaylistSource.custom,
         identifier: playlist.name,
         startIndex: songIndex,
+        moveToTop: true,
       );
     }
 
@@ -80,6 +81,7 @@ class PlaylistsPagePlayerHelper {
         source: PlaylistSource.custom,
         identifier: playlist.name,
         startIndex: 0,
+        moveToTop: true,
       );
     }
 
@@ -428,6 +430,9 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                           isHovered: index == _hoveredIndex,
                           accentColor: animationColor,
                           child: ListTile(
+                            hoverColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            focusColor: Colors.transparent,
                             leading: music.coverArt != null
                                 ? Image.memory(
                                     music.coverArt!,
@@ -650,6 +655,9 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
                           isHovered: isHovered,
                           accentColor: animationColor,
                           child: ListTile(
+                            hoverColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            focusColor: Colors.transparent,
                             leading: Icon(
                               AppIcons.playlist,
                               color: animationColor,

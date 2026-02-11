@@ -194,11 +194,12 @@ class _ArtistsPageState extends State<ArtistsPage> {
           child: Container(
             width: 400,
             constraints: const BoxConstraints(maxHeight: 600),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 歌曲卡片
-                Card(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 歌曲卡片
+                  Card(
                   margin: EdgeInsets.zero,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
@@ -206,110 +207,135 @@ class _ArtistsPageState extends State<ArtistsPage> {
                       topRight: Radius.circular(16),
                     ),
                   ),
-                  child: ListTile(
-                    leading: music.coverArt != null
-                        ? Image.memory(
-                            music.coverArt!,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        // 封面图
+                        music.coverArt != null
+                            ? Image.memory(
+                                music.coverArt!,
+                                width: 56,
+                                height: 56,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    CupertinoIcons.music_note,
+                                    size: 56,
+                                    color: Theme.of(context)
+                                        .iconTheme
+                                        .color
+                                        ?.withOpacity(0.5),
+                                  );
+                                },
+                              )
+                            : Icon(
                                 CupertinoIcons.music_note,
                                 size: 56,
                                 color: Theme.of(context)
                                     .iconTheme
                                     .color
                                     ?.withOpacity(0.5),
-                              );
-                            },
-                          )
-                        : Icon(
-                            CupertinoIcons.music_note,
-                            size: 56,
-                            color: Theme.of(context)
-                                .iconTheme
-                                .color
-                                ?.withOpacity(0.5),
-                          ),
-                    title: Text(
-                      music.title,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            // TODO: 跳转到艺术家页面
-                          },
-                          child: Text(
-                            music.artist,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                              ),
+                        const SizedBox(width: 16),
+                        // 歌曲信息
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 歌曲标题
+                              Text(
+                                music.title,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                              const SizedBox(height: 4),
+                              // 艺术家
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  // TODO: 跳转到艺术家页面
+                                },
+                                child: Text(
+                                  music.artist,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              // 专辑和主题色
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      music.album,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .iconTheme
+                                            .color
+                                            ?.withOpacity(0.5),
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  if (music.coverColor != null) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: Color(music.coverColor!),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                  if (music.secondaryColor != null) ...[
+                                    const SizedBox(width: 2),
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: Color(music.secondaryColor!),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                  if (music.tertiaryColor != null) ...[
+                                    const SizedBox(width: 2),
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: Color(music.tertiaryColor!),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        Row(
-                          children: [
-                            Text(
-                              music.album,
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .iconTheme
-                                    .color
-                                    ?.withOpacity(0.5),
-                                fontSize: 12,
-                              ),
-                            ),
-                            if (music.coverColor != null) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: Color(music.coverColor!),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                            if (music.secondaryColor != null) ...[
-                              const SizedBox(width: 2),
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: Color(music.secondaryColor!),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                            if (music.tertiaryColor != null) ...[
-                              const SizedBox(width: 2),
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: Color(music.tertiaryColor!),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                          ],
+                        const SizedBox(width: 16),
+                        // 时长
+                        Text(
+                          _formatDuration(music.duration),
+                          style: TextStyle(
+                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
-                    ),
-                    trailing: Text(
-                      _formatDuration(music.duration),
-                      style: TextStyle(
-                        color:
-                            Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
                     ),
                   ),
                 ),
@@ -366,7 +392,14 @@ class _ArtistsPageState extends State<ArtistsPage> {
                       title: const Text('下一首播放'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        // TODO: 设置为下一首播放
+                        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                        playerProvider.playNextAsNext(music);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('已将 "${music.title}" 添加到下一首播放'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                     ),
                     ListTile(
@@ -383,7 +416,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                     ),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -1020,6 +1054,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                   children: [
                                     ListTile(
                                       hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      focusColor: Colors.transparent,
                                       leading: CircleAvatar(
                                         backgroundColor: Theme.of(context)
                                             .colorScheme
@@ -1083,6 +1119,7 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                       },
                                     ),
                                     AnimatedContainer(
+                                      color: Colors.transparent,
                                       duration:
                                           const Duration(milliseconds: 300),
                                       curve: Curves.easeInOut,
@@ -1090,10 +1127,13 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                           ? artistMusics.length * 72.0
                                           : 0,
                                       child: _expandedArtists.contains(artist)
-                                          ? ListView.builder(
+                                          ? Container(
+                                              color: Colors.transparent,
+                                              child: ListView.builder(
                                               physics:
                                                   const NeverScrollableScrollPhysics(),
                                               shrinkWrap: true,
+                                              padding: EdgeInsets.zero,
                                               itemCount: artistMusics.length,
                                               itemBuilder:
                                                   (context, musicIndex) {
@@ -1142,6 +1182,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                           .colorScheme
                                                           .onSurface,
                                                     ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
                                                   ),
                                                   subtitle: Text(
                                                     music.album,
@@ -1151,6 +1193,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                           .color
                                                           ?.withOpacity(0.7),
                                                     ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
                                                   ),
                                                   onTap: () {
                                                     final playerProvider =
@@ -1267,7 +1311,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                   ),
                                                 );
                                               },
-                                            )
+                                            ),
+                                          )
                                           : const SizedBox.shrink(),
                                     ),
                                   ],

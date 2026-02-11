@@ -159,6 +159,23 @@ class _UISettingsPageState extends State<UISettingsPage> {
                     settings.setUIBackgroundType(newSelection.first);
                   },
                 ),
+                // 流体背景设置
+                if (settings.uiBackgroundType == UIBackgroundType.fluid)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSwitchTile(
+                          title: '流体动态效果',
+                          subtitle: '启用流体背景的动态效果',
+                          icon: CupertinoIcons.waveform_path,
+                          value: settings.isFluidDynamic,
+                          onChanged: (value) => settings.setIsFluidDynamic(value),
+                        ),
+                      ],
+                    ),
+                  ),
                 // 默认背景类型的设置
                 if (settings.uiBackgroundType == UIBackgroundType.normal)
                   Padding(

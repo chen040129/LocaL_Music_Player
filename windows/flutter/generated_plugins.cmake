@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   just_audio_windows
   screen_brightness_windows
   screen_retriever
+  url_launcher_windows
   window_manager
 )
 

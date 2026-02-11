@@ -301,6 +301,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,18 +317,24 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                         Row(
                           children: [
-                            Text(
-                              music.album,
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .iconTheme
-                                    .color
-                                    ?.withOpacity(0.5),
-                                fontSize: 12,
+                            Expanded(
+                              child: Text(
+                                music.album,
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .iconTheme
+                                      .color
+                                      ?.withOpacity(0.5),
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             if (music.coverColor != null) ...[
@@ -386,7 +394,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         color:
                             Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到艺术家'),
+                      title: const Text('艺术家'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // 使用NavigationProvider切换到艺术家页面
@@ -402,7 +410,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         color:
                             Theme.of(context).iconTheme.color?.withOpacity(0.7),
                       ),
-                      title: const Text('跳转到专辑'),
+                      title: const Text('专辑'),
                       onTap: () {
                         Navigator.of(context).pop();
                         // TODO: 跳转到专辑页面并定位到对应专辑
@@ -429,7 +437,14 @@ class _AlbumsPageState extends State<AlbumsPage> {
                       title: const Text('下一首播放'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        // TODO: 设置为下一首播放
+                        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                        playerProvider.playNextAsNext(music);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('已将 "${music.title}" 添加到下一首播放'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                     ),
                     ListTile(
@@ -1084,6 +1099,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                   children: [
                                     ListTile(
                                       hoverColor: Colors.transparent,
+                                      splashColor: Colors.transparent,
+                                      focusColor: Colors.transparent,
                                       leading: buildCoverImage(),
                                       title: Text(
                                         album,
@@ -1132,6 +1149,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                       },
                                     ),
                                     AnimatedContainer(
+                                      color: Colors.transparent,
                                       duration:
                                           const Duration(milliseconds: 300),
                                       curve: Curves.easeInOut,
@@ -1139,10 +1157,13 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                           ? albumMusics.length * 72.0
                                           : 0,
                                       child: _expandedAlbums.contains(album)
-                                          ? ListView.builder(
+                                          ? Container(
+                                              color: Colors.transparent,
+                                              child: ListView.builder(
                                               physics:
                                                   const NeverScrollableScrollPhysics(),
                                               shrinkWrap: true,
+                                              padding: EdgeInsets.zero,
                                               itemCount: albumMusics.length,
                                               itemBuilder:
                                                   (context, musicIndex) {
@@ -1320,7 +1341,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                                   ),
                                                 );
                                               },
-                                            )
+                                            ),
+                                          )
                                           : const SizedBox.shrink(),
                                     ),
                                   ],

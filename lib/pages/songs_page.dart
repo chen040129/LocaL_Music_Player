@@ -513,6 +513,8 @@ class _SongsPageState extends State<SongsPage> {
                                 accentColor: animationColor,
                                 child: ListTile(
                                   hoverColor: Colors.transparent,
+                                  splashColor: Colors.transparent,
+                                  focusColor: Colors.transparent,
                                   leading: music.coverArt != null
                                       ? RepaintBoundary(
                                           child: Image.memory(
@@ -1143,6 +1145,8 @@ class _SongsPageState extends State<SongsPage> {
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1157,18 +1161,24 @@ class _SongsPageState extends State<SongsPage> {
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                         Row(
                           children: [
-                            Text(
-                              music.album,
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .iconTheme
-                                    .color
-                                    ?.withOpacity(0.5),
-                                fontSize: 12,
+                            Expanded(
+                              child: Text(
+                                music.album,
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .iconTheme
+                                      .color
+                                      ?.withOpacity(0.5),
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             if (music.coverColor != null) ...[
@@ -1275,7 +1285,14 @@ class _SongsPageState extends State<SongsPage> {
                       title: const Text('下一首播放'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        // TODO: 设置为下一首播放
+                        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                        playerProvider.playNextAsNext(music);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('已将 "${music.title}" 添加到下一首播放'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                     ),
                     ListTile(

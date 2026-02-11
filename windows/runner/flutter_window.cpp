@@ -17,12 +17,12 @@ bool FlutterWindow::OnCreate() {
   }
 
   // Extend DWM frame into client area to achieve borderless effect
-  MARGINS margins = {0};
+  MARGINS margins = {-1};
   DwmExtendFrameIntoClientArea(GetHandle(), &margins);
 
   // Remove the standard title bar and make window borderless
   LONG style = GetWindowLong(GetHandle(), GWL_STYLE);
-  style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+  style &= ~(WS_CAPTION | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
   SetWindowLong(GetHandle(), GWL_STYLE, style);
 
   // Remove the extended window styles
@@ -32,6 +32,13 @@ bool FlutterWindow::OnCreate() {
 
   // Set window to redraw
   SetWindowPos(GetHandle(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+  // Enable DWM blur behind to prevent white edges
+  DWM_BLURBEHIND blurBehind = {0};
+  blurBehind.dwFlags = DWM_BB_ENABLE;
+  blurBehind.fEnable = TRUE;
+  blurBehind.hRgnBlur = NULL;
+  DwmEnableBlurBehindWindow(GetHandle(), &blurBehind);
 
   RECT frame = GetClientArea();
 
@@ -54,14 +61,6 @@ bool FlutterWindow::OnCreate() {
   // registered. The following call ensures a frame is pending to ensure the
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
-
-  // Set window to be layered with transparent background
-  LONG exstyle = GetWindowLong(GetHandle(), GWL_EXSTYLE);
-  exstyle |= WS_EX_LAYERED;
-  SetWindowLong(GetHandle(), GWL_EXSTYLE, exstyle);
-
-  // Make the window background transparent
-  SetLayeredWindowAttributes(GetHandle(), 0, 255, LWA_ALPHA);
 
   return true;
 }
@@ -97,6 +96,12 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       InvalidateRect(GetHandle(), NULL, TRUE);
       UpdateWindow(GetHandle());
       break;
+    case WM_SIZE: {
+      // Force redraw for layered window to prevent artifacts during resizing
+      InvalidateRect(GetHandle(), NULL, TRUE);
+      UpdateWindow(GetHandle());
+      break;
+    }
     case WM_SIZING: {
       // Limit window minimum size
       const int minWidth = 1600;

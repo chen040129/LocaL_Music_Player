@@ -227,7 +227,12 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(16),
                         child: InkWell(
                           onTap: () {
-                            // TODO: 实现音质设置功能
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('音效设置功能也许可能在后面版本推出'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
                           },
                           splashColor: Colors.transparent,
                           highlightColor: Colors.transparent,

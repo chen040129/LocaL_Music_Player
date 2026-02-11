@@ -39,6 +39,7 @@ class PlaylistsPagePlayerHelper {
         source: PlaylistSource.custom,
         identifier: playlist.name,
         startIndex: songIndex,
+        moveToTop: true,
       );
     }
 
@@ -79,6 +80,7 @@ class PlaylistsPagePlayerHelper {
         source: PlaylistSource.custom,
         identifier: playlist.name,
         startIndex: 0,
+        moveToTop: true,
       );
     }
 

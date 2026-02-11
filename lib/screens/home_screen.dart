@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
@@ -40,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAlwaysOnTop = false;
   List<Map<String, dynamic>> _songs = [];
   Size? _windowSize;
+  Timer? _resizeDebounceTimer;
 
   @override
   void initState() {
@@ -61,11 +64,26 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _resizeDebounceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _updateWindowSize() async {
     _windowSize = await windowManager.getSize();
     if (mounted) {
       setState(() {});
     }
+  }
+
+  // 防抖方法：延迟执行窗口大小调整
+  void _debouncedResize(Size newSize) {
+    _resizeDebounceTimer?.cancel();
+    _resizeDebounceTimer = Timer(const Duration(milliseconds: 16), () async {
+      await windowManager.setSize(newSize);
+      _windowSize = newSize;
+    });
   }
 
   // 窗口控制功能
@@ -478,8 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size.width + details.delta.dx,
                                   size.height,
                                 );
-                                await windowManager.setSize(newSize);
-                                _windowSize = newSize;
+                                _debouncedResize(newSize);
                               },
                               behavior: HitTestBehavior.translucent,
                             ),
@@ -502,8 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size.width + details.delta.dx,
                                   size.height,
                                 );
-                                await windowManager.setSize(newSize);
-                                _windowSize = newSize;
+                                _debouncedResize(newSize);
                               },
                               behavior: HitTestBehavior.translucent,
                             ),
@@ -526,8 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size.width,
                                   size.height + details.delta.dy,
                                 );
-                                await windowManager.setSize(newSize);
-                                _windowSize = newSize;
+                                _debouncedResize(newSize);
                               },
                               behavior: HitTestBehavior.translucent,
                             ),
@@ -550,8 +565,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size.width + details.delta.dx,
                                   size.height + details.delta.dy,
                                 );
-                                await windowManager.setSize(newSize);
-                                _windowSize = newSize;
+                                _debouncedResize(newSize);
                               },
                               behavior: HitTestBehavior.translucent,
                             ),
@@ -574,8 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size.width + details.delta.dx,
                                   size.height + details.delta.dy,
                                 );
-                                await windowManager.setSize(newSize);
-                                _windowSize = newSize;
+                                _debouncedResize(newSize);
                               },
                               behavior: HitTestBehavior.translucent,
                             ),

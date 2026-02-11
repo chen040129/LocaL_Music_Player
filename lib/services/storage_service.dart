@@ -149,6 +149,11 @@ class StorageService {
     required String musicId,
     required Duration position,
     required String filePath,
+    List<String>? playlistMusicIds,
+    int? currentIndex,
+    String? playlistSource,
+    String? sourceIdentifier,
+    int? playMode,
   }) async {
     try {
       final directory = await _getAppDirectory();
@@ -159,6 +164,11 @@ class StorageService {
         'position': position.inMilliseconds,
         'filePath': filePath,
         'timestamp': DateTime.now().toIso8601String(),
+        if (playlistMusicIds != null) 'playlistMusicIds': playlistMusicIds,
+        if (currentIndex != null) 'currentIndex': currentIndex,
+        if (playlistSource != null) 'playlistSource': playlistSource,
+        if (sourceIdentifier != null) 'sourceIdentifier': sourceIdentifier,
+        if (playMode != null) 'playMode': playMode,
       };
 
       final jsonData = jsonEncode(progressData);

@@ -102,6 +102,59 @@ class PlayerProvider with ChangeNotifier {
     final positionMs = progressData['position'] as int;
     final filePath = progressData['filePath'] as String;
 
+    // 恢复播放列表
+    if (progressData.containsKey('playlistMusicIds') &&
+        progressData.containsKey('currentIndex')) {
+      final playlistMusicIds = progressData['playlistMusicIds'] as List<dynamic>;
+      final currentIndex = progressData['currentIndex'] as int;
+
+      // 恢复播放模式
+      if (progressData.containsKey('playMode')) {
+        final playModeIndex = progressData['playMode'] as int;
+        _playMode = PlayMode.values[playModeIndex];
+      }
+
+      // 恢复播放来源
+      if (progressData.containsKey('playlistSource')) {
+        final playlistSourceName = progressData['playlistSource'] as String;
+        _playlistSource = PlaylistSource.values.firstWhere(
+          (source) => source.name == playlistSourceName,
+          orElse: () => PlaylistSource.custom,
+        );
+        _sourceIdentifier = progressData['sourceIdentifier'] as String?;
+      }
+
+      // 重建播放列表
+      final allMusic = _musicProvider?.musicList ?? [];
+      final restoredPlaylist = <MusicInfo>[];
+
+      for (final musicId in playlistMusicIds) {
+        try {
+          final music = allMusic.firstWhere((m) => m.id == musicId);
+          restoredPlaylist.add(music);
+        } catch (e) {
+          // 如果找不到某首歌曲，跳过它
+          debugPrint('未找到歌曲ID: $musicId');
+        }
+      }
+
+      if (restoredPlaylist.isNotEmpty) {
+        _playlist = restoredPlaylist;
+        _originalPlaylist = List.from(restoredPlaylist);
+
+        // 确保当前索引在有效范围内
+        _currentIndex = currentIndex.clamp(0, _playlist.length - 1);
+
+        // 恢复播放位置
+        final position = Duration(milliseconds: positionMs);
+        await playAtIndex(_currentIndex, startPosition: position, autoPlay: autoPlay);
+        debugPrint('已恢复播放进度: ${_playlist[_currentIndex].title} - ${position.inSeconds}秒');
+        debugPrint('已恢复播放列表，共 ${_playlist.length} 首歌曲');
+        return;
+      }
+    }
+
+    // 如果没有保存的播放列表，或者恢复失败，使用旧的逻辑
     // 在音乐列表中查找该音乐
     final allMusic = _musicProvider?.musicList ?? [];
     MusicInfo? music;
@@ -237,6 +290,11 @@ class PlayerProvider with ChangeNotifier {
         musicId: _currentMusic!.id,
         position: _position,
         filePath: _currentMusic!.filePath,
+        playlistMusicIds: _playlist.map((m) => m.id).toList(),
+        currentIndex: _currentIndex,
+        playlistSource: _playlistSource.name,
+        sourceIdentifier: _sourceIdentifier,
+        playMode: _playMode.index,
       );
     }
   }
@@ -248,6 +306,11 @@ class PlayerProvider with ChangeNotifier {
         musicId: _currentMusic!.id,
         position: _position,
         filePath: _currentMusic!.filePath,
+        playlistMusicIds: _playlist.map((m) => m.id).toList(),
+        currentIndex: _currentIndex,
+        playlistSource: _playlistSource.name,
+        sourceIdentifier: _sourceIdentifier,
+        playMode: _playMode.index,
       );
     }
   }
@@ -288,12 +351,29 @@ class PlayerProvider with ChangeNotifier {
     required PlaylistSource source,
     String? identifier,
     int startIndex = 0,
+    bool moveToTop = false, // 是否将选中的歌曲移到顶部
   }) {
-    _playlist = List.from(musicList);
     _originalPlaylist = List.from(musicList); // 保存原始播放列表
     _playlistSource = source;
     _sourceIdentifier = identifier;
-    _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+    if (moveToTop) {
+      // 将播放列表重置为原始顺序，然后将当前歌曲移到顶部
+      _playlist = List.from(_originalPlaylist);
+      _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+      if (_currentIndex > 0) {
+        final current = _playlist[_currentIndex];
+        _playlist.removeAt(_currentIndex);
+        _playlist.insert(0, current);
+        _currentIndex = 0;
+      }
+    } else {
+      // 保持当前播放列表顺序
+      _playlist = List.from(musicList);
+      _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+    }
+
     notifyListeners();
   }
 
@@ -534,6 +614,28 @@ class PlayerProvider with ChangeNotifier {
     }
 
     await playAtIndex(nextIndex);
+  }
+
+  /// 将指定歌曲插入到下一首播放
+  void playNextAsNext(MusicInfo music) {
+    if (_playlist.isEmpty) {
+      // 如果播放列表为空，直接播放这首歌
+      setPlaylist(
+        musicList: [music],
+        source: PlaylistSource.custom,
+        identifier: 'next',
+        startIndex: 0,
+      );
+      return;
+    }
+
+    // 将歌曲插入到当前播放歌曲的下一位置
+    final insertIndex = _currentIndex + 1;
+    _playlist.insert(insertIndex, music);
+    notifyListeners();
+
+    // 显示提示
+    debugPrint('已将 "${music.title}" 添加到下一首播放');
   }
 
   /// 上一首
