@@ -148,20 +148,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
               themeMode: themeProvider.themeMode,
               child: Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(settings.windowBorderRadius),
-                    child: Stack(
-                      children: [
-                        // 背景层 - 应用透明度
-                        Positioned.fill(
-                          child: Container(
-                            color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
-                          ),
+                  return Stack(
+                    children: [
+                      // 背景层 - 应用透明度
+                      Positioned.fill(
+                        child: Container(
+                          color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
                         ),
-                        // 内容层 - 不应用透明度
-                        const HomeScreen(),
-                      ],
-                    ),
+                      ),
+                      // 内容层 - 不应用透明度
+                      const HomeScreen(),
+                    ],
                   );
                 },
               ),

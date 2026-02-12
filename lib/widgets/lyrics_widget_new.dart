@@ -42,6 +42,81 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   // 记录上一次滚动的索引，用于优化滚动体验
   int _lastScrollIndex = -1;
 
+  /// 将字符串转换为Curve对象
+  Curve _getCurve(String curveName) {
+    switch (curveName) {
+      // 基础曲线
+      case 'linear':
+        return Curves.linear;
+      case 'ease':
+        return Curves.ease;
+      // 缓入曲线
+      case 'easeIn':
+        return Curves.easeIn;
+      case 'easeInCubic':
+        return Curves.easeInCubic;
+      case 'easeInQuart':
+        return Curves.easeInQuart;
+      case 'easeInQuint':
+        return Curves.easeInQuint;
+      case 'easeInSine':
+        return Curves.easeInSine;
+      case 'easeInExpo':
+        return Curves.easeInExpo;
+      case 'easeInCirc':
+        return Curves.easeInCirc;
+      case 'easeInBack':
+        return Curves.easeInBack;
+      // 缓出曲线
+      case 'easeOut':
+        return Curves.easeOut;
+      case 'easeOutCubic':
+        return Curves.easeOutCubic;
+      case 'easeOutQuart':
+        return Curves.easeOutQuart;
+      case 'easeOutQuint':
+        return Curves.easeOutQuint;
+      case 'easeOutSine':
+        return Curves.easeOutSine;
+      case 'easeOutExpo':
+        return Curves.easeOutExpo;
+      case 'easeOutCirc':
+        return Curves.easeOutCirc;
+      case 'easeOutBack':
+        return Curves.easeOutBack;
+      // 缓入缓出曲线
+      case 'easeInOut':
+        return Curves.easeInOut;
+      case 'easeInOutCubic':
+        return Curves.easeInOutCubic;
+      case 'easeInOutQuart':
+        return Curves.easeInOutQuart;
+      case 'easeInOutQuint':
+        return Curves.easeInOutQuint;
+      case 'easeInOutSine':
+        return Curves.easeInOutSine;
+      case 'easeInOutExpo':
+        return Curves.easeInOutExpo;
+      case 'easeInOutCirc':
+        return Curves.easeInOutCirc;
+      case 'easeInOutBack':
+        return Curves.easeInOutBack;
+      // 特殊曲线
+      case 'fastOutSlowIn':
+        return Curves.fastOutSlowIn;
+      case 'slowMiddle':
+        return Curves.slowMiddle;
+      case 'elasticOut':
+        return Curves.elasticOut;
+      case 'elasticIn':
+        return Curves.elasticIn;
+      case 'elasticInOut':
+        return Curves.elasticInOut;
+      default:
+        return Curves.easeInOutCubic;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -161,14 +236,14 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           selectionAnchorPosition: 0.5,
           // 选中锚点对齐方式
           selectionAlignment: MainAxisAlignment.center,
-          // 滚动动画时长 - 使用更长的时长实现更平滑的过渡
-          scrollDuration: const Duration(milliseconds: 500),
-          // 选中行自动恢复时长 - 增加时长使过渡更平滑
-          selectionAutoResumeDuration: const Duration(milliseconds: 400),
-          // 播放行自动恢复时长 - 增加时长使过渡更平滑
-          activeAutoResumeDuration: const Duration(milliseconds: 3500),
-          // 滚动动画曲线 - 使用更平滑的曲线
-          scrollCurve: Curves.easeInOutCubic,
+          // 滚动动画时长 - 使用设置中的值
+          scrollDuration: Duration(milliseconds: settings.scrollDuration),
+          // 选中行自动恢复时长 - 使用设置中的值
+          selectionAutoResumeDuration: Duration(milliseconds: settings.selectionAutoResumeDuration),
+          // 播放行自动恢复时长 - 使用设置中的值
+          activeAutoResumeDuration: Duration(milliseconds: settings.activeAutoResumeDuration),
+          // 滚动动画曲线 - 使用设置中的值
+          scrollCurve: _getCurve(settings.scrollCurve),
           // 禁用触摸事件 - 由GestureDetector处理
           disableTouchEvent: false,
           // 选中行自动恢复模式 - 停止选择后再恢复

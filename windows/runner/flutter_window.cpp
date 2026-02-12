@@ -151,7 +151,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         return HTCAPTION;
       }
 
-      // Handle window edge resizing
+      // Handle window edge resizing - only outer border
       const int borderSize = 8;
       if (pt.x < borderSize && pt.y < borderSize) {
         return HTTOPLEFT;
@@ -171,7 +171,8 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         return HTRIGHT;
       }
 
-      break;
+      // Remove internal frame resizing capability - return HTCLIENT for all other areas
+      return HTCLIENT;
     }
   }
 

@@ -63,7 +63,7 @@ class _PlayerControlBarState extends State<PlayerControlBar> with TickerProvider
                         return Consumer<SettingsProvider>(
                           builder: (context, settings, child) {
                             return ClipRRect(
-                              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+                              borderRadius: BorderRadius.circular(settings.borderRadius),
                               child: const LyricsPage(),
                             );
                           },

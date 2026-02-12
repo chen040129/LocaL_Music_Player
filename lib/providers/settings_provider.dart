@@ -79,6 +79,10 @@ class SettingsProvider with ChangeNotifier {
   bool _enableLyricsBlur = true;       // 是否启用歌词模糊
   double _lyricsOpacity = 1.0;         // 歌词不透明度
   int _lyricsLineGap = 8;              // 歌词行间距
+  int _scrollDuration = 500;          // 滚动动画时长(毫秒)
+  int _selectionAutoResumeDuration = 400;  // 选中行自动恢复时长(毫秒)
+  int _activeAutoResumeDuration = 3500;    // 播放行自动恢复时长(毫秒)
+  String _scrollCurve = 'easeInOutCubic';  // 滚动动画曲线
 
   // 播放器设置
   bool _autoPlayNext = true;           // 是否自动播放下一首
@@ -141,6 +145,10 @@ class SettingsProvider with ChangeNotifier {
   bool get enableLyricsBlur => _enableLyricsBlur;
   double get lyricsOpacity => _lyricsOpacity;
   int get lyricsLineGap => _lyricsLineGap;
+  int get scrollDuration => _scrollDuration;
+  int get selectionAutoResumeDuration => _selectionAutoResumeDuration;
+  int get activeAutoResumeDuration => _activeAutoResumeDuration;
+  String get scrollCurve => _scrollCurve;
 
   // 歌曲页面设置 getters
   SongPageBackgroundType get songPageBackgroundType => _songPageBackgroundType;
@@ -197,6 +205,10 @@ class SettingsProvider with ChangeNotifier {
     _enableLyricsBlur = prefs.getBool('enable_lyrics_blur') ?? true;
     _lyricsOpacity = prefs.getDouble('lyrics_opacity') ?? 1.0;
     _lyricsLineGap = prefs.getInt('lyrics_line_gap') ?? 8;
+    _scrollDuration = prefs.getInt('scroll_duration') ?? 500;
+    _selectionAutoResumeDuration = prefs.getInt('selection_auto_resume_duration') ?? 400;
+    _activeAutoResumeDuration = prefs.getInt('active_auto_resume_duration') ?? 3500;
+    _scrollCurve = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
 
     // 加载播放器设置
     _autoPlayNext = prefs.getBool('auto_play_next') ?? true;
@@ -408,6 +420,30 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setScrollDuration(int value) async {
+    _scrollDuration = value.clamp(100, 2000);
+    await _saveSetting('scroll_duration', _scrollDuration);
+    notifyListeners();
+  }
+
+  Future<void> setSelectionAutoResumeDuration(int value) async {
+    _selectionAutoResumeDuration = value.clamp(100, 2000);
+    await _saveSetting('selection_auto_resume_duration', _selectionAutoResumeDuration);
+    notifyListeners();
+  }
+
+  Future<void> setActiveAutoResumeDuration(int value) async {
+    _activeAutoResumeDuration = value.clamp(1000, 10000);
+    await _saveSetting('active_auto_resume_duration', _activeAutoResumeDuration);
+    notifyListeners();
+  }
+
+  Future<void> setScrollCurve(String value) async {
+    _scrollCurve = value;
+    await _saveSetting('scroll_curve', _scrollCurve);
+    notifyListeners();
+  }
+
   // 播放器设置 setters
   Future<void> setAutoPlayNext(bool value) async {
     _autoPlayNext = value;
@@ -569,6 +605,10 @@ class SettingsProvider with ChangeNotifier {
     await prefs.remove('enable_lyrics_blur');
     await prefs.remove('lyrics_opacity');
     await prefs.remove('lyrics_line_gap');
+    await prefs.remove('scroll_duration');
+    await prefs.remove('selection_auto_resume_duration');
+    await prefs.remove('active_auto_resume_duration');
+    await prefs.remove('scroll_curve');
 
     // 重置播放器设置
     await prefs.remove('auto_play_next');

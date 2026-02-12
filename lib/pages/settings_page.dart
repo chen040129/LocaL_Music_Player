@@ -6,6 +6,7 @@ import 'ui_settings_page.dart';
 import 'lyrics_settings_page.dart';
 import 'player_settings_page.dart';
 import 'system_settings_page.dart';
+import 'song_page_settings_page.dart';
 import '../providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -164,19 +165,27 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         _buildSettingsCard(
           context,
-          '歌曲界面',
-          '播放器和歌曲列表设置',
+          '播放器',
+          '播放控制和音效设置',
           CupertinoIcons.play_circle,
           Colors.orange,
           2,
         ),
         _buildSettingsCard(
           context,
+          '歌曲页面',
+          '歌曲页面背景和视觉效果',
+          CupertinoIcons.music_albums,
+          Colors.purple,
+          3,
+        ),
+        _buildSettingsCard(
+          context,
           '系统',
           '导入和导出配置文件',
           CupertinoIcons.gear_solid,
-          Colors.purple,
-          3,
+          Colors.red,
+          4,
         ),
       ],
     );
@@ -326,6 +335,17 @@ class _SettingsPageState extends State<SettingsPage> {
         });
         break;
       case 3:
+        setState(() {
+          _currentPage = SongPageSettingsPage(
+            onBack: () {
+              setState(() {
+                _currentPage = null;
+              });
+            },
+          );
+        });
+        break;
+      case 4:
         setState(() {
           _currentPage = SystemSettingsPage(
             onBack: () {

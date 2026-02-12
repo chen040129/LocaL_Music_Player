@@ -199,6 +199,58 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   label: '${settings.lyricsLineGap}',
                   onChanged: (value) => settings.setLyricsLineGap(value.toInt()),
                 ),
+                const Divider(height: 32),
+
+                // 滚动动画时长滑块
+                _buildSliderTile(
+                  title: '滚动动画时长',
+                  subtitle: '调整歌词滚动的动画时长',
+                  icon: CupertinoIcons.time,
+                  value: settings.scrollDuration.toDouble(),
+                  min: 100.0,
+                  max: 2000.0,
+                  divisions: 19,
+                  label: '${settings.scrollDuration}ms',
+                  onChanged: (value) => settings.setScrollDuration(value.toInt()),
+                ),
+                const Divider(height: 32),
+
+                // 选中行自动恢复时长滑块
+                _buildSliderTile(
+                  title: '选中行恢复时长',
+                  subtitle: '调整选中行自动恢复的动画时长',
+                  icon: CupertinoIcons.time_solid,
+                  value: settings.selectionAutoResumeDuration.toDouble(),
+                  min: 100.0,
+                  max: 2000.0,
+                  divisions: 19,
+                  label: '${settings.selectionAutoResumeDuration}ms',
+                  onChanged: (value) => settings.setSelectionAutoResumeDuration(value.toInt()),
+                ),
+                const Divider(height: 32),
+
+                // 播放行自动恢复时长滑块
+                _buildSliderTile(
+                  title: '播放行恢复时长',
+                  subtitle: '调整播放行自动恢复的动画时长',
+                  icon: CupertinoIcons.play_circle,
+                  value: settings.activeAutoResumeDuration.toDouble(),
+                  min: 1000.0,
+                  max: 10000.0,
+                  divisions: 18,
+                  label: '${settings.activeAutoResumeDuration}ms',
+                  onChanged: (value) => settings.setActiveAutoResumeDuration(value.toInt()),
+                ),
+                const Divider(height: 32),
+
+                // 滚动动画曲线选择
+                _buildCurveTile(
+                  title: '滚动动画曲线',
+                  subtitle: '选择滚动动画的缓动曲线',
+                  icon: CupertinoIcons.graph_circle,
+                  value: settings.scrollCurve,
+                  onChanged: (value) => settings.setScrollCurve(value),
+                ),
               ],
             ),
           ),
@@ -418,6 +470,144 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
             onChanged(newSelection.first);
           },
         ),
+      ],
+    );
+  }
+
+  /// 构建滚动曲线选择项
+  Widget _buildCurveTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+    required ValueChanged<String> onChanged,
+  }) {
+    // 曲线分类
+    final curveCategories = {
+      '基础曲线': [
+        {'value': 'linear', 'label': '线性'},
+        {'value': 'ease', 'label': '标准缓动'},
+      ],
+      '缓入曲线': [
+        {'value': 'easeIn', 'label': '缓入'},
+        {'value': 'easeInCubic', 'label': '三次缓入'},
+        {'value': 'easeInQuart', 'label': '四次缓入'},
+        {'value': 'easeInQuint', 'label': '五次缓入'},
+        {'value': 'easeInSine', 'label': '正弦缓入'},
+        {'value': 'easeInExpo', 'label': '指数缓入'},
+        {'value': 'easeInCirc', 'label': '圆形缓入'},
+        {'value': 'easeInBack', 'label': '回弹缓入'},
+      ],
+      '缓出曲线': [
+        {'value': 'easeOut', 'label': '缓出'},
+        {'value': 'easeOutCubic', 'label': '三次缓出'},
+        {'value': 'easeOutQuart', 'label': '四次缓出'},
+        {'value': 'easeOutQuint', 'label': '五次缓出'},
+        {'value': 'easeOutSine', 'label': '正弦缓出'},
+        {'value': 'easeOutExpo', 'label': '指数缓出'},
+        {'value': 'easeOutCirc', 'label': '圆形缓出'},
+        {'value': 'easeOutBack', 'label': '回弹缓出'},
+      ],
+      '缓入缓出曲线': [
+        {'value': 'easeInOut', 'label': '缓入缓出'},
+        {'value': 'easeInOutCubic', 'label': '三次缓入缓出'},
+        {'value': 'easeInOutQuart', 'label': '四次缓入缓出'},
+        {'value': 'easeInOutQuint', 'label': '五次缓入缓出'},
+        {'value': 'easeInOutSine', 'label': '正弦缓入缓出'},
+        {'value': 'easeInOutExpo', 'label': '指数缓入缓出'},
+        {'value': 'easeInOutCirc', 'label': '圆形缓入缓出'},
+        {'value': 'easeInOutBack', 'label': '回弹缓入缓出'},
+      ],
+      '特殊曲线': [
+        {'value': 'fastOutSlowIn', 'label': '快出慢入'},
+        {'value': 'slowMiddle', 'label': '中间慢'},
+        {'value': 'elasticOut', 'label': '弹性缓出'},
+        {'value': 'elasticIn', 'label': '弹性缓入'},
+        {'value': 'elasticInOut', 'label': '弹性缓入缓出'},
+      ],
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ...curveCategories.entries.map((entry) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  entry.key,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: entry.value.map((option) {
+                  final isSelected = value == option['value'];
+                  return FilterChip(
+                    label: Text(option['label'] as String),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      if (selected) {
+                        onChanged(option['value'] as String);
+                      }
+                    },
+                    selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                    checkmarkColor: Theme.of(context).colorScheme.primary,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        }).toList(),
       ],
     );
   }

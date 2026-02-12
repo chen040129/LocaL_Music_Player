@@ -412,23 +412,6 @@ class _UISettingsPageState extends State<UISettingsPage> {
                   onChanged: (value) => settings.setBorderRadius(value),
                 ),
                 const Divider(height: 32),
-
-                // 窗口边框弧度值滑块
-                _buildSliderTile(
-                  title: '窗口边框弧度值',
-                  subtitle: '调整整个应用窗口的边框弧度',
-                  icon: CupertinoIcons.app,
-                  value: settings.windowBorderRadius,
-                  min: 0.0,
-                  max: 30.0,
-                  divisions: 30,
-                  label: '${settings.windowBorderRadius.toInt()}',
-                  onChanged: (value) => settings.setWindowBorderRadius(value),
-                ),
-                const Divider(height: 32),
-
-
-
                 // 音乐卡片透明度滑块
                 _buildSliderTile(
                   title: '音乐卡片透明度',

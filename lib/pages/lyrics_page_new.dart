@@ -465,7 +465,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                 }
                                 return ClipRRect(
                                   borderRadius: BorderRadius.circular(
-                                      settings.windowBorderRadius),
+                                      settings.borderRadius),
                                   child: Image.file(
                                     File(settings.customImagePath),
                                     fit: boxFit,
@@ -1394,11 +1394,11 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                               builder: (context, settings, child) {
                                 return Padding(
                                   padding: EdgeInsets.only(
-                                    right: settings.windowBorderRadius > 0
-                                        ? settings.windowBorderRadius * 0.3
+                                    right: settings.borderRadius > 0
+                                        ? settings.borderRadius * 0.3
                                         : 0,
-                                    top: settings.windowBorderRadius > 0
-                                        ? settings.windowBorderRadius * 0.3
+                                    top: settings.borderRadius > 0
+                                        ? settings.borderRadius * 0.3
                                         : 0,
                                   ),
                                   child: Row(
@@ -1464,7 +1464,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+            borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
               onTap: () async {
                 final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
@@ -1473,7 +1473,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                   _isAlwaysOnTop = !_isAlwaysOnTop;
                 });
               },
-              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1507,10 +1507,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+            borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
               onTap: () => windowManager.minimize(),
-              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1544,10 +1544,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+            borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
               onTap: () => windowManager.maximize(),
-              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1581,13 +1581,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+            borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
               onTap: () async {
                 // 触发窗口关闭事件，让main.dart中的onWindowClose处理
                 await windowManager.close();
               },
-              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+              borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,

@@ -347,10 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
-        // 监听窗口边框弧度变化
+        // 始终保持窗口完全不透明，透明度由背景层控制
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _updateWindowBorderRadius(settings.windowBorderRadius);
-          // 始终保持窗口完全不透明，透明度由背景层控制
           if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
             windowManager.setOpacity(1.0);
           }
@@ -401,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 break;
                             }
                             return ClipRRect(
-                              borderRadius: BorderRadius.circular(settings.windowBorderRadius),
+                              borderRadius: BorderRadius.circular(settings.borderRadius),
                               child: Image.file(
                                 File(settings.uiCustomImagePath),
                                 fit: boxFit,
@@ -415,8 +413,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 // 内容层
                 Padding(
-                  padding: EdgeInsets.all(settings.windowBorderRadius > 0
-                      ? settings.windowBorderRadius * 0.3
+                  padding: EdgeInsets.all(settings.borderRadius > 0
+                      ? settings.borderRadius * 0.3
                       : 0),
                   child: Stack(
                     children: [
