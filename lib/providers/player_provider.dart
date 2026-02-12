@@ -357,24 +357,94 @@ class PlayerProvider with ChangeNotifier {
     _playlistSource = source;
     _sourceIdentifier = identifier;
 
-    if (moveToTop) {
-      // 将播放列表重置为原始顺序，然后将当前歌曲移到顶部
-      _playlist = List.from(_originalPlaylist);
-      _currentIndex = startIndex.clamp(0, _playlist.length - 1);
-
-      if (_currentIndex > 0) {
-        final current = _playlist[_currentIndex];
-        _playlist.removeAt(_currentIndex);
-        _playlist.insert(0, current);
-        _currentIndex = 0;
-      }
-    } else {
-      // 保持当前播放列表顺序
-      _playlist = List.from(musicList);
-      _currentIndex = startIndex.clamp(0, _playlist.length - 1);
-    }
+    // 根据播放模式生成播放列表
+    _generatePlaylistByMode(startIndex: startIndex, moveToTop: moveToTop);
 
     notifyListeners();
+  }
+
+  /// 根据播放模式生成播放列表
+  void _generatePlaylistByMode({int startIndex = 0, bool moveToTop = false}) {
+    if (_originalPlaylist.isEmpty) return;
+
+    debugPrint('=== _generatePlaylistByMode ===');
+    debugPrint('播放模式: $_playMode');
+    debugPrint('startIndex: $startIndex');
+    debugPrint('moveToTop: $moveToTop');
+    debugPrint('原始播放列表: ${_originalPlaylist.map((m) => m.title).toList()}');
+
+    switch (_playMode) {
+      case PlayMode.shuffle:
+        // 随机播放模式：将选中的歌曲移到顶部，其余随机排序
+        _playlist = List.from(_originalPlaylist);
+        _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+        if (_currentIndex > 0) {
+          final current = _playlist[_currentIndex];
+          _playlist.removeAt(_currentIndex);
+          _playlist.shuffle();
+          _playlist.insert(0, current);
+          _currentIndex = 0;
+        } else {
+          _playlist.shuffle();
+        }
+        break;
+
+      case PlayMode.sequence:
+        // 顺序播放模式：将当前歌曲及其之后的歌曲移到前面，形成一个环
+        // 注意：顺序播放模式下忽略 moveToTop 参数，始终按照原始顺序播放
+        _playlist = List.from(_originalPlaylist);
+        _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+        debugPrint('当前索引: $_currentIndex');
+        debugPrint('当前歌曲: ${_playlist[_currentIndex].title}');
+
+        // 将当前歌曲及其之后的歌曲移到前面
+        final beforeCurrent = _playlist.sublist(0, _currentIndex);
+        final fromCurrent = _playlist.sublist(_currentIndex);
+        _playlist = [...fromCurrent, ...beforeCurrent];
+        _currentIndex = 0;
+
+        debugPrint('beforeCurrent: ${beforeCurrent.map((m) => m.title).toList()}');
+        debugPrint('fromCurrent: ${fromCurrent.map((m) => m.title).toList()}');
+        debugPrint('最终播放列表: ${_playlist.map((m) => m.title).toList()}');
+        break;
+
+      case PlayMode.listLoop:
+        // 列表循环模式：将当前歌曲及其之后的歌曲移到前面，形成一个环
+        _playlist = List.from(_originalPlaylist);
+        _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+        debugPrint('列表循环模式 - 当前索引: $_currentIndex');
+        debugPrint('列表循环模式 - 当前歌曲: ${_playlist[_currentIndex].title}');
+
+        // 将当前歌曲及其之后的歌曲移到前面
+        final beforeCurrent = _playlist.sublist(0, _currentIndex);
+        final fromCurrent = _playlist.sublist(_currentIndex);
+        _playlist = [...fromCurrent, ...beforeCurrent];
+        _currentIndex = 0;
+
+        debugPrint('列表循环模式 - beforeCurrent: ${beforeCurrent.map((m) => m.title).toList()}');
+        debugPrint('列表循环模式 - fromCurrent: ${fromCurrent.map((m) => m.title).toList()}');
+        debugPrint('列表循环模式 - 最终播放列表: ${_playlist.map((m) => m.title).toList()}');
+        break;
+
+      case PlayMode.loop:
+        // 单曲循环模式：将选中的歌曲移到顶部，保持原始顺序
+        _playlist = List.from(_originalPlaylist);
+        _currentIndex = startIndex.clamp(0, _playlist.length - 1);
+
+        if (_currentIndex > 0) {
+          final current = _playlist[_currentIndex];
+          _playlist.removeAt(_currentIndex);
+          _playlist.insert(0, current);
+          _currentIndex = 0;
+        }
+        break;
+    }
+
+    debugPrint('最终播放列表: ${_playlist.map((m) => m.title).toList()}');
+    debugPrint('=== _generatePlaylistByMode 结束 ===');
   }
 
   /// 播放指定索引的音乐
@@ -591,25 +661,14 @@ class PlayerProvider with ChangeNotifier {
     int nextIndex;
     switch (_playMode) {
       case PlayMode.shuffle:
-        // 随机播放模式：按照随机排序后的列表顺序播放
+      case PlayMode.sequence:
+      case PlayMode.listLoop:
+        // 随机、顺序、列表循环模式：按照当前播放列表顺序播放下一首
         nextIndex = (_currentIndex + 1) % _playlist.length;
         break;
       case PlayMode.loop:
-        // 单曲循环模式：播放下一首后重新排序，使新歌曲置顶
-        nextIndex = (_currentIndex + 1) % _playlist.length;
-        await playAtIndex(nextIndex);
-        _reorderPlaylistByMode();
-        return;
-      case PlayMode.listLoop:
-        // 列表循环模式：播放下一首后重新排序，使新歌曲置顶
-        nextIndex = (_currentIndex + 1) % _playlist.length;
-        await playAtIndex(nextIndex);
-        _reorderPlaylistByMode();
-        return;
-      default:
-        // 顺序播放
-        nextIndex = (_currentIndex + 1) % _playlist.length;
-        // 顺序播放模式下，最后一首歌播放完后回到第一首
+        // 单曲循环模式：重新播放当前歌曲
+        nextIndex = _currentIndex;
         break;
     }
 
@@ -645,28 +704,15 @@ class PlayerProvider with ChangeNotifier {
     int prevIndex;
     switch (_playMode) {
       case PlayMode.shuffle:
-        // 随机播放模式：按照随机排序后的列表顺序播放
+      case PlayMode.sequence:
+      case PlayMode.listLoop:
+        // 随机、顺序、列表循环模式：按照当前播放列表顺序播放上一首
         prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
         break;
       case PlayMode.loop:
-        // 单曲循环模式：播放上一首后重新排序，使新歌曲置顶
-        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
-        await playAtIndex(prevIndex);
-        _reorderPlaylistByMode();
-        return;
-      case PlayMode.listLoop:
-        // 列表循环模式：播放上一首后重新排序，使新歌曲置顶
-        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
-        await playAtIndex(prevIndex);
-        _reorderPlaylistByMode();
-        return;
-      default:
-        // 顺序播放
-        prevIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
-        if (prevIndex == _playlist.length - 1) {
-          // 顺序播放模式下，到第一首就停止
-          return;
-        }
+        // 单曲循环模式：重新播放当前歌曲
+        prevIndex = _currentIndex;
+        break;
     }
 
     await playAtIndex(prevIndex);
@@ -737,15 +783,16 @@ class PlayerProvider with ChangeNotifier {
 
     switch (_playMode) {
       case PlayMode.shuffle:
-        // 随机打乱播放列表，但将当前播放的歌曲放在第一位
+        // 随机播放模式：将当前播放的歌曲放在第一位，其余随机排序
         final current = _playlist[_currentIndex];
         _playlist.removeAt(_currentIndex);
         _playlist.shuffle();
         _playlist.insert(0, current);
         _currentIndex = 0;
         break;
+
       case PlayMode.sequence:
-        // 顺序播放模式：将当前歌曲放在第一位，形成一个环
+        // 顺序播放模式：将当前歌曲及其之后的歌曲移到前面，形成一个环
         if (_originalPlaylist.isNotEmpty && currentMusic != null) {
           // 找到当前播放的音乐在原始列表中的位置
           final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
@@ -759,32 +806,19 @@ class PlayerProvider with ChangeNotifier {
           }
         }
         break;
-      case PlayMode.loop:
-        // 单曲循环模式：将当前歌曲放在第一位，形成一个环
-        if (_originalPlaylist.isNotEmpty && currentMusic != null) {
-          // 找到当前播放的音乐在原始列表中的位置
-          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
-          if (currentMusicIndex != -1) {
-            _playlist = List.from(_originalPlaylist);
-            // 将当前歌曲及其之后的歌曲移到前面
-            final beforeCurrent = _playlist.sublist(0, currentMusicIndex);
-            final fromCurrent = _playlist.sublist(currentMusicIndex);
-            _playlist = [...fromCurrent, ...beforeCurrent];
-            _currentIndex = 0;
-          }
-        }
-        break;
+
       case PlayMode.listLoop:
-        // 列表循环模式：将当前歌曲放在第一位，形成一个环
+      case PlayMode.loop:
+        // 列表循环、单曲循环模式：从原始列表重新生成，当前歌曲置顶
         if (_originalPlaylist.isNotEmpty && currentMusic != null) {
           // 找到当前播放的音乐在原始列表中的位置
           final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
           if (currentMusicIndex != -1) {
             _playlist = List.from(_originalPlaylist);
-            // 将当前歌曲及其之后的歌曲移到前面
-            final beforeCurrent = _playlist.sublist(0, currentMusicIndex);
-            final fromCurrent = _playlist.sublist(currentMusicIndex);
-            _playlist = [...fromCurrent, ...beforeCurrent];
+            // 将当前歌曲移到顶部
+            final current = _playlist[currentMusicIndex];
+            _playlist.removeAt(currentMusicIndex);
+            _playlist.insert(0, current);
             _currentIndex = 0;
           }
         }

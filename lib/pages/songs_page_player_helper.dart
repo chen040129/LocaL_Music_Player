@@ -75,13 +75,14 @@ class SongsPagePlayerHelper {
         musicList: musicList,
         source: PlaylistSource.all,
         startIndex: index,
+        moveToTop: true,  // 将选中的歌曲移到顶部
       );
       debugPrint('播放列表更新完成');
     }
 
-    // 播放选中的歌曲
+    // 播放选中的歌曲（现在在索引0）
     debugPrint('准备播放歌曲...');
-    playerProvider.playAtIndex(index);
+    playerProvider.playAtIndex(0);
     debugPrint('playAtIndex调用完成');
   }
 

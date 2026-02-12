@@ -654,15 +654,20 @@ class _SongsPageState extends State<SongsPage> {
                                         Provider.of<PlayerProvider>(context,
                                             listen: false);
 
-                                    // 设置播放列表（使用当前排序后的列表）
+                                    // 设置播放列表（使用原始音乐列表，而不是排序后的列表）
+                                    // 找到当前歌曲在原始列表中的索引
+                                    final originalMusicList = musicProvider.musicList;
+                                    final originalIndex = originalMusicList.indexWhere((m) => m.id == music.id);
+
                                     playerProvider.setPlaylist(
-                                      musicList: musicList,
+                                      musicList: originalMusicList,
                                       source: PlaylistSource.all,
-                                      startIndex: index,
+                                      startIndex: originalIndex,
+                                      moveToTop: true,
                                     );
 
-                                    // 播放指定索引的音乐
-                                    playerProvider.playAtIndex(index);
+                                    // 播放指定索引的音乐（现在在索引0）
+                                    playerProvider.playAtIndex(0);
                                   },
                                 ),
                               ),

@@ -270,7 +270,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setGlassOpacity(double value) async {
-    _glassOpacity = value.clamp(0.0, 0.8);
+    _glassOpacity = value.clamp(0.0, 1.0);
     await _saveSetting('glass_opacity', _glassOpacity);
     notifyListeners();
   }
@@ -294,7 +294,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setCardOpacity(double value) async {
-    _cardOpacity = value.clamp(0.3, 1.0);
+    _cardOpacity = value.clamp(0.0, 1.0);
     await _saveSetting('card_opacity', _cardOpacity);
     notifyListeners();
   }

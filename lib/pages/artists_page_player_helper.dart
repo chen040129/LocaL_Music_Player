@@ -45,10 +45,11 @@ class ArtistsPagePlayerHelper {
         source: PlaylistSource.artist,
         identifier: artistName,
         startIndex: 0,
+        moveToTop: true,  // 将选中的歌曲移到顶部
       );
     }
 
-    // 播放第一首歌曲
+    // 播放第一首歌曲（现在在索引0）
     playerProvider.playAtIndex(0);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -97,10 +98,11 @@ class ArtistsPagePlayerHelper {
         source: PlaylistSource.album,
         identifier: albumName,
         startIndex: 0,
+        moveToTop: true,  // 将选中的歌曲移到顶部
       );
     }
 
-    // 播放第一首歌曲
+    // 播放第一首歌曲（现在在索引0）
     playerProvider.playAtIndex(0);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -142,6 +144,9 @@ class ArtistsPagePlayerHelper {
         currentSource != PlaylistSource.album ||
         currentIdentifier != albumName;
 
+    // 找到点击的歌曲
+    final clickedSong = sortedSongs[sortedIndex];
+
     // 只在需要时更新播放列表
     if (needsUpdate) {
       playerProvider.setPlaylist(
@@ -149,11 +154,29 @@ class ArtistsPagePlayerHelper {
         source: PlaylistSource.album,
         identifier: albumName,
         startIndex: sortedIndex,
+        moveToTop: true,  // 将选中的歌曲移到顶部
       );
+      playerProvider.playAtIndex(0);  // 播放索引0的歌曲（已移到顶部）
+    } else {
+      // 如果不需要更新播放列表，找到歌曲在当前播放列表中的索引
+      final playlistIndex = currentPlaylist.indexWhere(
+        (m) => m.id == clickedSong.id
+      );
+      if (playlistIndex != -1) {
+        // 如果在播放列表中找到，直接播放
+        playerProvider.playAtIndex(playlistIndex);
+      } else {
+        // 如果不在播放列表中，设置新的播放列表
+        playerProvider.setPlaylist(
+          musicList: sortedSongs,
+          source: PlaylistSource.album,
+          identifier: albumName,
+          startIndex: sortedIndex,
+          moveToTop: true,  // 将选中的歌曲移到顶部
+        );
+        playerProvider.playAtIndex(0);  // 播放索引0的歌曲（已移到顶部）
+      }
     }
-
-    // 播放选中的歌曲
-    playerProvider.playAtIndex(sortedIndex);
   }
 
   /// 将艺术家歌曲添加到播放列表
