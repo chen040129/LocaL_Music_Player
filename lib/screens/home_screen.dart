@@ -367,7 +367,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.transparent,
                           );
                         case UIBackgroundType.fluid:
-                          return _buildFluidBackground(player, settings);
+                          return Stack(
+                            children: [
+                              // 添加一个半透明的背景层以支持模糊效果
+                              Container(
+                                color: Theme.of(context).colorScheme.surface.withOpacity(1.0),
+                              ),
+                              // 流体背景
+                              _buildFluidBackground(player, settings),
+                            ],
+                          );
                         case UIBackgroundType.gradient:
                           return _buildGradientBackground(player, settings, colorScheme);
                         case UIBackgroundType.customImage:

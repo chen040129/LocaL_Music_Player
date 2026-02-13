@@ -64,6 +64,7 @@ class SettingsProvider with ChangeNotifier {
   double _windowOpacity = 0.85;        // 窗口背景透明度
   double _cardOpacity = 0.85;           // 音乐卡片透明度
   UIBackgroundType _uiBackgroundType = UIBackgroundType.normal;  // 用户界面背景类型
+  double _savedNormalWindowOpacity = 0.85;  // 保存默认背景类型的窗口透明度
   String _uiCustomImagePath = '';       // 用户界面自定义背景图片路径
   ImageFitType _uiImageFitType = ImageFitType.fill;  // 用户界面自定义背景图片布局方式
   bool _syncBackgroundImages = false;  // 是否同步用户界面和歌曲界面的背景图片
@@ -312,6 +313,18 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setUIBackgroundType(UIBackgroundType value) async {
+    // 当从默认背景切换到流体背景时，保存当前透明度并设置为0
+    if (_uiBackgroundType == UIBackgroundType.normal && value == UIBackgroundType.fluid) {
+      _savedNormalWindowOpacity = _windowOpacity;
+      _windowOpacity = 0.0;
+      await _saveSetting('window_opacity', _windowOpacity);
+    }
+    // 当从流体背景切换回默认背景时，恢复之前保存的透明度
+    else if (_uiBackgroundType == UIBackgroundType.fluid && value == UIBackgroundType.normal) {
+      _windowOpacity = _savedNormalWindowOpacity;
+      await _saveSetting('window_opacity', _windowOpacity);
+    }
+    
     _uiBackgroundType = value;
     await _saveSetting('ui_background_type', _uiBackgroundType.index);
     notifyListeners();

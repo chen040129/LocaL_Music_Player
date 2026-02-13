@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_music_player/screens/home_screen.dart';
 import 'package:window_manager/window_manager.dart';
@@ -150,15 +149,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                 builder: (context, settings, child) {
                   return Stack(
                     children: [
-                      // 背景层 - 应用透明度
+                      // 背景层 - 根据背景类型应用透明度
                       Positioned.fill(
                         child: Container(
-                          color: settings.windowOpacity < 0.01 
-                              ? Colors.transparent 
-                              : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                          color: settings.uiBackgroundType == UIBackgroundType.fluid
+                              ? Colors.transparent
+                              : (settings.windowOpacity < 0.01
+                                  ? Colors.transparent
+                                  : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity)),
                         ),
                       ),
-                      // 内容层 - 不应用透明度
+                      // 内容层
                       const HomeScreen(),
                     ],
                   );
