@@ -3,6 +3,7 @@ import 'package:flutter_music_player/screens/home_screen.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
@@ -18,6 +19,7 @@ import 'widgets/animated_theme.dart';
 MusicProvider? globalMusicProvider;
 PlayerProvider? globalPlayerProvider;
 bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
+final globalLiquidGlassViewController = LiquidGlassViewController();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -159,6 +161,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                                   : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity)),
                         ),
                       ),
+                      // 液态玻璃背景捕获层
+                      if (settings.playerBarStyle == PlayerBarStyle.liquidGlass)
+                        Positioned.fill(
+                          child: LiquidGlassView(
+                            controller: globalLiquidGlassViewController,
+                            pixelRatio: 1.0,
+                            realTimeCapture: true,
+                            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
+                            useSync: true,
+                            backgroundWidget: const SizedBox.expand(),
+                            children: const [],
+                          ),
+                        ),
                       // 内容层
                       const HomeScreen(),
                     ],

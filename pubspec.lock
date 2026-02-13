@@ -655,6 +655,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.0"
+  liquid_glass_easy:
+    dependency: "direct main"
+    description:
+      path: "../liquid_glass_easy"
+      relative: true
+    source: path
+    version: "1.1.1"
   logging:
     dependency: transitive
     description:

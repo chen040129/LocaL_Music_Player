@@ -19,6 +19,9 @@ dependencies:
   fluid_background:
     path: ../fluid_background
 
+  liquid_glass_easy:
+    path: ../liquid_glass_easy
+
   cupertino_icons: ^1.0.6
   provider: ^6.1.1
   flutter_colorpicker: ^1.0.3

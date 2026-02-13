@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
 import 'package:flutter_music_player/widgets/player_control_bar.dart';
+import 'package:flutter_music_player/widgets/player_control_bar_liquid_glass.dart';
+import 'package:flutter_music_player/providers/settings_provider.dart' show PlayerBarStyle;
 import 'package:flutter_music_player/widgets/custom_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform, File;
@@ -469,7 +471,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         left: 16,
                                         right: 16,
                                         bottom: 16,
-                                        child: const PlayerControlBar(),
+                                        child: Consumer<SettingsProvider>(
+                                          builder: (context, settings, child) {
+                                            switch (settings.playerBarStyle) {
+                                              case PlayerBarStyle.normal:
+                                                return const PlayerControlBar();
+                                              case PlayerBarStyle.liquidGlass:
+                                                return const PlayerControlBarLiquidGlass();
+                                            }
+                                          },
+                                        ),
                                       ),
                                     ],
                                   ),

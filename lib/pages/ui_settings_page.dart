@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
 import '../theme/theme_provider.dart';
+import '../providers/settings_provider.dart' show PlayerBarStyle;
 
 class UISettingsPage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -127,6 +128,109 @@ class _UISettingsPageState extends State<UISettingsPage> {
                     Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
                   },
                 ),
+                const Divider(height: 32),
+                // 播放栏样式选择
+                const Text('播放栏样式'),
+                const SizedBox(height: 8),
+                SegmentedButton<PlayerBarStyle>(
+                  segments: const [
+                    ButtonSegment(
+                      value: PlayerBarStyle.normal,
+                      label: Text('默认'),
+                      icon: Icon(CupertinoIcons.rectangle),
+                    ),
+                    ButtonSegment(
+                      value: PlayerBarStyle.liquidGlass,
+                      label: Text('液态玻璃'),
+                      icon: Icon(CupertinoIcons.drop),
+                    ),
+                  ],
+                  selected: {settings.playerBarStyle},
+                  onSelectionChanged: (Set<PlayerBarStyle> newSelection) {
+                    settings.setPlayerBarStyle(newSelection.first);
+                  },
+                ),
+                // 液态玻璃参数调整
+                if (settings.playerBarStyle == PlayerBarStyle.liquidGlass)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSliderTile(
+                          title: '扭曲强度',
+                          subtitle: '控制液态玻璃的扭曲效果强度',
+                          icon: CupertinoIcons.waveform_path,
+                          value: settings.liquidGlassDistortion,
+                          min: 0.0,
+                          max: 0.5,
+                          divisions: 50,
+                          label: '${settings.liquidGlassDistortion.toStringAsFixed(3)}',
+                          onChanged: (value) => settings.setLiquidGlassDistortion(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '扭曲宽度',
+                          subtitle: '控制扭曲效果的宽度范围',
+                          icon: CupertinoIcons.arrow_left_right,
+                          value: settings.liquidGlassDistortionWidth,
+                          min: 0.0,
+                          max: 100.0,
+                          divisions: 100,
+                          label: '${settings.liquidGlassDistortionWidth.toStringAsFixed(1)}',
+                          onChanged: (value) => settings.setLiquidGlassDistortionWidth(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '色差强度',
+                          subtitle: '控制色差效果的强度',
+                          icon: CupertinoIcons.color_filter,
+                          value: settings.liquidGlassChromaticAberration,
+                          min: 0.0,
+                          max: 0.01,
+                          divisions: 100,
+                          label: '${settings.liquidGlassChromaticAberration.toStringAsFixed(4)}',
+                          onChanged: (value) => settings.setLiquidGlassChromaticAberration(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '饱和度',
+                          subtitle: '控制液态玻璃的饱和度',
+                          icon: CupertinoIcons.photo,
+                          value: settings.liquidGlassSaturation,
+                          min: 0.0,
+                          max: 2.0,
+                          divisions: 100,
+                          label: '${settings.liquidGlassSaturation.toStringAsFixed(2)}',
+                          onChanged: (value) => settings.setLiquidGlassSaturation(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '模糊强度',
+                          subtitle: '控制液态玻璃的模糊效果',
+                          icon: CupertinoIcons.eye_slash,
+                          value: settings.liquidGlassBlurSigma,
+                          min: 0.0,
+                          max: 50.0,
+                          divisions: 100,
+                          label: '${settings.liquidGlassBlurSigma.toStringAsFixed(1)}',
+                          onChanged: (value) => settings.setLiquidGlassBlurSigma(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '放大倍数',
+                          subtitle: '控制液态玻璃的放大倍数',
+                          icon: CupertinoIcons.zoom_in,
+                          value: settings.liquidGlassMagnification,
+                          min: 0.5,
+                          max: 2.0,
+                          divisions: 30,
+                          label: '${settings.liquidGlassMagnification.toStringAsFixed(2)}',
+                          onChanged: (value) => settings.setLiquidGlassMagnification(value),
+                        ),
+                      ],
+                    ),
+                  ),
                 const Divider(height: 32),
                 // 背景类型选择
                 const Text('背景类型'),

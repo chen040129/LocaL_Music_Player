@@ -18,7 +18,7 @@ class LiquidGlassWidget extends StatefulWidget {
 }
 
 class _LiquidGlassWidgetState extends State<LiquidGlassWidget> {
-  late FragmentShader shader;
+  FragmentShader? shader;
   Offset? mousePosition;
 
   @override
@@ -65,7 +65,7 @@ class _LiquidGlassWidgetState extends State<LiquidGlassWidget> {
 }
 
 class _LiquidGlassPainter extends CustomPainter {
-  final FragmentShader shader;
+  final FragmentShader? shader;
   final double borderRadius;
   final Offset? mousePosition;
 
@@ -77,17 +77,17 @@ class _LiquidGlassPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (mousePosition == null) return;
+    if (mousePosition == null || shader == null) return;
 
     final pixelRatio = MediaQueryData.fromWindow(WidgetsBinding.instance.window).devicePixelRatio;
 
     // Set resolution uniform
-    shader.setFloat(0, size.width * pixelRatio);
-    shader.setFloat(1, size.height * pixelRatio);
+    shader!.setFloat(0, size.width * pixelRatio);
+    shader!.setFloat(1, size.height * pixelRatio);
 
     // Set mouse position uniform
-    shader.setFloat(2, mousePosition!.dx * pixelRatio);
-    shader.setFloat(3, mousePosition!.dy * pixelRatio);
+    shader!.setFloat(2, mousePosition!.dx * pixelRatio);
+    shader!.setFloat(3, mousePosition!.dy * pixelRatio);
 
     // Create an image from the canvas to use as texture input
     final recorder = PictureRecorder();
@@ -102,10 +102,10 @@ class _LiquidGlassPainter extends CustomPainter {
     final image = picture.toImageSync(size.width.ceil(), size.height.ceil());
 
     // Set the sampler uniform with the image
-    shader.setImageSampler(0, image);
+    shader!.setImageSampler(0, image);
 
     final paint = Paint()
-      ..shader = shader
+      ..shader = shader!
       ..style = PaintingStyle.fill;
 
     canvas.drawRRect(rrect, paint);

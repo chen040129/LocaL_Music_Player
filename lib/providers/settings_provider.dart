@@ -44,6 +44,12 @@ enum GradientType {
   dynamic,      // 动态渐变
 }
 
+/// 播放栏样式枚举
+enum PlayerBarStyle {
+  normal,       // 默认样式
+  liquidGlass,  // 液态玻璃样式
+}
+
 /// 歌词对齐方式枚举
 enum LyricsAlignment {
   left,         // 左对齐
@@ -93,6 +99,15 @@ class SettingsProvider with ChangeNotifier {
   double _fadeDuration = 2.0;          // 淡入淡出时长(秒)
   int _defaultVolume = 70;             // 默认音量(0-100)
   bool _showLyricsInPlayer = true;     // 播放器中是否显示歌词
+  PlayerBarStyle _playerBarStyle = PlayerBarStyle.normal;  // 播放栏样式
+
+  // 液态玻璃参数
+  double _liquidGlassDistortion = 0.15;           // 扭曲强度
+  double _liquidGlassDistortionWidth = 40.0;       // 扭曲宽度
+  double _liquidGlassChromaticAberration = 0.003;  // 色差强度
+  double _liquidGlassSaturation = 1.0;             // 饱和度
+  double _liquidGlassBlurSigma = 20.0;             // 模糊强度
+  double _liquidGlassMagnification = 1.0;           // 放大倍数
 
   // 歌曲页面设置
   SongPageBackgroundType _songPageBackgroundType = SongPageBackgroundType.fluid;  // 歌曲页面背景类型
@@ -119,6 +134,13 @@ class SettingsProvider with ChangeNotifier {
   double get fadeDuration => _fadeDuration;
   int get defaultVolume => _defaultVolume;
   bool get showLyricsInPlayer => _showLyricsInPlayer;
+  PlayerBarStyle get playerBarStyle => _playerBarStyle;
+  double get liquidGlassDistortion => _liquidGlassDistortion;
+  double get liquidGlassDistortionWidth => _liquidGlassDistortionWidth;
+  double get liquidGlassChromaticAberration => _liquidGlassChromaticAberration;
+  double get liquidGlassSaturation => _liquidGlassSaturation;
+  double get liquidGlassBlurSigma => _liquidGlassBlurSigma;
+  double get liquidGlassMagnification => _liquidGlassMagnification;
 
   // 用户界面设置 getters
   bool get useBlurBackground => _useBlurBackground;
@@ -219,6 +241,15 @@ class SettingsProvider with ChangeNotifier {
     _fadeDuration = prefs.getDouble('fade_duration') ?? 2.0;
     _defaultVolume = prefs.getInt('default_volume') ?? 70;
     _showLyricsInPlayer = prefs.getBool('show_lyrics_in_player') ?? true;
+    final playerBarStyleIndex = prefs.getInt('player_bar_style') ?? 0;
+    _playerBarStyle = PlayerBarStyle.values[playerBarStyleIndex];
+    // 加载液态玻璃参数
+    _liquidGlassDistortion = prefs.getDouble('liquid_glass_distortion') ?? 0.15;
+    _liquidGlassDistortionWidth = prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
+    _liquidGlassChromaticAberration = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.003;
+    _liquidGlassSaturation = prefs.getDouble('liquid_glass_saturation') ?? 1.0;
+    _liquidGlassBlurSigma = prefs.getDouble('liquid_glass_blur_sigma') ?? 20.0;
+    _liquidGlassMagnification = prefs.getDouble('liquid_glass_magnification') ?? 1.0;
 
     // 加载歌曲页面设置
     final backgroundTypeIndex = prefs.getInt('song_page_background_type') ?? 0;
@@ -497,6 +528,49 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setShowLyricsInPlayer(bool value) async {
     _showLyricsInPlayer = value;
     await _saveSetting('show_lyrics_in_player', value);
+    notifyListeners();
+  }
+
+  Future<void> setPlayerBarStyle(PlayerBarStyle value) async {
+    _playerBarStyle = value;
+    await _saveSetting('player_bar_style', value.index);
+    notifyListeners();
+  }
+
+  // 液态玻璃参数 setters
+  Future<void> setLiquidGlassDistortion(double value) async {
+    _liquidGlassDistortion = value;
+    await _saveSetting('liquid_glass_distortion', value);
+    notifyListeners();
+  }
+
+  Future<void> setLiquidGlassDistortionWidth(double value) async {
+    _liquidGlassDistortionWidth = value;
+    await _saveSetting('liquid_glass_distortion_width', value);
+    notifyListeners();
+  }
+
+  Future<void> setLiquidGlassChromaticAberration(double value) async {
+    _liquidGlassChromaticAberration = value;
+    await _saveSetting('liquid_glass_chromatic_aberration', value);
+    notifyListeners();
+  }
+
+  Future<void> setLiquidGlassSaturation(double value) async {
+    _liquidGlassSaturation = value;
+    await _saveSetting('liquid_glass_saturation', value);
+    notifyListeners();
+  }
+
+  Future<void> setLiquidGlassBlurSigma(double value) async {
+    _liquidGlassBlurSigma = value;
+    await _saveSetting('liquid_glass_blur_sigma', value);
+    notifyListeners();
+  }
+
+  Future<void> setLiquidGlassMagnification(double value) async {
+    _liquidGlassMagnification = value;
+    await _saveSetting('liquid_glass_magnification', value);
     notifyListeners();
   }
 
