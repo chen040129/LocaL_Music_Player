@@ -18,16 +18,20 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClientMixin {
   // 标题悬停状态
   bool _isTitleHovered = false;
   int _hoveredCardIndex = -1; // 用于设置卡片的悬停状态
 
   // 当前显示的页面
   Widget? _currentPage;
+
+  @override
+  bool get wantKeepAlive => true;
              
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用，以保持状态
     // 如果有子页面，显示子页面
     if (_currentPage != null) {
       return _currentPage!;
@@ -38,9 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         children: [
           // 顶部工具栏
-          Consumer<SettingsProvider>(
-            builder: (context, settings, child) {
-              return Container(
+          Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -99,8 +101,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
-          );
-            },
           ),
           // 设置内容
           Expanded(

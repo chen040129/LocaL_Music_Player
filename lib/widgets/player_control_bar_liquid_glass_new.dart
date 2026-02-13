@@ -66,8 +66,7 @@ class _PlayerControlBarLiquidGlassState extends State<PlayerControlBarLiquidGlas
                         return Consumer<SettingsProvider>(
                           builder: (context, settings, child) {
                             return ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(settings.borderRadius),
+                              borderRadius: BorderRadius.zero,
                               child: const LyricsPage(),
                             );
                           },

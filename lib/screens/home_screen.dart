@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
 import 'package:flutter_music_player/widgets/player_control_bar.dart';
 import 'package:flutter_music_player/widgets/player_control_bar_liquid_glass.dart';
-import 'package:flutter_music_player/providers/settings_provider.dart' show PlayerBarStyle;
+import 'package:flutter_music_player/providers/settings_provider.dart' show PlayerBarStyle, PlayerBarLength;
 import 'package:flutter_music_player/widgets/custom_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform, File;
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _songs = [];
   Size? _windowSize;
   Timer? _resizeDebounceTimer;
+  final LiquidGlassViewController _liquidGlassViewController = LiquidGlassViewController();
 
   @override
   void initState() {
@@ -351,7 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, settings, child) {
         // 移除强制设置窗口不透明度的代码，允许窗口透明度由背景层控制
 
-        return Material(
+        // 构建背景内容（不包含播放栏）
+        Widget backgroundContent = Material(
           color: Colors.transparent,
           child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -419,9 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 // 内容层
                 Padding(
-                  padding: EdgeInsets.all(settings.borderRadius > 0
-                      ? settings.borderRadius * 0.3
-                      : 0),
+                  padding: EdgeInsets.zero,
                   child: Stack(
                     children: [
                       // 主内容
@@ -466,22 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                         ],
                                       ),
-                                      // 底部播放控制栏 - 使用Positioned定位在底部
-                                      Positioned(
-                                        left: 16,
-                                        right: 16,
-                                        bottom: 16,
-                                        child: Consumer<SettingsProvider>(
-                                          builder: (context, settings, child) {
-                                            switch (settings.playerBarStyle) {
-                                              case PlayerBarStyle.normal:
-                                                return const PlayerControlBar();
-                                              case PlayerBarStyle.liquidGlass:
-                                                return const PlayerControlBarLiquidGlass();
-                                            }
-                                          },
-                                        ),
-                                      ),
+
                                     ],
                                   ),
                                 ),
@@ -615,6 +601,95 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         );
+
+        // 根据播放栏样式决定是否使用 LiquidGlassView
+        if (settings.playerBarStyle == PlayerBarStyle.liquidGlass) {
+          // 根据播放栏长度计算宽度
+          final double playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
+              ? MediaQuery.of(context).size.width - 32
+              : MediaQuery.of(context).size.width - 32 - (_isSidebarExpanded ? 220 : 0);
+          
+          return LiquidGlassView(
+            controller: _liquidGlassViewController,
+            pixelRatio: 1.0,
+            realTimeCapture: true,
+            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
+            useSync: true,
+            backgroundWidget: backgroundContent,
+            children: [
+              // 播放栏的液态玻璃效果
+              LiquidGlass(
+                controller: LiquidGlassController(),
+                position: LiquidGlassAlignPosition(
+                  alignment: Alignment.bottomCenter,
+                  margin: EdgeInsets.only(
+                    bottom: 16,
+                    left: settings.playerBarLength == PlayerBarLength.contentWidth && _isSidebarExpanded ? 236 : 16,
+                    right: 16,
+                  ),
+                ),
+                width: playerBarWidth,
+                height: 80,
+                magnification: settings.liquidGlassMagnification,
+                refractionMode: LiquidGlassRefractionMode.shapeRefraction,
+                enableInnerRadiusTransparent: false,
+                diagonalFlip: 0,
+                distortion: settings.liquidGlassDistortion,
+                distortionWidth: settings.liquidGlassDistortionWidth,
+                chromaticAberration: settings.liquidGlassChromaticAberration,
+                saturation: settings.liquidGlassSaturation,
+                draggable: false,
+                blur: LiquidGlassBlur(
+                  sigmaX: settings.liquidGlassBlurSigma,
+                  sigmaY: settings.liquidGlassBlurSigma,
+                ),
+                shape: RoundedRectangleShape(
+                  cornerRadius: settings.borderRadius,
+                  borderWidth: 1.0,
+                  borderSoftness: 1.0,
+                  lightIntensity: 1.0,
+                  oneSideLightIntensity: 0.0,
+                  lightDirection: 39.0,
+                  lightMode: LiquidGlassLightMode.edge,
+                ),
+                visibility: true,
+                color: Colors.white.withOpacity(0.1),
+                child: const PlayerControlBarLiquidGlass(),
+              ),
+            ],
+          );
+        } else {
+          // 普通模式，直接返回页面内容，并添加播放栏
+          // 根据播放栏长度计算宽度
+          final double playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
+              ? MediaQuery.of(context).size.width - 32
+              : MediaQuery.of(context).size.width - 32 - (_isSidebarExpanded ? 220 : 0);
+          
+          return Stack(
+            children: [
+              backgroundContent,
+              // 底部播放控制栏
+              Positioned(
+                left: settings.playerBarLength == PlayerBarLength.contentWidth && _isSidebarExpanded ? 236 : 16,
+                right: 16,
+                bottom: 16,
+                child: SizedBox(
+                  width: playerBarWidth,
+                  child: Consumer<SettingsProvider>(
+                  builder: (context, settings, child) {
+                    switch (settings.playerBarStyle) {
+                      case PlayerBarStyle.normal:
+                        return const PlayerControlBar();
+                      case PlayerBarStyle.liquidGlass:
+                        return const PlayerControlBarLiquidGlass();
+                    }
+                  },
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
       },
     );
   }

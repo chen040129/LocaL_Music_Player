@@ -50,6 +50,12 @@ enum PlayerBarStyle {
   liquidGlass,  // 液态玻璃样式
 }
 
+/// 播放栏长度枚举
+enum PlayerBarLength {
+  fullWidth,    // 全宽（占据整个窗口底部）
+  contentWidth, // 内容宽度（不占据导航栏）
+}
+
 /// 歌词对齐方式枚举
 enum LyricsAlignment {
   left,         // 左对齐
@@ -100,6 +106,7 @@ class SettingsProvider with ChangeNotifier {
   int _defaultVolume = 70;             // 默认音量(0-100)
   bool _showLyricsInPlayer = true;     // 播放器中是否显示歌词
   PlayerBarStyle _playerBarStyle = PlayerBarStyle.normal;  // 播放栏样式
+  PlayerBarLength _playerBarLength = PlayerBarLength.fullWidth;  // 播放栏长度
 
   // 液态玻璃参数
   double _liquidGlassDistortion = 0.15;           // 扭曲强度
@@ -135,6 +142,7 @@ class SettingsProvider with ChangeNotifier {
   int get defaultVolume => _defaultVolume;
   bool get showLyricsInPlayer => _showLyricsInPlayer;
   PlayerBarStyle get playerBarStyle => _playerBarStyle;
+  PlayerBarLength get playerBarLength => _playerBarLength;
   double get liquidGlassDistortion => _liquidGlassDistortion;
   double get liquidGlassDistortionWidth => _liquidGlassDistortionWidth;
   double get liquidGlassChromaticAberration => _liquidGlassChromaticAberration;
@@ -243,6 +251,8 @@ class SettingsProvider with ChangeNotifier {
     _showLyricsInPlayer = prefs.getBool('show_lyrics_in_player') ?? true;
     final playerBarStyleIndex = prefs.getInt('player_bar_style') ?? 0;
     _playerBarStyle = PlayerBarStyle.values[playerBarStyleIndex];
+    final playerBarLengthIndex = prefs.getInt('player_bar_length') ?? 0;
+    _playerBarLength = PlayerBarLength.values[playerBarLengthIndex];
     // 加载液态玻璃参数
     _liquidGlassDistortion = prefs.getDouble('liquid_glass_distortion') ?? 0.15;
     _liquidGlassDistortionWidth = prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
@@ -534,6 +544,12 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setPlayerBarStyle(PlayerBarStyle value) async {
     _playerBarStyle = value;
     await _saveSetting('player_bar_style', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setPlayerBarLength(PlayerBarLength value) async {
+    _playerBarLength = value;
+    await _saveSetting('player_bar_length', value.index);
     notifyListeners();
   }
 

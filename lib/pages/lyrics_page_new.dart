@@ -464,8 +464,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                     break;
                                 }
                                 return ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      settings.borderRadius),
+                                  borderRadius: BorderRadius.circular(0),
                                   child: Image.file(
                                     File(settings.customImagePath),
                                     fit: boxFit,
@@ -1393,13 +1392,9 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                             Consumer<SettingsProvider>(
                               builder: (context, settings, child) {
                                 return Padding(
-                                  padding: EdgeInsets.only(
-                                    right: settings.borderRadius > 0
-                                        ? settings.borderRadius * 0.3
-                                        : 0,
-                                    top: settings.borderRadius > 0
-                                        ? settings.borderRadius * 0.3
-                                        : 0,
+                                  padding: const EdgeInsets.only(
+                                    right: 3.6,
+                                    top: 3.6,
                                   ),
                                   child: Row(
                                     children: [
@@ -1464,7 +1459,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(0),
             child: InkWell(
               onTap: () async {
                 final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
@@ -1473,7 +1468,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                   _isAlwaysOnTop = !_isAlwaysOnTop;
                 });
               },
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(0),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1507,10 +1502,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(0),
             child: InkWell(
               onTap: () => windowManager.minimize(),
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(0),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1544,10 +1539,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(0),
             child: InkWell(
               onTap: () => windowManager.maximize(),
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(0),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -1581,13 +1576,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         builder: (context, settings, child) {
           return Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(settings.borderRadius),
+            borderRadius: BorderRadius.circular(0),
             child: InkWell(
               onTap: () async {
                 // 触发窗口关闭事件，让main.dart中的onWindowClose处理
                 await windowManager.close();
               },
-              borderRadius: BorderRadius.circular(settings.borderRadius),
+              borderRadius: BorderRadius.circular(0),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,

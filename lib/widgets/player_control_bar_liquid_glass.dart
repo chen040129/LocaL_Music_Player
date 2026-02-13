@@ -63,8 +63,7 @@ class _PlayerControlBarLiquidGlassState
                         return Consumer<SettingsProvider>(
                           builder: (context, settings, child) {
                             return ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(settings.borderRadius),
+                              borderRadius: BorderRadius.zero,
                               child: const LyricsPage(),
                             );
                           },
@@ -80,34 +79,10 @@ class _PlayerControlBarLiquidGlassState
                 },
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(settings.borderRadius),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: settings.liquidGlassBlurSigma,
-                          sigmaY: settings.liquidGlassBlurSigma,
-                        ),
-                        child: Container(
-                          width: constraints.maxWidth,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius:
-                                BorderRadius.circular(settings.borderRadius),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1.0,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Container(
+                    return Container(
+                      width: constraints.maxWidth,
+                      height: 80,
+                      child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 48, vertical: 12),
                             child: Row(
@@ -206,113 +181,166 @@ class _PlayerControlBarLiquidGlassState
                                           () => _isHoveringPrevious = false),
                                       child: Material(
                                         color: Colors.transparent,
-                                        child: IconButton(
-                                          icon: AnimatedScale(
-                                            scale: _isHoveringPrevious
-                                                ? _hoverScale
-                                                : _normalScale,
-                                            duration: _animationDuration,
-                                            child: Icon(
-                                              CupertinoIcons.backward_fill,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(
+                                            settings.borderRadius),
+                                        child: InkWell(
+                                          onTap: () =>
+                                              playerProvider.playPrevious(),
+                                          borderRadius: BorderRadius.circular(
+                                              settings.borderRadius),
+                                          splashColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            child: AnimatedScale(
+                                              scale: _isHoveringPrevious
+                                                  ? _hoverScale
+                                                  : _normalScale,
+                                              duration: _animationDuration,
+                                              child: Icon(
+                                                CupertinoIcons
+                                                    .backward_end_fill,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.8),
+                                                size: 24,
+                                              ),
                                             ),
                                           ),
-                                          onPressed: () {
-                                            playerProvider.playPrevious();
-                                          },
-                                          tooltip: '上一曲',
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 20),
                                     // 播放/暂停
                                     MouseRegion(
-                                      onEnter: (_) => setState(
-                                          () => _isHoveringPlay = true),
-                                      onExit: (_) => setState(
-                                          () => _isHoveringPlay = false),
+                                      onEnter: (_) =>
+                                          setState(() => _isHoveringPlay = true),
+                                      onExit: (_) =>
+                                          setState(() => _isHoveringPlay = false),
                                       child: Material(
                                         color: Colors.transparent,
-                                        child: IconButton(
-                                          icon: AnimatedScale(
-                                            scale: _isHoveringPlay
-                                                ? _hoverScale
-                                                : _normalScale,
-                                            duration: _animationDuration,
-                                            child: Icon(
-                                              isPlaying
-                                                  ? CupertinoIcons.pause_fill
-                                                  : CupertinoIcons.play_fill,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(
+                                            settings.borderRadius),
+                                        child: InkWell(
+                                          onTap: () {
+                                            final wasPlaying =
+                                                playerProvider.isPlaying;
+                                            playerProvider.togglePlayPause();
+
+                                            // 处理倒计时
+                                            if (playerProvider.timerMinutes !=
+                                                null) {
+                                              if (wasPlaying) {
+                                                // 暂停播放时，暂停倒计时
+                                                playerProvider.pauseTimer();
+                                              } else {
+                                                // 恢复播放时，恢复倒计时
+                                                playerProvider.resumeTimer();
+                                              }
+                                            }
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                              settings.borderRadius),
+                                          splashColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            child: AnimatedScale(
+                                              scale: _isHoveringPlay
+                                                  ? _hoverScale
+                                                  : _normalScale,
+                                              duration: _animationDuration,
+                                              child: Icon(
+                                                isPlaying
+                                                    ? CupertinoIcons.pause_fill
+                                                    : CupertinoIcons.play_fill,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.8),
+                                                size: 32,
+                                              ),
                                             ),
                                           ),
-                                          onPressed: () {
-                                            playerProvider.togglePlayPause();
-                                          },
-                                          tooltip: isPlaying ? '暂停' : '播放',
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 20),
                                     // 下一曲
                                     MouseRegion(
-                                      onEnter: (_) => setState(
-                                          () => _isHoveringNext = true),
-                                      onExit: (_) => setState(
-                                          () => _isHoveringNext = false),
+                                      onEnter: (_) =>
+                                          setState(() => _isHoveringNext = true),
+                                      onExit: (_) =>
+                                          setState(() => _isHoveringNext = false),
                                       child: Material(
                                         color: Colors.transparent,
-                                        child: IconButton(
-                                          icon: AnimatedScale(
-                                            scale: _isHoveringNext
-                                                ? _hoverScale
-                                                : _normalScale,
-                                            duration: _animationDuration,
-                                            child: Icon(
-                                              CupertinoIcons.forward_fill,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(
+                                            settings.borderRadius),
+                                        child: InkWell(
+                                          onTap: () =>
+                                              playerProvider.playNext(),
+                                          borderRadius: BorderRadius.circular(
+                                              settings.borderRadius),
+                                          splashColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            child: AnimatedScale(
+                                              scale: _isHoveringNext
+                                                  ? _hoverScale
+                                                  : _normalScale,
+                                              duration: _animationDuration,
+                                              child: Icon(
+                                                CupertinoIcons.forward_end_fill,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.8),
+                                                size: 24,
+                                              ),
                                             ),
                                           ),
-                                          onPressed: () {
-                                            playerProvider.playNext();
-                                          },
-                                          tooltip: '下一曲',
                                         ),
                                       ),
                                     ),
                                     // 播放列表
                                     MouseRegion(
-                                      onEnter: (_) => setState(
-                                          () => _isHoveringPlaylist = true),
-                                      onExit: (_) => setState(
-                                          () => _isHoveringPlaylist = false),
+                                      onEnter: (_) =>
+                                          setState(() => _isHoveringPlaylist = true),
+                                      onExit: (_) =>
+                                          setState(() => _isHoveringPlaylist = false),
                                       child: Material(
                                         color: Colors.transparent,
-                                        child: IconButton(
-                                          icon: AnimatedScale(
-                                            scale: _isHoveringPlaylist
-                                                ? _hoverScale
-                                                : _normalScale,
-                                            duration: _animationDuration,
-                                            child: Icon(
-                                              CupertinoIcons.list_bullet,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(
+                                            settings.borderRadius),
+                                        child: InkWell(
+                                          onTap: () => _showPlaylistPopup(context),
+                                          borderRadius: BorderRadius.circular(
+                                              settings.borderRadius),
+                                          splashColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            child: AnimatedScale(
+                                              scale: _isHoveringPlaylist
+                                                  ? _hoverScale
+                                                  : _normalScale,
+                                              duration: _animationDuration,
+                                              child: Icon(
+                                                AppIcons.playlist,
+                                                color: Theme.of(context)
+                                                    .iconTheme
+                                                    .color
+                                                    ?.withOpacity(0.7),
+                                                size: 24,
+                                              ),
                                             ),
                                           ),
-                                          onPressed: () {
-                                            _showPlaylistPopup(context);
-                                          },
-                                          tooltip: '播放列表',
                                         ),
                                       ),
                                     ),
@@ -321,8 +349,6 @@ class _PlayerControlBarLiquidGlassState
                               ],
                             ),
                           ),
-                        ),
-                      ),
                     );
                   },
                 ),

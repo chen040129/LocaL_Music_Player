@@ -87,6 +87,11 @@ class _MaskCardState extends State<MaskCard>
 
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
+        // 使用设置中的边框弧度，如果没有提供则使用默认值
+        final effectiveBorderRadius = widget.borderRadius == 12 
+            ? settings.borderRadius 
+            : widget.borderRadius;
+        
         return AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
@@ -95,7 +100,7 @@ class _MaskCardState extends State<MaskCard>
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(widget.borderRadius),
+                borderRadius: BorderRadius.circular(effectiveBorderRadius),
                 boxShadow: [
                   // 柔和的阴影，使边界更模糊
                   BoxShadow(
@@ -123,7 +128,7 @@ class _MaskCardState extends State<MaskCard>
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(widget.borderRadius),
+                borderRadius: BorderRadius.circular(effectiveBorderRadius),
                 child: Stack(
                   children: [
                     // 半透明蒙版层
@@ -135,7 +140,7 @@ class _MaskCardState extends State<MaskCard>
                               .surface
                               .withOpacity(settings.cardOpacity),
                           borderRadius:
-                              BorderRadius.circular(widget.borderRadius),
+                              BorderRadius.circular(effectiveBorderRadius),
                         ),
                       ),
                     ),
@@ -156,7 +161,7 @@ class _MaskCardState extends State<MaskCard>
                               ],
                             ),
                             borderRadius:
-                                BorderRadius.circular(widget.borderRadius),
+                                BorderRadius.circular(effectiveBorderRadius),
                           ),
                         ),
                       ),

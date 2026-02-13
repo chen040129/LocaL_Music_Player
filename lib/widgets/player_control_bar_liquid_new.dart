@@ -119,8 +119,7 @@ class _PlayerControlBarLiquidState extends State<PlayerControlBarLiquid>
                               return Consumer<SettingsProvider>(
                                 builder: (context, settings, child) {
                                   return ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                        settings.windowBorderRadius),
+                                    borderRadius: BorderRadius.zero,
                                     child: const LyricsPage(),
                                   );
                                 },
