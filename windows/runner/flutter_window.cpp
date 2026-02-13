@@ -33,13 +33,6 @@ bool FlutterWindow::OnCreate() {
   // Set window to redraw
   SetWindowPos(GetHandle(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-  // Enable DWM blur behind to prevent white edges
-  DWM_BLURBEHIND blurBehind = {0};
-  blurBehind.dwFlags = DWM_BB_ENABLE;
-  blurBehind.fEnable = TRUE;
-  blurBehind.hRgnBlur = NULL;
-  DwmEnableBlurBehindWindow(GetHandle(), &blurBehind);
-
   RECT frame = GetClientArea();
 
   // The size here must match the window dimensions to avoid unnecessary surface

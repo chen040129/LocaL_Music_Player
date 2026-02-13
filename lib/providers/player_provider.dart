@@ -286,16 +286,20 @@ class PlayerProvider with ChangeNotifier {
   /// 保存播放进度
   Future<void> savePlayProgress() async {
     if (_settingsProvider?.savePlayProgress ?? true && _currentMusic != null) {
-      await _storageService.savePlayProgress(
-        musicId: _currentMusic!.id,
-        position: _position,
-        filePath: _currentMusic!.filePath,
-        playlistMusicIds: _playlist.map((m) => m.id).toList(),
-        currentIndex: _currentIndex,
-        playlistSource: _playlistSource.name,
-        sourceIdentifier: _sourceIdentifier,
-        playMode: _playMode.index,
-      );
+      try {
+        await _storageService.savePlayProgress(
+          musicId: _currentMusic!.id,
+          position: _position,
+          filePath: _currentMusic!.filePath,
+          playlistMusicIds: _playlist.map((m) => m.id).toList(),
+          currentIndex: _currentIndex,
+          playlistSource: _playlistSource.name,
+          sourceIdentifier: _sourceIdentifier,
+          playMode: _playMode.index,
+        );
+      } catch (e) {
+        debugPrint('保存播放进度失败: $e');
+      }
     }
   }
 

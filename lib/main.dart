@@ -153,7 +153,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                       // 背景层 - 应用透明度
                       Positioned.fill(
                         child: Container(
-                          color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                          color: settings.windowOpacity < 0.01 
+                              ? Colors.transparent 
+                              : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
                         ),
                       ),
                       // 内容层 - 不应用透明度

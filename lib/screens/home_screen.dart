@@ -347,12 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
-        // 始终保持窗口完全不透明，透明度由背景层控制
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-            windowManager.setOpacity(1.0);
-          }
-        });
+        // 移除强制设置窗口不透明度的代码，允许窗口透明度由背景层控制
 
         return Material(
           color: Colors.transparent,

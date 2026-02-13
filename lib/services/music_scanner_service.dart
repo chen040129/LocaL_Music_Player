@@ -79,13 +79,13 @@ class MusicInfo {
 
   factory MusicInfo.fromJson(Map<String, dynamic> json) {
     return MusicInfo(
-      id: json['id'],
-      filePath: json['filePath'],
-      title: json['title'],
-      artist: json['artist'],
-      album: json['album'],
+      id: json['id'] ?? json['filePath'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      filePath: json['filePath'] ?? '',
+      title: json['title'] ?? 'Unknown',
+      artist: json['artist'] ?? 'Unknown',
+      album: json['album'] ?? 'Unknown',
       coverArt: json['coverArt'] != null ? _base64ToBytes(json['coverArt']) : null,
-      duration: Duration(milliseconds: json['duration']),
+      duration: Duration(milliseconds: json['duration'] ?? 0),
       quality: json['quality'],
       trackNumber: json['trackNumber'] ?? 0,
       year: json['year'] ?? 0,
