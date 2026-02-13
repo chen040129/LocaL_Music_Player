@@ -6,7 +6,8 @@ import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
 import 'package:flutter_music_player/widgets/player_control_bar.dart';
 import 'package:flutter_music_player/widgets/player_control_bar_liquid_glass.dart';
-import 'package:flutter_music_player/providers/settings_provider.dart' show PlayerBarStyle, PlayerBarLength;
+import 'package:flutter_music_player/providers/settings_provider.dart'
+    show PlayerBarStyle, PlayerBarLength;
 import 'package:flutter_music_player/widgets/custom_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform, File;
@@ -46,7 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _songs = [];
   Size? _windowSize;
   Timer? _resizeDebounceTimer;
-  final LiquidGlassViewController _liquidGlassViewController = LiquidGlassViewController();
+  final LiquidGlassViewController _liquidGlassViewController =
+      LiquidGlassViewController();
+  final GlobalKey _contentKey = GlobalKey();
 
   @override
   void initState() {
@@ -127,6 +130,23 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isSidebarExpanded = !_isSidebarExpanded;
     });
+  }
+
+  // 获取内容区域的实际位置
+  Offset? _getContentPosition() {
+    final RenderBox? renderBox =
+        _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      return renderBox.localToGlobal(Offset.zero);
+    }
+    return null;
+  }
+
+  // 获取内容区域的实际宽度
+  double? _getContentWidth() {
+    final RenderBox? renderBox =
+        _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    return renderBox?.size.width;
   }
 
   void _forceWindowRedraw() async {
@@ -219,8 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// 构建渐变背景
-  Widget _buildGradientBackground(
-      PlayerProvider playerProvider, SettingsProvider settings, ColorScheme colorScheme) {
+  Widget _buildGradientBackground(PlayerProvider playerProvider,
+      SettingsProvider settings, ColorScheme colorScheme) {
     // 获取歌曲主题色
     Color? songColor;
     try {
@@ -376,14 +396,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               // 添加一个半透明的背景层以支持模糊效果
                               Container(
-                                color: Theme.of(context).colorScheme.surface.withOpacity(1.0),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withOpacity(1.0),
                               ),
                               // 流体背景
                               _buildFluidBackground(player, settings),
                             ],
                           );
                         case UIBackgroundType.gradient:
-                          return _buildGradientBackground(player, settings, colorScheme);
+                          return _buildGradientBackground(
+                              player, settings, colorScheme);
                         case UIBackgroundType.customImage:
                           if (settings.uiCustomImagePath.isNotEmpty) {
                             BoxFit boxFit;
@@ -408,7 +432,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 break;
                             }
                             return ClipRRect(
-                              borderRadius: BorderRadius.circular(settings.borderRadius),
+                              borderRadius:
+                                  BorderRadius.circular(settings.borderRadius),
                               child: Image.file(
                                 File(settings.uiCustomImagePath),
                                 fit: boxFit,
@@ -456,18 +481,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 // 右侧内容区域
                                 Expanded(
-                                  child: Stack(
+                                  key: _contentKey,
+                                  child: Column(
                                     children: [
                                       // 主内容区域
-                                      Column(
-                                        children: [
-                                          // 根据当前页面显示不同的内容
-                                          Expanded(
-                                            child: _buildCurrentPage(),
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: _buildCurrentPage(),
                                       ),
-
+                                      // 播放栏 - 放在主内容区域内
+                                      // 注意：液态玻璃样式的播放栏由 LiquidGlassView 处理
+                                      // 只有在内容宽度模式下才在这里显示播放栏
+                                      if (settings.playerBarStyle == PlayerBarStyle.normal &&
+                                          settings.playerBarLength == PlayerBarLength.contentWidth)
+                                        const Padding(
+                                          padding: EdgeInsets.all(16),
+                                          child: PlayerControlBar(),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -476,6 +505,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
+                      // 默认模式下的全宽播放栏 - 放在 Stack 顶层以覆盖导航栏
+                      if (settings.playerBarStyle == PlayerBarStyle.normal &&
+                          settings.playerBarLength == PlayerBarLength.fullWidth)
+                        const Positioned(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                          child: PlayerControlBar(),
+                        ),
                       // 窗口边缘调整大小区域
                       if (Platform.isWindows) ...[
                         // 左边缘
@@ -603,12 +641,23 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         // 根据播放栏样式决定是否使用 LiquidGlassView
+        // 只要使用液态玻璃样式就使用 LiquidGlassView
         if (settings.playerBarStyle == PlayerBarStyle.liquidGlass) {
-          // 根据播放栏长度计算宽度
-          final double playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
+          // 获取内容区域的位置和宽度
+          final contentPosition = _getContentPosition();
+          final contentWidth = _getContentWidth() ?? 
+              MediaQuery.of(context).size.width - (_isSidebarExpanded ? 240 : 0);
+
+          // 根据播放栏长度决定宽度和位置
+          final playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
               ? MediaQuery.of(context).size.width - 32
-              : MediaQuery.of(context).size.width - 32 - (_isSidebarExpanded ? 220 : 0);
-          
+              : contentWidth - 32;
+
+          // 计算左边距：内容宽度模式下需要加上侧边栏的宽度
+          final double leftMargin = settings.playerBarLength == PlayerBarLength.fullWidth
+              ? 16
+              : (contentPosition?.dx ?? 0) + 16;
+
           return LiquidGlassView(
             controller: _liquidGlassViewController,
             pixelRatio: 1.0,
@@ -624,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   alignment: Alignment.bottomCenter,
                   margin: EdgeInsets.only(
                     bottom: 16,
-                    left: settings.playerBarLength == PlayerBarLength.contentWidth && _isSidebarExpanded ? 236 : 16,
+                    left: leftMargin,
                     right: 16,
                   ),
                 ),
@@ -659,36 +708,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           );
         } else {
-          // 普通模式，直接返回页面内容，并添加播放栏
-          // 根据播放栏长度计算宽度
-          final double playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
-              ? MediaQuery.of(context).size.width - 32
-              : MediaQuery.of(context).size.width - 32 - (_isSidebarExpanded ? 220 : 0);
-          
-          return Stack(
-            children: [
-              backgroundContent,
-              // 底部播放控制栏
-              Positioned(
-                left: settings.playerBarLength == PlayerBarLength.contentWidth && _isSidebarExpanded ? 236 : 16,
-                right: 16,
-                bottom: 16,
-                child: SizedBox(
-                  width: playerBarWidth,
-                  child: Consumer<SettingsProvider>(
-                  builder: (context, settings, child) {
-                    switch (settings.playerBarStyle) {
-                      case PlayerBarStyle.normal:
-                        return const PlayerControlBar();
-                      case PlayerBarStyle.liquidGlass:
-                        return const PlayerControlBarLiquidGlass();
-                    }
-                  },
-                  ),
-                ),
-              ),
-            ],
-          );
+          // 普通模式，直接返回页面内容
+          // 播放栏已经在右侧内容区域的Column中处理了
+          return backgroundContent;
         }
       },
     );

@@ -746,41 +746,72 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final Map<String, dynamic> settingsMap = {};
 
-    // 获取所有设置项
+    // 用户界面设置
+    settingsMap['use_blur_background'] = prefs.getBool('use_blur_background') ?? true;
+    settingsMap['show_album_art'] = prefs.getBool('show_album_art') ?? true;
+    settingsMap['use_sidebar_glass'] = prefs.getBool('use_sidebar_glass') ?? true;
+    settingsMap['use_player_glass'] = prefs.getBool('use_player_glass') ?? true;
+    settingsMap['glass_opacity'] = prefs.getDouble('glass_opacity') ?? 0.2;
+    settingsMap['border_radius'] = prefs.getDouble('border_radius') ?? 8.0;
+    settingsMap['window_border_radius'] = prefs.getDouble('window_border_radius') ?? 12.0;
+    settingsMap['window_opacity'] = prefs.getDouble('window_opacity') ?? 0.85;
+    settingsMap['card_opacity'] = prefs.getDouble('card_opacity') ?? 0.85;
     settingsMap['ui_background_type'] = prefs.getInt('ui_background_type') ?? 0;
-    settingsMap['ui_gradient_type'] = prefs.getInt('ui_gradient_type') ?? 0;
-    settingsMap['ui_gradient_song_color_ratio'] = prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.5;
     settingsMap['ui_custom_image_path'] = prefs.getString('ui_custom_image_path') ?? '';
     settingsMap['ui_image_fit_type'] = prefs.getInt('ui_image_fit_type') ?? 0;
-    settingsMap['glass_opacity'] = prefs.getDouble('glass_opacity') ?? 0.7;
-    settingsMap['card_opacity'] = prefs.getDouble('card_opacity') ?? 0.85;
-    settingsMap['window_opacity'] = prefs.getDouble('window_opacity') ?? 0.85;
-    settingsMap['window_border_radius'] = prefs.getDouble('window_border_radius') ?? 12.0;
-    settingsMap['border_radius'] = prefs.getDouble('border_radius') ?? 8.0;
+    settingsMap['sync_background_images'] = prefs.getBool('sync_background_images') ?? false;
+    settingsMap['sync_gradient_settings'] = prefs.getBool('sync_gradient_settings') ?? false;
+    settingsMap['ui_gradient_type'] = prefs.getInt('ui_gradient_type') ?? 0;
+    settingsMap['ui_gradient_song_color_ratio'] = prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
 
-    settingsMap['song_page_background_type'] = prefs.getInt('song_page_background_type') ?? 0;
-    settingsMap['page_opacity'] = prefs.getDouble('page_opacity') ?? 0.85;
-    settingsMap['custom_image_path'] = prefs.getString('custom_image_path') ?? '';
-    settingsMap['image_fit_type'] = prefs.getInt('image_fit_type') ?? 1;
-    settingsMap['gradient_type'] = prefs.getInt('gradient_type') ?? 0;
-    settingsMap['gradient_song_color_ratio'] = prefs.getDouble('gradient_song_color_ratio') ?? 0.5;
-    settingsMap['blur_amount'] = prefs.getDouble('blur_amount') ?? 30.0;
-
+    // 歌词设置
     settingsMap['lyrics_alignment'] = prefs.getInt('lyrics_alignment') ?? 1;
-    settingsMap['lyrics_font_size'] = prefs.getDouble('lyrics_font_size') ?? 24.0;
+    settingsMap['lyrics_font_size'] = prefs.getDouble('lyrics_font_size') ?? 16.0;
     settingsMap['active_lyrics_font_size'] = prefs.getDouble('active_lyrics_font_size') ?? 22.0;
-    settingsMap['lyrics_line_height'] = prefs.getDouble('lyrics_line_height') ?? 1.5;
+    settingsMap['show_translation'] = prefs.getBool('show_translation') ?? true;
+    settingsMap['enable_lyrics_blur'] = prefs.getBool('enable_lyrics_blur') ?? true;
     settingsMap['lyrics_opacity'] = prefs.getDouble('lyrics_opacity') ?? 1.0;
     settingsMap['lyrics_line_gap'] = prefs.getInt('lyrics_line_gap') ?? 8;
+    settingsMap['scroll_duration'] = prefs.getInt('scroll_duration') ?? 500;
+    settingsMap['selection_auto_resume_duration'] = prefs.getInt('selection_auto_resume_duration') ?? 400;
+    settingsMap['active_auto_resume_duration'] = prefs.getInt('active_auto_resume_duration') ?? 3500;
+    settingsMap['scroll_curve'] = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
 
-    settingsMap['fluid_bubbles_size'] = prefs.getDouble('fluid_bubbles_size') ?? 150.0;
-    settingsMap['fluid_velocity'] = prefs.getDouble('fluid_velocity') ?? 0.5;
-    settingsMap['fluid_animation_duration'] = prefs.getInt('fluid_animation_duration') ?? 2000;
-    settingsMap['fluid_offset_amount'] = prefs.getDouble('fluid_offset_amount') ?? 0.3;
-    settingsMap['fluid_layer_opacity'] = prefs.getDouble('fluid_layer_opacity') ?? 0.7;
-
+    // 播放器设置
+    settingsMap['auto_play_next'] = prefs.getBool('auto_play_next') ?? true;
+    settingsMap['save_play_progress'] = prefs.getBool('save_play_progress') ?? true;
+    settingsMap['show_play_count'] = prefs.getBool('show_play_count') ?? true;
+    settingsMap['enable_fade_effect'] = prefs.getBool('enable_fade_effect') ?? true;
     settingsMap['fade_duration'] = prefs.getDouble('fade_duration') ?? 2.0;
     settingsMap['default_volume'] = prefs.getInt('default_volume') ?? 70;
+    settingsMap['show_lyrics_in_player'] = prefs.getBool('show_lyrics_in_player') ?? true;
+    settingsMap['player_bar_style'] = prefs.getInt('player_bar_style') ?? 0;
+    settingsMap['player_bar_length'] = prefs.getInt('player_bar_length') ?? 0;
+
+    // 液态玻璃参数
+    settingsMap['liquid_glass_distortion'] = prefs.getDouble('liquid_glass_distortion') ?? 0.15;
+    settingsMap['liquid_glass_distortion_width'] = prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
+    settingsMap['liquid_glass_chromatic_aberration'] = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.003;
+    settingsMap['liquid_glass_saturation'] = prefs.getDouble('liquid_glass_saturation') ?? 1.0;
+    settingsMap['liquid_glass_blur_sigma'] = prefs.getDouble('liquid_glass_blur_sigma') ?? 20.0;
+    settingsMap['liquid_glass_magnification'] = prefs.getDouble('liquid_glass_magnification') ?? 1.0;
+
+    // 歌曲页面设置
+    settingsMap['song_page_background_type'] = prefs.getInt('song_page_background_type') ?? 0;
+    settingsMap['gradient_type'] = prefs.getInt('gradient_type') ?? 0;
+    settingsMap['is_fluid_dynamic'] = prefs.getBool('is_fluid_dynamic') ?? false;
+    settingsMap['blur_amount'] = prefs.getDouble('blur_amount') ?? 30.0;
+    settingsMap['page_opacity'] = prefs.getDouble('page_opacity') ?? 1.0;
+    settingsMap['gradient_song_color_ratio'] = prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
+    settingsMap['custom_image_path'] = prefs.getString('custom_image_path') ?? '';
+    settingsMap['image_fit_type'] = prefs.getInt('image_fit_type') ?? 1;
+
+    // 流体背景参数
+    settingsMap['fluid_bubbles_size'] = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
+    settingsMap['fluid_velocity'] = prefs.getDouble('fluid_velocity') ?? 120.0;
+    settingsMap['fluid_animation_duration'] = prefs.getInt('fluid_animation_duration') ?? 2000;
+    settingsMap['fluid_offset_amount'] = prefs.getDouble('fluid_offset_amount') ?? 20.0;
+    settingsMap['fluid_layer_opacity'] = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
 
     return jsonEncode(settingsMap);
   }
@@ -791,14 +822,36 @@ class SettingsProvider with ChangeNotifier {
     final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
 
     // 导入所有设置项
+    // 用户界面设置
+    if (settingsMap.containsKey('use_blur_background')) {
+      await prefs.setBool('use_blur_background', settingsMap['use_blur_background']);
+    }
+    if (settingsMap.containsKey('show_album_art')) {
+      await prefs.setBool('show_album_art', settingsMap['show_album_art']);
+    }
+    if (settingsMap.containsKey('use_sidebar_glass')) {
+      await prefs.setBool('use_sidebar_glass', settingsMap['use_sidebar_glass']);
+    }
+    if (settingsMap.containsKey('use_player_glass')) {
+      await prefs.setBool('use_player_glass', settingsMap['use_player_glass']);
+    }
+    if (settingsMap.containsKey('glass_opacity')) {
+      await prefs.setDouble('glass_opacity', settingsMap['glass_opacity']);
+    }
+    if (settingsMap.containsKey('border_radius')) {
+      await prefs.setDouble('border_radius', settingsMap['border_radius']);
+    }
+    if (settingsMap.containsKey('window_border_radius')) {
+      await prefs.setDouble('window_border_radius', settingsMap['window_border_radius']);
+    }
+    if (settingsMap.containsKey('window_opacity')) {
+      await prefs.setDouble('window_opacity', settingsMap['window_opacity']);
+    }
+    if (settingsMap.containsKey('card_opacity')) {
+      await prefs.setDouble('card_opacity', settingsMap['card_opacity']);
+    }
     if (settingsMap.containsKey('ui_background_type')) {
       await prefs.setInt('ui_background_type', settingsMap['ui_background_type']);
-    }
-    if (settingsMap.containsKey('ui_gradient_type')) {
-      await prefs.setInt('ui_gradient_type', settingsMap['ui_gradient_type']);
-    }
-    if (settingsMap.containsKey('ui_gradient_song_color_ratio')) {
-      await prefs.setDouble('ui_gradient_song_color_ratio', settingsMap['ui_gradient_song_color_ratio']);
     }
     if (settingsMap.containsKey('ui_custom_image_path')) {
       await prefs.setString('ui_custom_image_path', settingsMap['ui_custom_image_path']);
@@ -806,20 +859,46 @@ class SettingsProvider with ChangeNotifier {
     if (settingsMap.containsKey('ui_image_fit_type')) {
       await prefs.setInt('ui_image_fit_type', settingsMap['ui_image_fit_type']);
     }
-    if (settingsMap.containsKey('glass_opacity')) {
-      await prefs.setDouble('glass_opacity', settingsMap['glass_opacity']);
+    if (settingsMap.containsKey('sync_background_images')) {
+      await prefs.setBool('sync_background_images', settingsMap['sync_background_images']);
     }
-    if (settingsMap.containsKey('card_opacity')) {
-      await prefs.setDouble('card_opacity', settingsMap['card_opacity']);
+    if (settingsMap.containsKey('sync_gradient_settings')) {
+      await prefs.setBool('sync_gradient_settings', settingsMap['sync_gradient_settings']);
     }
-    if (settingsMap.containsKey('window_opacity')) {
-      await prefs.setDouble('window_opacity', settingsMap['window_opacity']);
+    if (settingsMap.containsKey('ui_gradient_type')) {
+      await prefs.setInt('ui_gradient_type', settingsMap['ui_gradient_type']);
     }
-    if (settingsMap.containsKey('window_border_radius')) {
-      await prefs.setDouble('window_border_radius', settingsMap['window_border_radius']);
+    if (settingsMap.containsKey('ui_gradient_song_color_ratio')) {
+      await prefs.setDouble('ui_gradient_song_color_ratio', settingsMap['ui_gradient_song_color_ratio']);
     }
-    if (settingsMap.containsKey('border_radius')) {
-      await prefs.setDouble('border_radius', settingsMap['border_radius']);
+
+    // 播放器设置
+    if (settingsMap.containsKey('auto_play_next')) {
+      await prefs.setBool('auto_play_next', settingsMap['auto_play_next']);
+    }
+    if (settingsMap.containsKey('save_play_progress')) {
+      await prefs.setBool('save_play_progress', settingsMap['save_play_progress']);
+    }
+    if (settingsMap.containsKey('show_play_count')) {
+      await prefs.setBool('show_play_count', settingsMap['show_play_count']);
+    }
+    if (settingsMap.containsKey('enable_fade_effect')) {
+      await prefs.setBool('enable_fade_effect', settingsMap['enable_fade_effect']);
+    }
+    if (settingsMap.containsKey('fade_duration')) {
+      await prefs.setDouble('fade_duration', settingsMap['fade_duration']);
+    }
+    if (settingsMap.containsKey('default_volume')) {
+      await prefs.setInt('default_volume', settingsMap['default_volume']);
+    }
+    if (settingsMap.containsKey('show_lyrics_in_player')) {
+      await prefs.setBool('show_lyrics_in_player', settingsMap['show_lyrics_in_player']);
+    }
+    if (settingsMap.containsKey('player_bar_style')) {
+      await prefs.setInt('player_bar_style', settingsMap['player_bar_style']);
+    }
+    if (settingsMap.containsKey('player_bar_length')) {
+      await prefs.setInt('player_bar_length', settingsMap['player_bar_length']);
     }
 
     if (settingsMap.containsKey('song_page_background_type')) {
@@ -844,6 +923,7 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setDouble('blur_amount', settingsMap['blur_amount']);
     }
 
+    // 歌词设置
     if (settingsMap.containsKey('lyrics_alignment')) {
       await prefs.setInt('lyrics_alignment', settingsMap['lyrics_alignment']);
     }
@@ -853,16 +933,78 @@ class SettingsProvider with ChangeNotifier {
     if (settingsMap.containsKey('active_lyrics_font_size')) {
       await prefs.setDouble('active_lyrics_font_size', settingsMap['active_lyrics_font_size']);
     }
-    if (settingsMap.containsKey('lyrics_line_height')) {
-      await prefs.setDouble('lyrics_line_height', settingsMap['lyrics_line_height']);
+    if (settingsMap.containsKey('show_translation')) {
+      await prefs.setBool('show_translation', settingsMap['show_translation']);
     }
-    if (settingsMap.containsKey('lyrics_line_gap')) {
-      await prefs.setInt('lyrics_line_gap', settingsMap['lyrics_line_gap']);
+    if (settingsMap.containsKey('enable_lyrics_blur')) {
+      await prefs.setBool('enable_lyrics_blur', settingsMap['enable_lyrics_blur']);
     }
     if (settingsMap.containsKey('lyrics_opacity')) {
       await prefs.setDouble('lyrics_opacity', settingsMap['lyrics_opacity']);
     }
+    if (settingsMap.containsKey('lyrics_line_gap')) {
+      await prefs.setInt('lyrics_line_gap', settingsMap['lyrics_line_gap']);
+    }
+    if (settingsMap.containsKey('scroll_duration')) {
+      await prefs.setInt('scroll_duration', settingsMap['scroll_duration']);
+    }
+    if (settingsMap.containsKey('selection_auto_resume_duration')) {
+      await prefs.setInt('selection_auto_resume_duration', settingsMap['selection_auto_resume_duration']);
+    }
+    if (settingsMap.containsKey('active_auto_resume_duration')) {
+      await prefs.setInt('active_auto_resume_duration', settingsMap['active_auto_resume_duration']);
+    }
+    if (settingsMap.containsKey('scroll_curve')) {
+      await prefs.setString('scroll_curve', settingsMap['scroll_curve']);
+    }
 
+    // 液态玻璃参数
+    if (settingsMap.containsKey('liquid_glass_distortion')) {
+      await prefs.setDouble('liquid_glass_distortion', settingsMap['liquid_glass_distortion']);
+    }
+    if (settingsMap.containsKey('liquid_glass_distortion_width')) {
+      await prefs.setDouble('liquid_glass_distortion_width', settingsMap['liquid_glass_distortion_width']);
+    }
+    if (settingsMap.containsKey('liquid_glass_chromatic_aberration')) {
+      await prefs.setDouble('liquid_glass_chromatic_aberration', settingsMap['liquid_glass_chromatic_aberration']);
+    }
+    if (settingsMap.containsKey('liquid_glass_saturation')) {
+      await prefs.setDouble('liquid_glass_saturation', settingsMap['liquid_glass_saturation']);
+    }
+    if (settingsMap.containsKey('liquid_glass_blur_sigma')) {
+      await prefs.setDouble('liquid_glass_blur_sigma', settingsMap['liquid_glass_blur_sigma']);
+    }
+    if (settingsMap.containsKey('liquid_glass_magnification')) {
+      await prefs.setDouble('liquid_glass_magnification', settingsMap['liquid_glass_magnification']);
+    }
+
+    // 歌曲页面设置
+    if (settingsMap.containsKey('song_page_background_type')) {
+      await prefs.setInt('song_page_background_type', settingsMap['song_page_background_type']);
+    }
+    if (settingsMap.containsKey('gradient_type')) {
+      await prefs.setInt('gradient_type', settingsMap['gradient_type']);
+    }
+    if (settingsMap.containsKey('is_fluid_dynamic')) {
+      await prefs.setBool('is_fluid_dynamic', settingsMap['is_fluid_dynamic']);
+    }
+    if (settingsMap.containsKey('blur_amount')) {
+      await prefs.setDouble('blur_amount', settingsMap['blur_amount']);
+    }
+    if (settingsMap.containsKey('page_opacity')) {
+      await prefs.setDouble('page_opacity', settingsMap['page_opacity']);
+    }
+    if (settingsMap.containsKey('gradient_song_color_ratio')) {
+      await prefs.setDouble('gradient_song_color_ratio', settingsMap['gradient_song_color_ratio']);
+    }
+    if (settingsMap.containsKey('custom_image_path')) {
+      await prefs.setString('custom_image_path', settingsMap['custom_image_path']);
+    }
+    if (settingsMap.containsKey('image_fit_type')) {
+      await prefs.setInt('image_fit_type', settingsMap['image_fit_type']);
+    }
+
+    // 流体背景参数
     if (settingsMap.containsKey('fluid_bubbles_size')) {
       await prefs.setDouble('fluid_bubbles_size', settingsMap['fluid_bubbles_size']);
     }
@@ -877,12 +1019,6 @@ class SettingsProvider with ChangeNotifier {
     }
     if (settingsMap.containsKey('fluid_layer_opacity')) {
       await prefs.setDouble('fluid_layer_opacity', settingsMap['fluid_layer_opacity']);
-    }
-    if (settingsMap.containsKey('fade_duration')) {
-      await prefs.setDouble('fade_duration', settingsMap['fade_duration']);
-    }
-    if (settingsMap.containsKey('default_volume')) {
-      await prefs.setInt('default_volume', settingsMap['default_volume']);
     }
 
     // 重新加载设置

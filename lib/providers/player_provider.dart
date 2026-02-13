@@ -476,6 +476,27 @@ class PlayerProvider with ChangeNotifier {
 
     try {
       debugPrint('创建音频源...');
+
+      // 检查文件是否存在
+      final file = File(music.filePath);
+      if (!await file.exists()) {
+        debugPrint('=== 播放失败 ===');
+        debugPrint('错误: 文件不存在');
+        debugPrint('文件路径: ${music.filePath}');
+        return;
+      }
+
+      // 检查文件是否可读
+      try {
+        await file.openRead().first;
+      } catch (e) {
+        debugPrint('=== 播放失败 ===');
+        debugPrint('错误: 文件无法读取');
+        debugPrint('文件路径: ${music.filePath}');
+        debugPrint('读取错误: $e');
+        return;
+      }
+
       final source = DeviceFileSource(music.filePath);
       debugPrint('音频源类型: ${source.runtimeType}');
 
