@@ -521,6 +521,7 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                     child: LiquidGlassWidget(
                       enabled: settings.usePlayerGlass,
                       borderRadius: settings.borderRadius,
+                      opacity: settings.glassOpacity,
                       child: ClipRRect(
                       borderRadius:
                           BorderRadius.circular(settings.borderRadius),

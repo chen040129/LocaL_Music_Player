@@ -5,12 +5,14 @@ class LiquidGlassWidget extends StatefulWidget {
   final Widget child;
   final double borderRadius;
   final bool enabled;
+  final double opacity;
 
   const LiquidGlassWidget({
     super.key,
     required this.child,
     this.borderRadius = 12.0,
     this.enabled = true,
+    this.opacity = 0.15,
   });
 
   @override
@@ -57,6 +59,7 @@ class _LiquidGlassWidgetState extends State<LiquidGlassWidget> {
           shader: shader,
           borderRadius: widget.borderRadius,
           mousePosition: mousePosition,
+          opacity: widget.opacity,
         ),
         child: widget.child,
       ),
@@ -68,11 +71,13 @@ class _LiquidGlassPainter extends CustomPainter {
   final FragmentShader? shader;
   final double borderRadius;
   final Offset? mousePosition;
+  final double opacity;
 
   _LiquidGlassPainter({
     required this.shader,
     required this.borderRadius,
     this.mousePosition,
+    this.opacity = 0.15,
   });
 
   @override
@@ -88,6 +93,9 @@ class _LiquidGlassPainter extends CustomPainter {
     // Set mouse position uniform
     shader!.setFloat(2, mousePosition!.dx * pixelRatio);
     shader!.setFloat(3, mousePosition!.dy * pixelRatio);
+
+    // Set opacity uniform
+    shader!.setFloat(4, opacity);
 
     // Create an image from the canvas to use as texture input
     final recorder = PictureRecorder();
@@ -115,6 +123,7 @@ class _LiquidGlassPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _LiquidGlassPainter oldDelegate) {
     return oldDelegate.mousePosition != mousePosition ||
-        oldDelegate.borderRadius != borderRadius;
+        oldDelegate.borderRadius != borderRadius ||
+        oldDelegate.opacity != opacity;
   }
 }

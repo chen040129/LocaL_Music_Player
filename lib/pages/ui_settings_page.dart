@@ -190,14 +190,21 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                         // 窗口背景透明度滑块
                         _buildSliderTile(
                           title: '窗口背景透明度',
-                          subtitle: '调整整个应用窗口的背景透明度',
+                          subtitle: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? '液态玻璃样式下窗口背景不透明度为0%'
+                              : '调整整个应用窗口的背景透明度',
                           icon: CupertinoIcons.eye,
-                          value: 1.0 - settings.windowOpacity,
+                          value: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? 0.0
+                              : 1.0 - settings.windowOpacity,
                           min: 0.0,
                           max: 1.0,
                           divisions: 100,
-                          label: '${((1.0 - settings.windowOpacity) * 100).toInt()}%',
+                          label: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? '0%'
+                              : '${((1.0 - settings.windowOpacity) * 100).toInt()}%',
                           onChanged: (value) => settings.setWindowOpacity(1.0 - value),
+                          enabled: settings.canControlWindowOpacity,
                         ),
                       ],
                     ),
@@ -483,11 +490,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           title: '扭曲强度',
                           subtitle: '调整液态玻璃的扭曲效果强度',
                           icon: CupertinoIcons.waveform_path,
-                          value: settings.liquidGlassDistortion,
-                          min: 0.0,
+                          value: settings.liquidGlassDistortion < 0.01 ? 0.075 : settings.liquidGlassDistortion,
+                          min: 0.01,
                           max: 0.5,
                           divisions: 50,
-                          label: '${(settings.liquidGlassDistortion * 100).toInt()}%',
+                          label: '${(settings.liquidGlassDistortion < 0.01 ? 0.075 : settings.liquidGlassDistortion * 100).toInt()}%',
                           onChanged: (value) => settings.setLiquidGlassDistortion(value),
                         ),
                         const SizedBox(height: 16),
@@ -507,11 +514,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           title: '色差强度',
                           subtitle: '调整液态玻璃的色差效果强度',
                           icon: CupertinoIcons.color_filter,
-                          value: settings.liquidGlassChromaticAberration,
-                          min: 0.0,
+                          value: settings.liquidGlassChromaticAberration < 0.001 ? 0.002 : settings.liquidGlassChromaticAberration,
+                          min: 0.001,
                           max: 0.01,
                           divisions: 100,
-                          label: '${(settings.liquidGlassChromaticAberration * 1000).toInt()}‰',
+                          label: '${(settings.liquidGlassChromaticAberration < 0.001 ? 0.002 : settings.liquidGlassChromaticAberration * 1000).toInt()}‰',
                           onChanged: (value) => settings.setLiquidGlassChromaticAberration(value),
                         ),
                         const SizedBox(height: 16),
@@ -519,11 +526,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           title: '饱和度',
                           subtitle: '调整液态玻璃的颜色饱和度',
                           icon: CupertinoIcons.photo,
-                          value: settings.liquidGlassSaturation,
-                          min: 0.0,
+                          value: settings.liquidGlassSaturation < 0.1 ? 1.0 : settings.liquidGlassSaturation,
+                          min: 0.1,
                           max: 2.0,
                           divisions: 20,
-                          label: '${(settings.liquidGlassSaturation * 100).toInt()}%',
+                          label: '${(settings.liquidGlassSaturation < 0.1 ? 1.0 : settings.liquidGlassSaturation * 100).toInt()}%',
                           onChanged: (value) => settings.setLiquidGlassSaturation(value),
                         ),
                         const SizedBox(height: 16),
@@ -531,11 +538,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           title: '模糊强度',
                           subtitle: '调整液态玻璃的模糊效果强度',
                           icon: CupertinoIcons.eye,
-                          value: settings.liquidGlassBlurSigma,
-                          min: 0.0,
+                          value: settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma,
+                          min: 0.1,
                           max: 60.0,
                           divisions: 60,
-                          label: '${settings.liquidGlassBlurSigma.toInt()}',
+                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toInt()}',
                           onChanged: (value) => settings.setLiquidGlassBlurSigma(value),
                         ),
                         const SizedBox(height: 16),
@@ -627,7 +634,28 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
     required int divisions,
     required String label,
     required ValueChanged<double> onChanged,
+    bool enabled = true,
   }) {
+    final isDisabled = !enabled;
+    final iconColor = isDisabled 
+        ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+        : Theme.of(context).colorScheme.primary;
+    final iconBgColor = isDisabled
+        ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+        : Theme.of(context).colorScheme.primary.withOpacity(0.1);
+    final labelColor = isDisabled
+        ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+        : Theme.of(context).colorScheme.primary;
+    final labelBgColor = isDisabled
+        ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+        : Theme.of(context).colorScheme.primary.withOpacity(0.1);
+    final titleColor = isDisabled
+        ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+        : null;
+    final subtitleColor = isDisabled
+        ? Theme.of(context).iconTheme.color?.withOpacity(0.3)
+        : Theme.of(context).iconTheme.color?.withOpacity(0.7);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -637,12 +665,12 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: iconBgColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: Theme.of(context).colorScheme.primary,
+                color: iconColor,
                 size: 20,
               ),
             ),
@@ -653,9 +681,10 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                      color: titleColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -663,7 +692,7 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                     subtitle,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                      color: subtitleColor,
                     ),
                   ),
                 ],
@@ -672,13 +701,13 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: labelBgColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 label,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: labelColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -692,7 +721,7 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
           max: max,
           divisions: divisions,
           label: label,
-          onChanged: onChanged,
+          onChanged: enabled ? onChanged : null,
         ),
       ],
     );

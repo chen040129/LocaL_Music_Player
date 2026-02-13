@@ -49,7 +49,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _resizeDebounceTimer;
   final LiquidGlassViewController _liquidGlassViewController =
       LiquidGlassViewController();
+  final LiquidGlassController _playerBarGlassController =
+      LiquidGlassController();
   final GlobalKey _contentKey = GlobalKey();
+  double _lastGlassOpacity = 0.2;
+  ThemeMode _lastThemeMode = ThemeMode.system;
 
   @override
   void initState() {
@@ -58,7 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
     // 设置主题切换回调
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-      themeProvider.onThemeChanged = _forceWindowRedraw;
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+      themeProvider.onThemeChanged = _onThemeChanged;
+
+      // 保存初始透明度和主题
+      _lastGlassOpacity = settingsProvider.glassOpacity;
+      _lastThemeMode = themeProvider.themeMode;
 
       // 初始化音乐数据，从本地加载
       final musicProvider = Provider.of<MusicProvider>(context, listen: false);
@@ -153,6 +163,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.setSize(await windowManager.getSize());
     }
+  }
+
+  void _onThemeChanged() async {
+    // 主题变化时重新加载液态玻璃
+    await _liquidGlassViewController.captureOnce();
+    _forceWindowRedraw();
+  }
+
+  void _onGlassOpacityChanged(double newOpacity) async {
+    // 透明度变化时重新加载液态玻璃
+    await _liquidGlassViewController.captureOnce();
   }
 
   void _updateWindowBorderRadius(double borderRadius) async {
@@ -274,37 +295,43 @@ class _HomeScreenState extends State<HomeScreen> {
     // 使用用户界面独立的渐变类型和歌曲主题色占比
     if (settings.uiGradientType == GradientType.dynamic) {
       // 动态渐变
-      return AnimatedContainer(
-        duration: const Duration(seconds: 3),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              topLeftColor,
-              Color.lerp(topLeftColor, bottomRightColor,
-                  1 - settings.uiGradientSongColorRatio)!,
-              bottomRightColor,
-            ],
-            stops: const [0.0, 0.5, 1.0],
+      return Opacity(
+        opacity: settings.windowOpacity,
+        child: AnimatedContainer(
+          duration: const Duration(seconds: 3),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                topLeftColor,
+                Color.lerp(topLeftColor, bottomRightColor,
+                    1 - settings.uiGradientSongColorRatio)!,
+                bottomRightColor,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
           ),
         ),
       );
     } else {
       // 静态渐变
-      return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              topLeftColor,
-              Color.lerp(topLeftColor, bottomRightColor,
-                  1 - settings.uiGradientSongColorRatio)!,
-              bottomRightColor,
-            ],
-            stops: const [0.0, 0.5, 1.0],
+      return Opacity(
+        opacity: settings.windowOpacity,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                topLeftColor,
+                Color.lerp(topLeftColor, bottomRightColor,
+                    1 - settings.uiGradientSongColorRatio)!,
+                bottomRightColor,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
           ),
         ),
       );
@@ -374,8 +401,10 @@ class _HomeScreenState extends State<HomeScreen> {
         // 移除强制设置窗口不透明度的代码，允许窗口透明度由背景层控制
 
         // 构建背景内容（不包含播放栏）
+        // 液态玻璃的背景需要提供一个实际的背景色，避免显示LiquidGlassView的黑色背景
+        // 使用主题的surface颜色，并根据窗口透明度调整
         Widget backgroundContent = Material(
-          color: Colors.transparent,
+          color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
           child: Scaffold(
             backgroundColor: Colors.transparent,
             body: Stack(
@@ -389,7 +418,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       switch (settings.uiBackgroundType) {
                         case UIBackgroundType.normal:
                           return Container(
-                            color: Colors.transparent,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.transparent
+                                : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
                           );
                         case UIBackgroundType.fluid:
                           return Stack(
@@ -399,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .surface
-                                    .withOpacity(1.0),
+                                    .withOpacity(settings.windowOpacity),
                               ),
                               // 流体背景
                               _buildFluidBackground(player, settings),
@@ -668,7 +699,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // 播放栏的液态玻璃效果
               LiquidGlass(
-                controller: LiquidGlassController(),
+                controller: _playerBarGlassController,
                 position: LiquidGlassAlignPosition(
                   alignment: Alignment.bottomCenter,
                   margin: EdgeInsets.only(
@@ -695,14 +726,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: RoundedRectangleShape(
                   cornerRadius: settings.borderRadius,
                   borderWidth: 1.0,
-                  borderSoftness: 1.0,
-                  lightIntensity: 1.0,
-                  oneSideLightIntensity: 0.0,
+                  borderSoftness: 2.5,
+                  lightIntensity: 1.5,
+                  oneSideLightIntensity: 0.4,
                   lightDirection: 39.0,
                   lightMode: LiquidGlassLightMode.edge,
                 ),
                 visibility: true,
-                color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withAlpha((settings.glassOpacity * 60).round())
+                    : Colors.grey.withAlpha((settings.glassOpacity * 60).round()),
                 child: const PlayerControlBarLiquidGlass(),
               ),
             ],
@@ -714,5 +747,29 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
     );
+  }
+
+  // 监听设置变化
+  void _listenToSettingsChanges(BuildContext context) {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    // 检查透明度是否变化
+    if (settingsProvider.glassOpacity != _lastGlassOpacity) {
+      _lastGlassOpacity = settingsProvider.glassOpacity;
+      _onGlassOpacityChanged(_lastGlassOpacity);
+    }
+
+    // 检查主题是否变化
+    if (themeProvider.themeMode != _lastThemeMode) {
+      _lastThemeMode = themeProvider.themeMode;
+      _onThemeChanged();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _listenToSettingsChanges(context);
   }
 }

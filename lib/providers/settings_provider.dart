@@ -109,11 +109,11 @@ class SettingsProvider with ChangeNotifier {
   PlayerBarLength _playerBarLength = PlayerBarLength.fullWidth;  // 播放栏长度
 
   // 液态玻璃参数
-  double _liquidGlassDistortion = 0.15;           // 扭曲强度
-  double _liquidGlassDistortionWidth = 40.0;       // 扭曲宽度
-  double _liquidGlassChromaticAberration = 0.003;  // 色差强度
+  double _liquidGlassDistortion = 0.075;          // 扭曲强度
+  double _liquidGlassDistortionWidth = 70.0;       // 扭曲宽度
+  double _liquidGlassChromaticAberration = 0.002;  // 色差强度
   double _liquidGlassSaturation = 1.0;             // 饱和度
-  double _liquidGlassBlurSigma = 20.0;             // 模糊强度
+  double _liquidGlassBlurSigma = 0.5;              // 模糊强度
   double _liquidGlassMagnification = 1.0;           // 放大倍数
 
   // 歌曲页面设置
@@ -161,6 +161,9 @@ class SettingsProvider with ChangeNotifier {
   double get windowOpacity => _windowOpacity;
   double get cardOpacity => _cardOpacity;
   UIBackgroundType get uiBackgroundType => _uiBackgroundType;
+
+  // 判断是否可以控制窗口透明度
+  bool get canControlWindowOpacity => _playerBarStyle != PlayerBarStyle.liquidGlass;
   String get uiCustomImagePath => _uiCustomImagePath;
   ImageFitType get uiImageFitType => _uiImageFitType;
   bool get syncBackgroundImages => _syncBackgroundImages;
@@ -254,11 +257,20 @@ class SettingsProvider with ChangeNotifier {
     final playerBarLengthIndex = prefs.getInt('player_bar_length') ?? 0;
     _playerBarLength = PlayerBarLength.values[playerBarLengthIndex];
     // 加载液态玻璃参数
-    _liquidGlassDistortion = prefs.getDouble('liquid_glass_distortion') ?? 0.15;
-    _liquidGlassDistortionWidth = prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
-    _liquidGlassChromaticAberration = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.003;
+    _liquidGlassDistortion = prefs.getDouble('liquid_glass_distortion') ?? 0.075;
+    if (_liquidGlassDistortion < 0.01) _liquidGlassDistortion = 0.075;
+
+    _liquidGlassDistortionWidth = prefs.getDouble('liquid_glass_distortion_width') ?? 70.0;
+
+    _liquidGlassChromaticAberration = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.002;
+    if (_liquidGlassChromaticAberration < 0.001) _liquidGlassChromaticAberration = 0.002;
+
     _liquidGlassSaturation = prefs.getDouble('liquid_glass_saturation') ?? 1.0;
-    _liquidGlassBlurSigma = prefs.getDouble('liquid_glass_blur_sigma') ?? 20.0;
+    if (_liquidGlassSaturation < 0.1) _liquidGlassSaturation = 1.0;
+
+    _liquidGlassBlurSigma = prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5;
+    if (_liquidGlassBlurSigma < 0.1) _liquidGlassBlurSigma = 0.5;
+
     _liquidGlassMagnification = prefs.getDouble('liquid_glass_magnification') ?? 1.0;
 
     // 加载歌曲页面设置
@@ -542,6 +554,18 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setPlayerBarStyle(PlayerBarStyle value) async {
+    // 当从默认样式切换到液态玻璃样式时，保存当前透明度并设置为1.0（完全不透明）
+    if (_playerBarStyle == PlayerBarStyle.normal && value == PlayerBarStyle.liquidGlass) {
+      _savedNormalWindowOpacity = _windowOpacity;
+      _windowOpacity = 1.0;
+      await _saveSetting('window_opacity', _windowOpacity);
+    }
+    // 当从液态玻璃样式切换回默认样式时，恢复之前保存的透明度
+    else if (_playerBarStyle == PlayerBarStyle.liquidGlass && value == PlayerBarStyle.normal) {
+      _windowOpacity = _savedNormalWindowOpacity;
+      await _saveSetting('window_opacity', _windowOpacity);
+    }
+
     _playerBarStyle = value;
     await _saveSetting('player_bar_style', value.index);
     notifyListeners();

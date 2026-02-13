@@ -81,6 +81,7 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                 child: LiquidGlassWidget(
                   enabled: settings.usePlayerGlass,
                   borderRadius: settings.borderRadius,
+                  opacity: settings.glassOpacity,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(settings.borderRadius),
                     child: BackdropFilter(

@@ -121,8 +121,13 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   void initState() {
     super.initState();
     _lyricController = LyricController();
-    _lyricController.loadLyric(widget.lyrics);
-    _lyricController.setProgress(widget.position);
+    // 延迟加载歌词，确保widget完全初始化
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _lyricController.loadLyric(widget.lyrics);
+      _lyricController.setProgress(widget.position);
+      // 重置选择状态，确保动画正常工作
+      _lyricController.isSelectingNotifier.value = false;
+    });
     _lyricController.setOnTapLineCallback((duration) {
       widget.onLineTap?.call(duration);
       _lyricController.stopSelection();
@@ -134,6 +139,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.lyrics != widget.lyrics) {
       _lyricController.loadLyric(widget.lyrics);
+      // 重置选择状态，确保动画正常工作
+      _lyricController.isSelectingNotifier.value = false;
     }
     // 只在非选择状态下更新进度，避免用户滚动时被打断
     if (oldWidget.position != widget.position && !_lyricController.isSelectingNotifier.value) {

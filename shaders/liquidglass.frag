@@ -5,6 +5,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
+uniform float u_opacity;
 
 uniform sampler2D u_texture_input;
 
@@ -51,7 +52,7 @@ void main() {
     color -= shadow * 0.2;  // 减少阴影强度
 
     // 增加透明度
-    float alpha = boxShape * 0.15;  // 大幅增加透明度
+    float alpha = mix(u_opacity * 0.5, u_opacity, boxShape);
 
     frag_color = vec4(color, alpha);
 //    frag_color = vec4(vec3(shadow), 1.);

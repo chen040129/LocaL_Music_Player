@@ -383,14 +383,13 @@ class PlayerProvider with ChangeNotifier {
         _playlist = List.from(_originalPlaylist);
         _currentIndex = startIndex.clamp(0, _playlist.length - 1);
 
-        if (_currentIndex > 0) {
+        // 确保选中的歌曲被正确移到顶部
+        if (_currentIndex >= 0) {
           final current = _playlist[_currentIndex];
           _playlist.removeAt(_currentIndex);
           _playlist.shuffle();
           _playlist.insert(0, current);
           _currentIndex = 0;
-        } else {
-          _playlist.shuffle();
         }
         break;
 
