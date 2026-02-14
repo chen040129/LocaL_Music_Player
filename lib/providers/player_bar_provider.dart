@@ -243,13 +243,6 @@ class PlayerBarProvider extends ChangeNotifier {
   Future<void> _terminatePlayerBarWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       try {
-        // 通过保存的进程ID终止进程
-        // 注意：这里需要实现进程管理，例如保存进程ID
-        // 简化实现：通过窗口管理器关闭窗口
-        // 由于独立窗口是独立进程，我们需要通过其他方式关闭它
-        // 这里可以使用进程间通信或保存进程ID的方式
-        // 为简化实现，我们暂时不实现终止进程的逻辑
-        // 实际应用中，应该保存进程ID并在需要时终止它
       } catch (e) {
         print('终止独立播放器栏窗口失败: $e');
       }

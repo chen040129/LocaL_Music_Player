@@ -121,6 +121,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   double _coverDragOffset = 0.0; // 拖动偏移量，用于反馈
   int _currentPage = 0; // 0: 歌曲信息, 1: 播放列表
   bool _showVolumeControl = false;
+  bool _isImmersiveMode = false; // 沉浸模式状态
 
   // 按钮悬停状态
   bool _isPlaylistHovered = false;
@@ -577,6 +578,12 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           330.0,
                                                                           700.0);
                                                               return GestureDetector(
+                                                                onTap: () {
+                                                                  // 点击封面切换沉浸模式
+                                                                  setState(() {
+                                                                    _isImmersiveMode = !_isImmersiveMode;
+                                                                  });
+                                                                },
                                                                 onHorizontalDragStart:
                                                                     (details) {
                                                                   setState(() {
@@ -1062,7 +1069,11 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                               const SizedBox(
                                                                   height: 12),
                                                               // 次级控制行（音量、播放列表、定时播放、循环模式）
-                                                              SizedBox(
+                                                              AnimatedOpacity(
+                                                                opacity: _isImmersiveMode ? 0.0 : 1.0,
+                                                                duration: const Duration(milliseconds: 300),
+                                                                curve: Curves.easeInOut,
+                                                                child: SizedBox(
                                                                 width:
                                                                     400, // 与主播放控制行的总宽度一致（32+20+44+20+32=148，加上一些边距）
                                                                 height:
@@ -1300,6 +1311,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                     ],
                                                                   ],
                                                                 ),
+                                                              ),
                                                               ),
                                                             ],
                                                           ),

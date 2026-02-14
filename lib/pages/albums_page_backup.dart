@@ -284,7 +284,6 @@ class _AlbumsPageState extends State<AlbumsPage> {
                         GestureDetector(
                           onTap: () {
                             Navigator.of(context).pop();
-                            // TODO: 跳转到艺术家页面
                           },
                           child: Text(
                             music.artist,
@@ -381,7 +380,6 @@ class _AlbumsPageState extends State<AlbumsPage> {
                       title: const Text('跳转到专辑'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        // TODO: 跳转到专辑页面并定位到对应专辑
                       },
                     ),
                     ListTile(
@@ -405,7 +403,6 @@ class _AlbumsPageState extends State<AlbumsPage> {
                       title: const Text('下一首播放'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        // TODO: 设置为下一首播放
                       },
                     ),
                     ListTile(

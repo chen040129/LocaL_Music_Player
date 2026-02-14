@@ -23,8 +23,34 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
   final List<String> _alphabet = [
-    '0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+    '0',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+    '#'
   ];
 
   // 展开的专辑
@@ -58,7 +84,9 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
     if (_pinyinCache.containsKey(text)) {
       return _pinyinCache[text]!;
     }
-    final pinyin = PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+    final pinyin =
+        PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE)
+            .toUpperCase();
     _pinyinCache[text] = pinyin;
     return pinyin;
   }
@@ -129,7 +157,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                   itemCount: playlists.length,
                   itemBuilder: (context, index) {
                     final playlist = playlists[index];
-                    final isMusicInPlaylist = playlist.musicIds.contains(musicId);
+                    final isMusicInPlaylist =
+                        playlist.musicIds.contains(musicId);
                     return ListTile(
                       title: Text(playlist.name),
                       subtitle: Text('${playlist.musicIds.length} 首歌曲'),
@@ -138,7 +167,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                           : null,
                       onTap: () async {
                         if (isMusicInPlaylist) {
-                          await playlistService.removeMusicFromPlaylist(playlist.id, musicId);
+                          await playlistService.removeMusicFromPlaylist(
+                              playlist.id, musicId);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('已从 "${playlist.name}" 中移除'),
@@ -146,7 +176,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                             ),
                           );
                         } else {
-                          await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                          await playlistService.addMusicToPlaylist(
+                              playlist.id, musicId);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('已添加到 "${playlist.name}"'),
@@ -203,9 +234,12 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
             TextButton(
               onPressed: () async {
                 if (playlistName.isNotEmpty) {
-                  final playlistService = Provider.of<PlaylistService>(context, listen: false);
-                  final playlist = await playlistService.createPlaylist(playlistName);
-                  await playlistService.addMusicToPlaylist(playlist.id, musicId);
+                  final playlistService =
+                      Provider.of<PlaylistService>(context, listen: false);
+                  final playlist =
+                      await playlistService.createPlaylist(playlistName);
+                  await playlistService.addMusicToPlaylist(
+                      playlist.id, musicId);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -244,7 +278,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.music_albums, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
+                Icon(CupertinoIcons.music_albums,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
                 const SizedBox(width: 8),
                 Text(
                   '专辑',
@@ -259,7 +294,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                     return Text(
                       ' ${musicProvider.albums.length}',
                       style: TextStyle(
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         fontSize: 14,
                       ),
                     );
@@ -272,14 +308,16 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         AppIcons.search,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -289,7 +327,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                           decoration: InputDecoration(
                             hintText: '搜索',
                             hintStyle: TextStyle(
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  ?.withOpacity(0.5),
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
@@ -297,7 +338,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                             contentPadding: EdgeInsets.zero,
                           ),
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.7),
                             fontSize: 14,
                           ),
                           onChanged: (value) {
@@ -321,7 +365,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                           },
                           child: Icon(
                             AppIcons.clearCircledSolid,
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             size: 18,
                           ),
                         ),
@@ -347,7 +394,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       _cachedSortedAlbums = null;
                     });
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'name',
                       child: Text('按名称排序'),
@@ -392,8 +440,8 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                 List<String> sortedAlbums;
 
                 // 检查是否可以使用缓存的排序结果
-                if (_cachedSortedAlbums != null && 
-                    _lastSortBy == _sortBy && 
+                if (_cachedSortedAlbums != null &&
+                    _lastSortBy == _sortBy &&
                     _lastIsAscending == _isAscending &&
                     _searchQuery.isEmpty) {
                   sortedAlbums = _cachedSortedAlbums!;
@@ -404,18 +452,26 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       sortedAlbums.sort((a, b) {
                         final aPinyin = _getPinyin(a);
                         final bPinyin = _getPinyin(b);
-                        return _isAscending ? aPinyin.compareTo(bPinyin) : bPinyin.compareTo(aPinyin);
+                        return _isAscending
+                            ? aPinyin.compareTo(bPinyin)
+                            : bPinyin.compareTo(aPinyin);
                       });
                       break;
                     case 'count':
                       sortedAlbums.sort((a, b) {
-                        final aCount = _albumMusicCache.containsKey(a) 
-                            ? _albumMusicCache[a]!.length 
-                            : (_albumMusicCache[a] = musicProvider.getMusicByAlbum(a)).length;
-                        final bCount = _albumMusicCache.containsKey(b) 
-                            ? _albumMusicCache[b]!.length 
-                            : (_albumMusicCache[b] = musicProvider.getMusicByAlbum(b)).length;
-                        return _isAscending ? aCount.compareTo(bCount) : bCount.compareTo(aCount);
+                        final aCount = _albumMusicCache.containsKey(a)
+                            ? _albumMusicCache[a]!.length
+                            : (_albumMusicCache[a] =
+                                    musicProvider.getMusicByAlbum(a))
+                                .length;
+                        final bCount = _albumMusicCache.containsKey(b)
+                            ? _albumMusicCache[b]!.length
+                            : (_albumMusicCache[b] =
+                                    musicProvider.getMusicByAlbum(b))
+                                .length;
+                        return _isAscending
+                            ? aCount.compareTo(bCount)
+                            : bCount.compareTo(aCount);
                       });
                       break;
                     default:
@@ -446,13 +502,19 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                         Icon(
                           CupertinoIcons.music_albums,
                           size: 64,
-                          color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
+                          color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              ?.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           '暂无专辑',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             fontSize: 16,
                           ),
                         ),
@@ -460,7 +522,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                         Text(
                           '扫描音乐后将自动显示专辑',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.4),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.4),
                             fontSize: 14,
                           ),
                         ),
@@ -480,13 +545,17 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                       itemBuilder: (context, index) {
                         final album = sortedAlbums[index];
                         // 使用缓存获取专辑音乐
-                        final albumMusics = _albumMusicCache.containsKey(album) 
-                            ? _albumMusicCache[album]! 
-                            : (_albumMusicCache[album] = musicProvider.getMusicByAlbum(album));
-                        final coverArt = albumMusics.isNotEmpty ? albumMusics.first.coverArt : null;
+                        final albumMusics = _albumMusicCache.containsKey(album)
+                            ? _albumMusicCache[album]!
+                            : (_albumMusicCache[album] =
+                                musicProvider.getMusicByAlbum(album));
+                        final coverArt = albumMusics.isNotEmpty
+                            ? albumMusics.first.coverArt
+                            : null;
 
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: ExpansionTile(
                             leading: coverArt != null
                                 ? Image.memory(
@@ -498,14 +567,20 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                       return Icon(
                                         CupertinoIcons.music_albums,
                                         size: 56,
-                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                        color: Theme.of(context)
+                                            .iconTheme
+                                            .color
+                                            ?.withOpacity(0.5),
                                       );
                                     },
                                   )
                                 : Icon(
                                     CupertinoIcons.music_albums,
                                     size: 56,
-                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                    color: Theme.of(context)
+                                        .iconTheme
+                                        .color
+                                        ?.withOpacity(0.5),
                                   ),
                             title: Text(
                               album,
@@ -517,12 +592,18 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                             subtitle: Text(
                               '${albumMusics.length} 首歌曲',
                               style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.7),
                               ),
                             ),
                             trailing: Icon(
                               CupertinoIcons.chevron_down,
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  ?.withOpacity(0.5),
                             ),
                             onExpansionChanged: (isExpanded) {
                               setState(() {
@@ -544,29 +625,41 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                           width: 48,
                                           height: 48,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
                                             return Icon(
                                               CupertinoIcons.music_note,
                                               size: 48,
-                                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                              color: Theme.of(context)
+                                                  .iconTheme
+                                                  .color
+                                                  ?.withOpacity(0.5),
                                             );
                                           },
                                         )
                                       : Icon(
                                           CupertinoIcons.music_note,
                                           size: 48,
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.5),
                                         ),
                                   title: Text(
                                     music.title,
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                   ),
                                   subtitle: Text(
                                     music.artist,
                                     style: TextStyle(
-                                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                      color: Theme.of(context)
+                                          .iconTheme
+                                          .color
+                                          ?.withOpacity(0.7),
                                     ),
                                   ),
                                   trailing: Row(
@@ -575,7 +668,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                       Text(
                                         _formatDuration(music.duration),
                                         style: TextStyle(
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.7),
                                           fontSize: 12,
                                         ),
                                       ),
@@ -583,7 +679,10 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                       IconButton(
                                         icon: Icon(
                                           AppIcons.playlistAdd,
-                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                          color: Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.5),
                                           size: 20,
                                         ),
                                         onPressed: () {
@@ -635,12 +734,14 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                               return GestureDetector(
                                 onTap: () {
                                   // 滚动到对应字母的位置
-                                  final targetIndex = sortedAlbums.indexWhere((album) {
+                                  final targetIndex =
+                                      sortedAlbums.indexWhere((album) {
                                     final pinyin = _getPinyin(album);
                                     if (letter == '0') {
                                       return RegExp(r'^[0-9]').hasMatch(album);
                                     } else if (letter == '#') {
-                                      return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                      return !RegExp(r'^[A-Z0-9]')
+                                          .hasMatch(pinyin);
                                     } else {
                                       return pinyin.startsWith(letter);
                                     }
@@ -658,8 +759,13 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                                     style: TextStyle(
                                       fontSize: hasAlbums ? 12 : 10,
                                       color: hasAlbums
-                                          ? Theme.of(context).colorScheme.primary
-                                          : Theme.of(context).iconTheme.color?.withOpacity(0.3),
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.3),
                                     ),
                                   ),
                                 ),
@@ -667,6 +773,7 @@ class _AlbumsPageOptimizedState extends State<AlbumsPageOptimized> {
                             },
                           ),
                         ),
+                      ),
                   ],
                 );
               },

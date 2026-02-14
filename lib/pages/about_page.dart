@@ -162,7 +162,7 @@ class _AboutPageState extends State<AboutPage> {
                   _buildInfoSection(
                     '开源许可',
                     [
-                      '本项目采用 MIT 许可证，可自由使用、修改和分发',
+                      '本项目采用 CC BY-NC 4.0 (署名-非商业性使用 4.0) 许可证',
                       '源代码可在 GitHub 上查看和贡献',
                       '欢迎提交 Issue 和 Pull Request',
                     ],

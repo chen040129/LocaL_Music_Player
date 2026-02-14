@@ -1,0 +1,145 @@
+第三方许可证声明
+================
+
+本项目使用了以下开源软件和库，这些软件和库的版权归其各自作者所有。
+以下是这些第三方组件的许可证信息：
+
+Flutter及相关组件
+----------------
+Flutter SDK
+许可证: BSD 3-Clause
+版权所有: Google Inc.
+
+Dart SDK
+许可证: BSD 3-Clause
+版权所有: Google Inc.
+
+音频相关组件
+-----------
+just_audio (0.9.46)
+许可证: MIT
+版权所有: Ryan Hise
+
+just_audio_windows (0.2.2)
+许可证: MIT
+版权所有: Ryan Hise
+
+audio_session (0.1.25)
+许可证: MIT
+版权所有: Ryan Hise
+
+audioplayers (5.2.1)
+许可证: MIT
+版权所有: Luan Potiker
+
+audio_metadata_reader (1.4.2)
+许可证: MIT
+版权所有: SinoAppEngine
+
+UI组件
+-------
+provider (6.1.5+1)
+许可证: MIT
+版权所有: Remi Rousselet
+
+flutter_colorpicker (1.1.0)
+许可证: BSD 3-Clause
+版权所有: Mike Rydstrom
+
+animations (2.1.1)
+许可证: BSD 3-Clause
+版权所有: Flutter Team
+
+flutter_lyric (3.0.2)
+许可证: MIT
+版权所有: wslongchen
+
+cached_network_image (3.4.1)
+许可证: MIT
+版权所有: Baseflow
+
+fl_chart (0.66.2)
+许可证: Apache 2.0
+版权所有: Iman Khoshabi
+
+palette_generator (0.3.3+7)
+许可证: BSD 3-Clause
+版权所有: Flutter Team
+
+工具类组件
+---------
+file_picker (6.2.1)
+许可证: MIT
+版权所有: Miguel Ruivo
+
+path_provider (2.1.5)
+许可证: BSD 3-Clause
+版权所有: Flutter Team
+
+path (1.9.1)
+许可证: BSD 3-Clause
+版权所有: Dart Team
+
+dio (5.9.1)
+许可证: MIT
+版权所有: WenluDart
+
+url_launcher (6.3.2)
+许可证: BSD 3-Clause
+版权所有: Flutter Team
+
+window_manager (0.3.9)
+许可证: MIT
+版权所有: Leanflutter
+
+shared_preferences (2.5.4)
+许可证: BSD 3-Clause
+版权所有: Flutter Team
+
+hive (2.2.3)
+许可证: Apache 2.0
+版权所有: Simon Leier
+
+uuid (4.5.2)
+许可证: MIT
+版权所有: Richard Heap
+
+intl (0.20.2)
+许可证: BSD 3-Clause
+版权所有: Dart Team
+
+其他组件
+---------
+cupertino_icons (1.0.8)
+许可证: MIT
+版权所有: Flutter Team
+
+screen_brightness (0.2.2+1)
+许可证: BSD 3-Clause
+版权所有: fluttercandies
+
+lpinyin (2.0.3)
+许可证: Apache 2.0
+版权所有: zhouteng
+
+scrollable_positioned_list (0.3.8)
+许可证: MIT
+版权所有: Carl Jette
+
+upnped (1.1.2+1)
+许可证: MIT
+版权所有: nuc134
+
+liquid_glass_easy (1.1.1)
+许可证: MIT License
+版权所有: Ahmed Gamil
+
+注意
+----
+本项目的第三方组件许可证信息可能会随时间更新。如需获取最新信息，请访问各组件的官方仓库或发布页面。
+
+如需获取完整的许可证文本，请访问：
+- MIT许可证: https://opensource.org/licenses/MIT
+- BSD 3-Clause许可证: https://opensource.org/licenses/BSD-3-Clause
+- Apache 2.0许可证: https://opensource.org/licenses/Apache-2.0
+- CC BY-NC 4.0许可证: https://creativecommons.org/licenses/by-nc/4.0/
