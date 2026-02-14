@@ -86,8 +86,30 @@ class _HomeScreenState extends State<HomeScreen> {
       final playlistService =
           Provider.of<PlaylistService>(context, listen: false);
       playlistService.loadPlaylists();
+
+      // 初始化内容区域尺寸
+      _updateContentDimensions();
     });
+
+    // 添加渲染回调，监听布局变化
+    WidgetsBinding.instance.addPersistentFrameCallback(_onFrameCallback);
   }
+
+  // 帧回调，用于监听布局变化
+  void _onFrameCallback(Duration timestamp) {
+    if (mounted) {
+      // 检查内容区域尺寸是否变化
+      final currentWidth = _getContentWidth();
+      if (currentWidth != null && _lastContentWidth != null && currentWidth != _lastContentWidth) {
+        _updateContentDimensions();
+      }
+      _lastContentWidth = currentWidth;
+    }
+    // 继续监听下一帧
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  double? _lastContentWidth;
 
   @override
   void dispose() {
@@ -101,6 +123,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _windowSize = await windowManager.getSize();
     if (mounted) {
       setState(() {});
+      // 延迟更新内容区域尺寸，等待窗口调整完成
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _updateContentDimensions();
+        }
+      });
     }
   }
 
@@ -132,6 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
       await _updateWindowSize();
       if (mounted) {
         _liquidGlassViewController.captureOnce();
+        // 延迟更新内容区域尺寸，确保窗口调整完成
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) {
+            _updateContentDimensions();
+          }
+        });
       }
     }
   }
@@ -155,24 +189,73 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isSidebarExpanded = !_isSidebarExpanded;
     });
+    // 延迟更新内容区域尺寸，等待侧边栏动画完成
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _updateContentDimensions();
+      }
+    });
   }
 
   // 获取内容区域的实际位置
   Offset? _getContentPosition() {
-    final RenderBox? renderBox =
-        _contentKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      return renderBox.localToGlobal(Offset.zero);
+    try {
+      final RenderBox? renderBox =
+          _contentKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox != null && renderBox.hasSize) {
+        return renderBox.localToGlobal(Offset.zero);
+      }
+    } catch (e) {
+      // 忽略错误，返回null
     }
     return null;
   }
 
   // 获取内容区域的实际宽度
   double? _getContentWidth() {
-    final RenderBox? renderBox =
-        _contentKey.currentContext?.findRenderObject() as RenderBox?;
-    return renderBox?.size.width;
+    try {
+      final RenderBox? renderBox =
+          _contentKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox != null && renderBox.hasSize) {
+        final width = renderBox.size.width;
+        // 如果宽度发生变化，更新缓存并触发重新构建
+        if (_cachedContentWidth != null && _cachedContentWidth != width) {
+          _cachedContentWidth = width;
+          // 使用WidgetsBinding.instance.addPostFrameCallback确保在下一帧更新UI
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {});
+            }
+          });
+        } else if (_cachedContentWidth == null) {
+          _cachedContentWidth = width;
+        }
+        return width;
+      }
+    } catch (e) {
+      // 忽略错误，返回null
+    }
+    return null;
   }
+
+  // 强制更新内容区域尺寸
+  void _updateContentDimensions() {
+    try {
+      final RenderBox? renderBox =
+          _contentKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox != null && renderBox.hasSize) {
+        // 清除缓存，强制重新计算
+        _cachedContentWidth = null;
+        setState(() {
+          // 触发重新构建，更新液态玻璃宽度
+        });
+      }
+    } catch (e) {
+      // 忽略错误
+    }
+  }
+
+  double? _cachedContentWidth;
 
   void _forceWindowRedraw() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -568,124 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           bottom: 16,
                           child: PlayerControlBar(),
                         ),
-                      // 窗口边缘调整大小区域
-                      if (Platform.isWindows) ...[
-                        // 左边缘
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 5,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.resizeLeft,
-                            child: GestureDetector(
-                              onPanUpdate: (details) async {
-                                final size = _windowSize ??
-                                    await windowManager.getSize();
-                                windowManager.setAspectRatio(0.0);
-                                final newSize = Size(
-                                  size.width + details.delta.dx,
-                                  size.height,
-                                );
-                                _debouncedResize(newSize);
-                              },
-                              behavior: HitTestBehavior.translucent,
-                            ),
-                          ),
-                        ),
-                        // 右边缘
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 5,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.resizeRight,
-                            child: GestureDetector(
-                              onPanUpdate: (details) async {
-                                final size = _windowSize ??
-                                    await windowManager.getSize();
-                                windowManager.setAspectRatio(0.0);
-                                final newSize = Size(
-                                  size.width + details.delta.dx,
-                                  size.height,
-                                );
-                                _debouncedResize(newSize);
-                              },
-                              behavior: HitTestBehavior.translucent,
-                            ),
-                          ),
-                        ),
-                        // 下边缘
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          height: 5,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.resizeDown,
-                            child: GestureDetector(
-                              onPanUpdate: (details) async {
-                                final size = _windowSize ??
-                                    await windowManager.getSize();
-                                windowManager.setAspectRatio(0.0);
-                                final newSize = Size(
-                                  size.width,
-                                  size.height + details.delta.dy,
-                                );
-                                _debouncedResize(newSize);
-                              },
-                              behavior: HitTestBehavior.translucent,
-                            ),
-                          ),
-                        ),
-                        // 左下角
-                        Positioned(
-                          left: 0,
-                          bottom: 0,
-                          width: 10,
-                          height: 10,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.resizeDownLeft,
-                            child: GestureDetector(
-                              onPanUpdate: (details) async {
-                                final size = _windowSize ??
-                                    await windowManager.getSize();
-                                windowManager.setAspectRatio(0.0);
-                                final newSize = Size(
-                                  size.width + details.delta.dx,
-                                  size.height + details.delta.dy,
-                                );
-                                _debouncedResize(newSize);
-                              },
-                              behavior: HitTestBehavior.translucent,
-                            ),
-                          ),
-                        ),
-                        // 右下角
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          width: 10,
-                          height: 10,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.resizeDownRight,
-                            child: GestureDetector(
-                              onPanUpdate: (details) async {
-                                final size = _windowSize ??
-                                    await windowManager.getSize();
-                                windowManager.setAspectRatio(0.0);
-                                final newSize = Size(
-                                  size.width + details.delta.dx,
-                                  size.height + details.delta.dy,
-                                );
-                                _debouncedResize(newSize);
-                              },
-                              behavior: HitTestBehavior.translucent,
-                            ),
-                          ),
-                        ),
-                      ],
+
                     ],
                   ),
                 ),

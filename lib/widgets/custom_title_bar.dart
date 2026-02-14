@@ -74,32 +74,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
 
     return Stack(
       children: [
-        // 窗口边缘调整大小区域
-        if (_isDesktopPlatform) ...[
-          // 上边缘
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 5,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.resizeUp,
-              child: GestureDetector(
-                onPanUpdate: (details) async {
-                  final size = _windowSize ?? await windowManager.getSize();
-                  windowManager.setAspectRatio(0.0);
-                  final newSize = Size(
-                    size.width,
-                    size.height - details.delta.dy,
-                  );
-                  await windowManager.setSize(newSize);
-                  _windowSize = newSize;
-                },
-                behavior: HitTestBehavior.translucent,
-              ),
-            ),
-          ),
-        ],
+
         // 标题栏
         Container(
           height: 32,
