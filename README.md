@@ -118,7 +118,7 @@ flutter run
 
 ## 📄 开源许可
 
-本项目采用 CC BY-NC 4.0 (署名-非商业性使用 4.0) 许可证 - 详见 [LICENSE](LICENSE) 文件
+本项目采用 CC BY-NC 4.0 (署名-非商业性使用 4.0) 许可证 - 详见 [LICENSE](license.txt) 文件
 
 如需将本作品用于商业目的，请联系csy689016@gmail.com获取许可。
 
@@ -128,7 +128,7 @@ flutter run
 
 ## 📮 联系方式
 
-- GitHub Issues: [提交问题](https://github.com/yourusername/flutter_music_player/issues)
+- GitHub Issues: [提交问题](https://github.com/chen040129/LocaL_Music_Player/issues)
 
 ## 🙏 致谢
 
