@@ -17,8 +17,9 @@
 -  **UI设计参考**：部分UI参考了salt_music,网易云等音乐软件
 
 ## 部分截图
-![替代文本](picture/image1.png "封面")
-![替代文本](picture/image.png "封面")
+![](picture/image.png "封面")
+![](picture/image1.png "封面")
+![](picture/image2.png "封面")
 
 
 ## 🛠️ 技术栈
