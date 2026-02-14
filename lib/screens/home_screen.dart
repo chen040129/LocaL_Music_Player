@@ -55,10 +55,18 @@ class _HomeScreenState extends State<HomeScreen> {
   double _lastGlassOpacity = 0.2;
   ThemeMode _lastThemeMode = ThemeMode.system;
 
+  // 当前页面
+  AppPage _currentPage = AppPage.songs;
+
+  // 窗口事件监听器
+  late final _WindowEventListener _windowListener = _WindowEventListener(this);
+
   @override
   void initState() {
     super.initState();
     _updateWindowSize();
+    // 添加窗口大小变化监听器
+    windowManager.addListener(_windowListener);
     // 设置主题切换回调
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -84,6 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _resizeDebounceTimer?.cancel();
+    // 移除窗口事件监听器
+    windowManager.removeListener(_windowListener);
     super.dispose();
   }
 
@@ -117,6 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
         await windowManager.unmaximize();
       } else {
         await windowManager.maximize();
+      }
+      // 窗口大小变化后，更新窗口大小并触发液态玻璃重新捕获
+      await _updateWindowSize();
+      if (mounted) {
+        _liquidGlassViewController.captureOnce();
       }
     }
   }
@@ -341,33 +356,41 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 根据当前页面返回不同的页面组件
   Widget _buildCurrentPage() {
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    switch (navigationProvider.currentPage) {
+    final currentPage = navigationProvider.currentPage;
+
+    // 直接更新当前页面状态，不调用setState
+    _currentPage = currentPage;
+
+    // 使用ValueKey确保页面切换时重新创建
+    switch (currentPage) {
       case AppPage.songs:
-        return SongsPage(onSidebarToggle: _toggleSidebar);
+        return SongsPage(key: ValueKey('songs_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.albums:
         return AlbumsPage(
+            key: ValueKey('albums_$_currentPage'),
             navigateToAlbum: navigationProvider.navigateToAlbumName,
             onSidebarToggle: _toggleSidebar);
       case AppPage.artists:
         return ArtistsPage(
+            key: ValueKey('artists_$_currentPage'),
             navigateToArtist: navigationProvider.navigateToArtistName,
             onSidebarToggle: _toggleSidebar);
       case AppPage.folders:
-        return FoldersPage(onSidebarToggle: _toggleSidebar);
+        return FoldersPage(key: ValueKey('folders_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.playlists:
-        return PlaylistsPage(onSidebarToggle: _toggleSidebar);
+        return PlaylistsPage(key: ValueKey('playlists_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.scanner:
-        return ScannerPage(onSidebarToggle: _toggleSidebar);
+        return ScannerPage(key: ValueKey('scanner_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.library:
-        return LibraryPage(onSidebarToggle: _toggleSidebar);
+        return LibraryPage(key: ValueKey('library_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.statistics:
-        return StatisticsPage(onSidebarToggle: _toggleSidebar);
+        return StatisticsPage(key: ValueKey('statistics_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.settings:
-        return SettingsPage(onSidebarToggle: _toggleSidebar);
+        return SettingsPage(key: ValueKey('settings_$_currentPage'), onSidebarToggle: _toggleSidebar);
       case AppPage.about:
-        return AboutPage(onSidebarToggle: _toggleSidebar);
+        return AboutPage(key: ValueKey('about_$_currentPage'), onSidebarToggle: _toggleSidebar);
       default:
-        return SongsPage(onSidebarToggle: _toggleSidebar);
+        return SongsPage(key: ValueKey('songs_$_currentPage'), onSidebarToggle: _toggleSidebar);
     }
   }
 
@@ -771,5 +794,77 @@ class _HomeScreenState extends State<HomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _listenToSettingsChanges(context);
+  }
+}
+
+/// 窗口事件监听器
+class _WindowEventListener extends WindowListener {
+  final _HomeScreenState _state;
+
+  _WindowEventListener(this._state);
+
+  @override
+  void onWindowResize() {
+    // 当窗口大小变化时，更新窗口大小并触发液态玻璃重新捕获
+    _state._updateWindowSize().then((_) {
+      if (_state.mounted) {
+        _state._liquidGlassViewController.captureOnce();
+      }
+    });
+  }
+
+  @override
+  void onWindowMaximize() {
+    // 当窗口最大化时，更新窗口大小并触发液态玻璃重新捕获
+    _state._updateWindowSize().then((_) {
+      if (_state.mounted) {
+        _state._liquidGlassViewController.captureOnce();
+      }
+    });
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    // 当窗口恢复时，更新窗口大小并触发液态玻璃重新捕获
+    _state._updateWindowSize().then((_) {
+      if (_state.mounted) {
+        _state._liquidGlassViewController.captureOnce();
+      }
+    });
+  }
+
+  @override
+  void onWindowRestore() {
+    // 当窗口恢复时，更新窗口大小并触发液态玻璃重新捕获
+    _state._updateWindowSize().then((_) {
+      if (_state.mounted) {
+        _state._liquidGlassViewController.captureOnce();
+      }
+    });
+  }
+
+  @override
+  void onWindowFocus() {
+    // 当窗口获得焦点时，更新窗口大小并触发液态玻璃重新捕获
+    _state._updateWindowSize().then((_) {
+      if (_state.mounted) {
+        _state._liquidGlassViewController.captureOnce();
+      }
+    });
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    // 监听所有窗口事件，包括拖动标题栏
+    if (eventName == 'onWindowResize' || 
+        eventName == 'onWindowMaximize' || 
+        eventName == 'onWindowUnmaximize' ||
+        eventName == 'onWindowRestore') {
+      _state._updateWindowSize().then((_) {
+        if (_state.mounted) {
+          _state._liquidGlassViewController.captureOnce();
+        }
+      });
+    }
   }
 }

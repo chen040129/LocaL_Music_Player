@@ -14,12 +14,14 @@ import 'package:flutter_music_player/pages/artists_page.dart';
 import 'package:flutter_music_player/pages/albums_page.dart';
 import 'providers/navigation_provider.dart';
 import 'widgets/animated_theme.dart';
+import 'services/global_hotkey_service.dart';
 
 // 全局变量保存Provider引用
 MusicProvider? globalMusicProvider;
 PlayerProvider? globalPlayerProvider;
 bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
 final globalLiquidGlassViewController = LiquidGlassViewController();
+final globalHotkeyService = GlobalHotkeyService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +75,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.removeListener(this);
     }
+    // 释放全局热键服务资源
+    globalHotkeyService.dispose();
     super.dispose();
   }
 
@@ -126,6 +130,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
             playerProvider.setMusicProvider(musicProvider);
             playerProvider.setSettingsProvider(settingsProvider);
             globalPlayerProvider = playerProvider;
+            // 初始化全局热键服务
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (playerProvider != null) {
+                globalHotkeyService.initialize(
+                  context: context,
+                  playerProvider: playerProvider!,
+                  settingsProvider: settingsProvider,
+                );
+              }
+            });
             // 只在首次初始化且音乐列表已加载时恢复播放进度
             if (!_hasRestoredPlayProgress && musicProvider.musicList.isNotEmpty) {
               _hasRestoredPlayProgress = true;

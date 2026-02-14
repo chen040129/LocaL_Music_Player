@@ -100,6 +100,19 @@ class _SongsPageState extends State<SongsPage> {
   }
 
   @override
+  void deactivate() {
+    // 当页面不再活动时，清除交互状态
+    _clearInteractionStates();
+    super.deactivate();
+  }
+
+  void _clearInteractionStates() {
+    _hoveredIndex = -1;
+    _touchedIndex = -1;
+    _detailHoveredIndex = -1;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.transparent,

@@ -181,7 +181,6 @@ class _LyricsPageState extends State<LyricsPage> {
                   ),
                 ],
               ),
-            ),
               ),
               // 透明标题栏
               Positioned(
