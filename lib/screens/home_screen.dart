@@ -570,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             }
                             return ClipRRect(
                               borderRadius:
-                                  BorderRadius.circular(settings.borderRadius),
+                                  BorderRadius.circular(0), // 强制设置为0，无弧度
                               child: Image.file(
                                 File(settings.uiCustomImagePath),
                                 fit: boxFit,

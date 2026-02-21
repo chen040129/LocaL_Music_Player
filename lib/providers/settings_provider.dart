@@ -83,7 +83,7 @@ class SettingsProvider with ChangeNotifier {
   bool _useSidebarGlass = true;         // 是否使用侧边栏玻璃材质
   bool _usePlayerGlass = true;         // 是否使用播放栏玻璃材质
   double _glassOpacity = 0.2;         // 玻璃材质透明度
-  double _borderRadius = 8.0;          // 主页面边框弧度值
+  double _borderRadius = 0.0;          // 主页面边框弧度值（默认为0，无弧度）
   double _windowBorderRadius = 12.0;   // 窗口边框弧度值
   double _windowOpacity = 0.85;        // 窗口背景透明度
   double _cardOpacity = 0.85;           // 音乐卡片透明度
@@ -149,7 +149,7 @@ class SettingsProvider with ChangeNotifier {
   CoverShape _coverShape = CoverShape.square;  // 封面形状
   CircleCoverState _circleCoverState = CircleCoverState.static;  // 圆形封面状态
   double _coverSize = 300.0;                  // 封面大小
-  double _coverBorderRadius = 16.0;           // 封面方形时的圆角半径
+  double _coverBorderRadius = 0.0;            // 封面方形时的圆角半径（默认为0，无弧度）
   
   // 封面旋转速度（固定为0.5秒/圈）
   double coverRotationSpeed = 50;
@@ -242,7 +242,7 @@ class SettingsProvider with ChangeNotifier {
     _useSidebarGlass = prefs.getBool('use_sidebar_glass') ?? true;
     _usePlayerGlass = prefs.getBool('use_player_glass') ?? true;
     _glassOpacity = prefs.getDouble('glass_opacity') ?? 0.2;
-    _borderRadius = prefs.getDouble('border_radius') ?? 8.0;
+    _borderRadius = prefs.getDouble('border_radius') ?? 0.0;
     _windowBorderRadius = prefs.getDouble('window_border_radius') ?? 12.0;
     _windowOpacity = prefs.getDouble('window_opacity') ?? 0.85;
     _cardOpacity = prefs.getDouble('card_opacity') ?? 0.85;
@@ -366,6 +366,18 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setUsePlayerGlass(bool value) async {
     _usePlayerGlass = value;
+    
+    // 当启用液态玻璃效果时，将窗口背景透明度设置为完全不透明
+    if (value) {
+      _savedNormalWindowOpacity = _windowOpacity;
+      _windowOpacity = 1.0;
+      await _saveSetting('window_opacity', _windowOpacity);
+    } else {
+      // 禁用液态玻璃效果时，恢复之前保存的透明度
+      _windowOpacity = _savedNormalWindowOpacity;
+      await _saveSetting('window_opacity', _windowOpacity);
+    }
+    
     await _saveSetting('use_player_glass', value);
     notifyListeners();
   }
