@@ -140,11 +140,11 @@ class MusicScannerService {
   /// 异步提取封面颜色
   Future<Map<String, int?>> _extractCoverColor(Uint8List coverArt) async {
     try {
-      // 解码图片并缩小尺寸以提高性能
+      // 解码图片并缩小尺寸以提高性能，但保留足够的细节以准确提取颜色
       final codec = await ui.instantiateImageCodec(
         coverArt,
-        targetWidth: 100, // 缩小到100px宽度
-        targetHeight: 100, // 缩小到100px高度
+        targetWidth: 150, // 增加到150px宽度以提高准确性
+        targetHeight: 150, // 增加到150px高度以提高准确性
       );
       final frame = await codec.getNextFrame();
       final image = frame.image;
@@ -166,7 +166,7 @@ class MusicScannerService {
       
       // 定义采样点：中心、四角、四边中点
       final samplePoints = [
-        // 中心点
+        // 中心点 - 权重更高
         (width ~/ 2, height ~/ 2),
         // 四个角
         (width ~/ 4, height ~/ 4),
@@ -178,10 +178,15 @@ class MusicScannerService {
         (width ~/ 2, height * 3 ~/ 4),
         (width ~/ 4, height ~/ 2),
         (width * 3 ~/ 4, height ~/ 2),
+        // 增加更多采样点以提高准确性
+        (width ~/ 3, height ~/ 3),
+        (width * 2 ~/ 3, height ~/ 3),
+        (width ~/ 3, height * 2 ~/ 3),
+        (width * 2 ~/ 3, height * 2 ~/ 3),
       ];
       
-      // 在每个采样点周围采样
-      const sampleRadius = 10; // 采样半径
+      // 在每个采样点周围采样，中心区域采样更多
+      const sampleRadius = 8; // 减小采样半径，但增加采样点
       for (final (centerX, centerY) in samplePoints) {
         for (int y = centerY - sampleRadius; y <= centerY + sampleRadius; y++) {
           for (int x = centerX - sampleRadius; x <= centerX + sampleRadius; x++) {
@@ -210,7 +215,7 @@ class MusicScannerService {
 
         // 提取三个不同的颜色，确保颜色之间有足够的差异
         final List<int> distinctColors = [];
-        final minColorDistance = 30; // 颜色差异阈值
+        final minColorDistance = 25; // 降低颜色差异阈值，提高颜色区分度
 
         for (final entry in sortedColors) {
           if (distinctColors.length >= 3) break;
@@ -327,6 +332,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
       year: metadata.year != null ? int.tryParse(metadata.year.toString()) ?? 0 : 0,
       fileSize: fileSize,
       playCount: 0,
+      playHistory: {}, // 添加空的playHistory
     );
   } catch (e) {
     debugPrint('处理音乐文件失败: $filePath, 错误: $e');
@@ -528,7 +534,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
         year: musicInfo.year,
         fileSize: musicInfo.fileSize,
         playCount: musicInfo.playCount,
-        playHistory: musicInfo.playHistory,
+        playHistory: musicInfo.playHistory ?? {}, // 确保playHistory不为null
         coverColor: colors['coverColor'],
         secondaryColor: colors['secondaryColor'],
         tertiaryColor: colors['tertiaryColor'],

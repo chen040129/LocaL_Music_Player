@@ -241,11 +241,11 @@ class SettingsProvider with ChangeNotifier {
     _showAlbumArt = prefs.getBool('show_album_art') ?? true;
     _useSidebarGlass = prefs.getBool('use_sidebar_glass') ?? true;
     _usePlayerGlass = prefs.getBool('use_player_glass') ?? true;
-    _glassOpacity = prefs.getDouble('glass_opacity') ?? 0.2;
-    _borderRadius = prefs.getDouble('border_radius') ?? 0.0;
-    _windowBorderRadius = prefs.getDouble('window_border_radius') ?? 12.0;
-    _windowOpacity = prefs.getDouble('window_opacity') ?? 0.85;
-    _cardOpacity = prefs.getDouble('card_opacity') ?? 0.85;
+    _glassOpacity = (prefs.getDouble('glass_opacity') ?? 0.2).toDouble();
+    _borderRadius = (prefs.getDouble('border_radius') ?? 0.0).toDouble();
+    _windowBorderRadius = (prefs.getDouble('window_border_radius') ?? 12.0).toDouble();
+    _windowOpacity = (prefs.getDouble('window_opacity') ?? 0.85).toDouble();
+    _cardOpacity = (prefs.getDouble('card_opacity') ?? 0.85).toDouble();
     final uiBackgroundTypeIndex = prefs.getInt('ui_background_type') ?? 0;
     _uiBackgroundType = UIBackgroundType.values[uiBackgroundTypeIndex];
     _uiCustomImagePath = prefs.getString('ui_custom_image_path') ?? '';
@@ -255,16 +255,16 @@ class SettingsProvider with ChangeNotifier {
     _syncGradientSettings = prefs.getBool('sync_gradient_settings') ?? false;
     final uiGradientTypeIndex = prefs.getInt('ui_gradient_type') ?? 0;
     _uiGradientType = GradientType.values[uiGradientTypeIndex];
-    _uiGradientSongColorRatio = prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
+    _uiGradientSongColorRatio = (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
 
     // 加载歌词设置
     final alignmentIndex = prefs.getInt('lyrics_alignment') ?? 1;
     _lyricsAlignment = LyricsAlignment.values[alignmentIndex];
-    _lyricsFontSize = prefs.getDouble('lyrics_font_size') ?? 16.0;
-    _activeLyricsFontSize = prefs.getDouble('active_lyrics_font_size') ?? 22.0;
+    _lyricsFontSize = (prefs.getDouble('lyrics_font_size') ?? 16.0).toDouble();
+    _activeLyricsFontSize = (prefs.getDouble('active_lyrics_font_size') ?? 22.0).toDouble();
     _showTranslation = prefs.getBool('show_translation') ?? true;
     _enableLyricsBlur = prefs.getBool('enable_lyrics_blur') ?? true;
-    _lyricsOpacity = prefs.getDouble('lyrics_opacity') ?? 1.0;
+    _lyricsOpacity = (prefs.getDouble('lyrics_opacity') ?? 1.0).toDouble();
     _lyricsLineGap = prefs.getInt('lyrics_line_gap') ?? 8;
     _scrollDuration = prefs.getInt('scroll_duration') ?? 500;
     _selectionAutoResumeDuration = prefs.getInt('selection_auto_resume_duration') ?? 400;
@@ -284,21 +284,21 @@ class SettingsProvider with ChangeNotifier {
     final playerBarLengthIndex = prefs.getInt('player_bar_length') ?? 0;
     _playerBarLength = PlayerBarLength.values[playerBarLengthIndex];
     // 加载液态玻璃参数
-    _liquidGlassDistortion = prefs.getDouble('liquid_glass_distortion') ?? 0.075;
+    _liquidGlassDistortion = (prefs.getDouble('liquid_glass_distortion') ?? 0.075).toDouble();
     if (_liquidGlassDistortion < 0.01) _liquidGlassDistortion = 0.075;
 
-    _liquidGlassDistortionWidth = prefs.getDouble('liquid_glass_distortion_width') ?? 70.0;
+    _liquidGlassDistortionWidth = (prefs.getDouble('liquid_glass_distortion_width') ?? 70.0).toDouble();
 
-    _liquidGlassChromaticAberration = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.002;
+    _liquidGlassChromaticAberration = (prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.002).toDouble();
     if (_liquidGlassChromaticAberration < 0.001) _liquidGlassChromaticAberration = 0.002;
 
-    _liquidGlassSaturation = prefs.getDouble('liquid_glass_saturation') ?? 1.0;
+    _liquidGlassSaturation = (prefs.getDouble('liquid_glass_saturation') ?? 1.0).toDouble();
     if (_liquidGlassSaturation < 0.1) _liquidGlassSaturation = 1.0;
 
-    _liquidGlassBlurSigma = prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5;
+    _liquidGlassBlurSigma = (prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5).toDouble();
     if (_liquidGlassBlurSigma < 0.1) _liquidGlassBlurSigma = 0.5;
 
-    _liquidGlassMagnification = prefs.getDouble('liquid_glass_magnification') ?? 1.0;
+    _liquidGlassMagnification = (prefs.getDouble('liquid_glass_magnification') ?? 1.0).toDouble();
 
     // 加载歌曲页面设置
     final backgroundTypeIndex = prefs.getInt('song_page_background_type') ?? 0;
@@ -306,27 +306,27 @@ class SettingsProvider with ChangeNotifier {
     final gradientTypeIndex = prefs.getInt('gradient_type') ?? 0;
     _gradientType = GradientType.values[gradientTypeIndex];
     _isFluidDynamic = prefs.getBool('is_fluid_dynamic') ?? false;
-    _blurAmount = prefs.getDouble('blur_amount') ?? 30.0;
-    _pageOpacity = prefs.getDouble('page_opacity') ?? 1.0;
-    _gradientSongColorRatio = prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
+    _blurAmount = (prefs.getDouble('blur_amount') ?? 30.0).toDouble();
+    _pageOpacity = (prefs.getDouble('page_opacity') ?? 1.0).toDouble();
+    _gradientSongColorRatio = (prefs.getDouble('gradient_song_color_ratio') ?? 0.7).toDouble();
     _customImagePath = prefs.getString('custom_image_path') ?? '';
     final imageFitTypeIndex = prefs.getInt('image_fit_type') ?? 1;
     _imageFitType = ImageFitType.values[imageFitTypeIndex];
 
     // 加载流体背景参数
-    _fluidBubblesSize = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
-    _fluidVelocity = prefs.getDouble('fluid_velocity') ?? 120.0;
+    _fluidBubblesSize = (prefs.getDouble('fluid_bubbles_size') ?? 400.0).toDouble();
+    _fluidVelocity = (prefs.getDouble('fluid_velocity') ?? 120.0).toDouble();
     _fluidAnimationDuration = prefs.getInt('fluid_animation_duration') ?? 2000;
-    _fluidOffsetAmount = prefs.getDouble('fluid_offset_amount') ?? 20.0;
-    _fluidLayerOpacity = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
+    _fluidOffsetAmount = (prefs.getDouble('fluid_offset_amount') ?? 20.0).toDouble();
+    _fluidLayerOpacity = (prefs.getDouble('fluid_layer_opacity') ?? 0.3).toDouble();
     
     // 加载封面设置
     final coverShapeIndex = prefs.getInt('cover_shape') ?? 0;
     _coverShape = CoverShape.values[coverShapeIndex];
     final circleCoverStateIndex = prefs.getInt('circle_cover_state') ?? 0;
     _circleCoverState = CircleCoverState.values[circleCoverStateIndex];
-    _coverSize = prefs.getDouble('cover_size') ?? 300.0;
-    _coverBorderRadius = prefs.getDouble('cover_border_radius') ?? 16.0;
+    _coverSize = (prefs.getDouble('cover_size') ?? 300.0).toDouble();
+    _coverBorderRadius = (prefs.getDouble('cover_border_radius') ?? 16.0).toDouble();
 
     notifyListeners();
   }
