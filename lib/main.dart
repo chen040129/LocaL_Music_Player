@@ -168,11 +168,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                       // 背景层 - 根据背景类型应用透明度
                       Positioned.fill(
                         child: Container(
-                          color: settings.uiBackgroundType == UIBackgroundType.fluid
-                              ? Colors.transparent
-                              : (settings.windowOpacity < 0.01
+                          color: settings.uiBackgroundType == UIBackgroundType.normal
+                              ? (settings.windowOpacity < 0.01
                                   ? Colors.transparent
-                                  : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity)),
+                                  : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity))
+                              : Theme.of(context).colorScheme.surface.withOpacity(1.0),
                         ),
                       ),
                       // 液态玻璃背景捕获层

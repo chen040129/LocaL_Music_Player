@@ -152,7 +152,7 @@ class SettingsProvider with ChangeNotifier {
   double _coverBorderRadius = 16.0;           // 封面方形时的圆角半径
   
   // 封面旋转速度（固定为0.5秒/圈）
-  static const double coverRotationSpeed = 0.5;
+  static const double coverRotationSpeed = 100;
 
   // 播放器设置
   bool get autoPlayNext => _autoPlayNext;
