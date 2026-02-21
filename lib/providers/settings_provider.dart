@@ -63,6 +63,18 @@ enum LyricsAlignment {
   right,        // 右对齐
 }
 
+/// 封面形状枚举
+enum CoverShape {
+  square,       // 方形
+  circle,       // 圆形
+}
+
+/// 圆形封面状态枚举
+enum CircleCoverState {
+  static,       // 静态
+  rotating,     // 旋转
+}
+
 /// 设置提供者
 class SettingsProvider with ChangeNotifier {
   // 用户界面设置
@@ -132,6 +144,15 @@ class SettingsProvider with ChangeNotifier {
   int _fluidAnimationDuration = 2000;         // 流体动画持续时间（毫秒）
   double _fluidOffsetAmount = 20.0;           // 流体偏移量
   double _fluidLayerOpacity = 0.3;            // 流体层透明度
+  
+  // 封面设置
+  CoverShape _coverShape = CoverShape.square;  // 封面形状
+  CircleCoverState _circleCoverState = CircleCoverState.static;  // 圆形封面状态
+  double _coverSize = 300.0;                  // 封面大小
+  double _coverBorderRadius = 16.0;           // 封面方形时的圆角半径
+  
+  // 封面旋转速度（固定为0.5秒/圈）
+  static const double coverRotationSpeed = 0.5;
 
   // 播放器设置
   bool get autoPlayNext => _autoPlayNext;
@@ -200,6 +221,12 @@ class SettingsProvider with ChangeNotifier {
   int get fluidAnimationDuration => _fluidAnimationDuration;
   double get fluidOffsetAmount => _fluidOffsetAmount;
   double get fluidLayerOpacity => _fluidLayerOpacity;
+  
+  // 封面设置 getters
+  CoverShape get coverShape => _coverShape;
+  CircleCoverState get circleCoverState => _circleCoverState;
+  double get coverSize => _coverSize;
+  double get coverBorderRadius => _coverBorderRadius;
 
   SettingsProvider() {
     _loadSettings();
@@ -292,6 +319,14 @@ class SettingsProvider with ChangeNotifier {
     _fluidAnimationDuration = prefs.getInt('fluid_animation_duration') ?? 2000;
     _fluidOffsetAmount = prefs.getDouble('fluid_offset_amount') ?? 20.0;
     _fluidLayerOpacity = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
+    
+    // 加载封面设置
+    final coverShapeIndex = prefs.getInt('cover_shape') ?? 0;
+    _coverShape = CoverShape.values[coverShapeIndex];
+    final circleCoverStateIndex = prefs.getInt('circle_cover_state') ?? 0;
+    _circleCoverState = CircleCoverState.values[circleCoverStateIndex];
+    _coverSize = prefs.getDouble('cover_size') ?? 300.0;
+    _coverBorderRadius = prefs.getDouble('cover_border_radius') ?? 16.0;
 
     notifyListeners();
   }
@@ -708,6 +743,33 @@ class SettingsProvider with ChangeNotifier {
     await _saveSetting('fluid_layer_opacity', _fluidLayerOpacity);
     notifyListeners();
   }
+  
+  // 封面设置 setters
+  Future<void> setCoverShape(CoverShape value) async {
+    _coverShape = value;
+    await _saveSetting('cover_shape', _coverShape.index);
+    notifyListeners();
+  }
+  
+  Future<void> setCircleCoverState(CircleCoverState value) async {
+    _circleCoverState = value;
+    await _saveSetting('circle_cover_state', _circleCoverState.index);
+    notifyListeners();
+  }
+  
+  Future<void> setCoverSize(double value) async {
+    _coverSize = value.clamp(200.0, 500.0);
+    await _saveSetting('cover_size', _coverSize);
+    notifyListeners();
+  }
+  
+
+  
+  Future<void> setCoverBorderRadius(double value) async {
+    _coverBorderRadius = value.clamp(0.0, 50.0);
+    await _saveSetting('cover_border_radius', _coverBorderRadius);
+    notifyListeners();
+  }
 
   /// 重置所有设置为默认值
   Future<void> resetToDefaults() async {
@@ -760,6 +822,12 @@ class SettingsProvider with ChangeNotifier {
     await prefs.remove('fluid_animation_duration');
     await prefs.remove('fluid_offset_amount');
     await prefs.remove('fluid_layer_opacity');
+    
+    // 重置封面设置
+    await prefs.remove('cover_shape');
+    await prefs.remove('circle_cover_state');
+    await prefs.remove('cover_size');
+    await prefs.remove('cover_border_radius');
 
     // 重新加载设置
     await _loadSettings();

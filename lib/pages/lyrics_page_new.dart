@@ -13,6 +13,7 @@ import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
 import '../widgets/lyrics_widget_new.dart' as lyrics_widgets;
+import '../widgets/album_cover_widget.dart';
 
 // 自定义SliderTrackShape，用于控制进度条的宽度
 class CustomSliderTrackShape extends SliderTrackShape {
@@ -558,8 +559,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                       MainAxisAlignment.center,
                                                   children: [
                                                       // 专辑封面
-                                                      Consumer<
-                                                          SettingsProvider>(
+                                                      Consumer<SettingsProvider>(
                                                         builder: (context,
                                                             settings, child) {
                                                           if (!settings
@@ -583,6 +583,10 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                       .clamp(
                                                                           330.0,
                                                                           700.0);
+                                                              
+                                                              // 更新设置中的封面大小
+                                                              settings.setCoverSize(size);
+                                                              
                                                               return GestureDetector(
                                                                 onTap: () {
                                                                   // 点击封面切换沉浸模式
@@ -675,7 +679,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                             opacity:
                                                                                 1 - (_coverDragOffset.abs() / 400),
                                                                             child:
-                                                                                child,
+                                                                                AlbumCoverWidget(),
                                                                           ),
                                                                         ),
                                                                       ),
