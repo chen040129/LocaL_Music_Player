@@ -1233,7 +1233,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                             child:
                                                                                 GestureDetector(
                                                                               onTap: () {
-                                                                                _pageSwitchController.forward(from: 0).then((_) {
+                                                                                _pageSwitchController.forward().then((_) {
                                                                                   setState(() {
                                                                                     _currentPage = 1;
                                                                                   });
@@ -2100,7 +2100,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
               )
             : GestureDetector(
                 onTap: () {
-                  _pageSwitchController.forward(from: 0).then((_) {
+                  _pageSwitchController.reverse().then((_) {
                     setState(() {
                       _currentPage = 0;
                     });
@@ -2283,18 +2283,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                         colorScheme.onSurface.withOpacity(0.6),
                                   ),
                                 ),
-                                trailing: isCurrentPlaying
-                                    ? Icon(
-                                        CupertinoIcons.play_fill,
-                                        color: colorScheme.primary,
-                                      )
-                                    : IconButton(
-                                        icon: const Icon(
-                                            CupertinoIcons.play_fill),
-                                        onPressed: () {
-                                          playerProvider.playAtIndex(index);
-                                        },
-                                      ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                      CupertinoIcons.delete),
+                                  onPressed: () {
+                                    playerProvider.removeFromPlaylist(index);
+                                  },
+                                ),
                                 onTap: () {
                                   playerProvider.playAtIndex(index);
                                 },
