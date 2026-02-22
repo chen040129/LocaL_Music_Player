@@ -115,7 +115,7 @@ class PlaylistArea extends StatelessWidget {
                     builder: (context, settings, child) {
                       return InkWell(
                         onTap: () => onSongTap(index),
-                        borderRadius: BorderRadius.circular(settings.borderRadius),
+                        borderRadius: BorderRadius.circular(0),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Row(

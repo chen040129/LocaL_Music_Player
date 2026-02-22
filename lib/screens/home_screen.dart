@@ -742,6 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _listenToSettingsChanges(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
 
     // 检查透明度是否变化
     if (settingsProvider.glassOpacity != _lastGlassOpacity) {
@@ -753,6 +754,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (themeProvider.themeMode != _lastThemeMode) {
       _lastThemeMode = themeProvider.themeMode;
       _onThemeChanged();
+    }
+
+    // 检查是否在歌词页面，如果是则不应用窗口边框弧度
+    // 由于app_pages.dart中没有定义lyrics页面，我们需要通过其他方式判断
+    // 这里我们通过检查当前路由是否包含lyrics来判断
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final isLyricsPage = currentRoute != null && currentRoute.contains('lyrics');
+    if (!isLyricsPage) {
+      // 只有不在歌词页面时才应用窗口边框弧度
+      _updateWindowBorderRadius(settingsProvider.windowBorderRadius);
     }
   }
 

@@ -64,7 +64,7 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                           builder: (context, settings, child) {
                             return ClipRRect(
                               borderRadius:
-                                  BorderRadius.circular(settings.borderRadius),
+                                  BorderRadius.circular(0),
                               child: const LyricsPage(),
                             );
                           },

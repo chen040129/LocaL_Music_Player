@@ -151,7 +151,7 @@ class SettingsProvider with ChangeNotifier {
   double _coverSize = 300.0;                  // 封面大小
   double _coverBorderRadius = 0.0;            // 封面方形时的圆角半径（默认为0，无弧度）
   
-  // 封面旋转速度（固定为0.5秒/圈）
+  // 封面旋转速度（固定为50秒/圈）
   double coverRotationSpeed = 50;
 
   // 播放器设置

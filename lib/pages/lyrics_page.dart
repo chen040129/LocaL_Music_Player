@@ -234,7 +234,7 @@ class _LyricsPageState extends State<LyricsPage> {
         duration: _animationDuration,
         decoration: BoxDecoration(
           color: _isHoveringPin ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
+          borderRadius: BorderRadius.circular(0),
         ),
         child: IconButton(
           icon: AnimatedScale(
@@ -272,7 +272,7 @@ class _LyricsPageState extends State<LyricsPage> {
         duration: _animationDuration,
         decoration: BoxDecoration(
           color: _isHoveringMinimize ? hoverBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_borderRadius),
+          borderRadius: BorderRadius.circular(0),
         ),
         child: IconButton(
           icon: Icon(

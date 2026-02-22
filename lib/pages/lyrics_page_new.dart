@@ -151,6 +151,17 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _checkAlwaysOnTop();
+
+    // 确保歌曲页面没有圆角
+    // 强制设置窗口边框弧度为0
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // 使用setSize触发窗口重绘，重置边框弧度
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final size = await windowManager.getSize();
+        await windowManager.setSize(size);
+      });
+    }
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -403,6 +414,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                           SongPageBackgroundType.transparent
                       ? Colors.transparent
                       : colorScheme.surface,
+                  borderRadius: BorderRadius.circular(0),
                 ),
                 child: Stack(
                   children: [
@@ -695,7 +707,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                       decoration:
                                                                           BoxDecoration(
                                                                         borderRadius:
-                                                                            BorderRadius.circular(16),
+                                                                            BorderRadius.circular(0),
                                                                         boxShadow: [
                                                                           BoxShadow(
                                                                             color:
@@ -710,7 +722,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                       child:
                                                                           ClipRRect(
                                                                         borderRadius:
-                                                                            BorderRadius.circular(16),
+                                                                            BorderRadius.circular(0),
                                                                         child: currentMusic?.coverArt !=
                                                                                 null
                                                                             ? Image.memory(
@@ -1727,7 +1739,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                         colorScheme.primary.withOpacity(0.05),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(0),
                     border: Border.all(
                       color: colorScheme.primary.withOpacity(0.2),
                       width: 2,
@@ -2067,7 +2079,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(0),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
