@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
 import '../services/storage_service.dart';
+import '../services/system_tray_service.dart';
 import 'package:path/path.dart' as path;
 import 'music_provider.dart';
 import 'settings_provider.dart';
@@ -32,6 +33,7 @@ class PlayerProvider with ChangeNotifier {
   MusicProvider? _musicProvider; // 添加MusicProvider引用
   SettingsProvider? _settingsProvider; // 添加SettingsProvider引用
   final StorageService _storageService = StorageService(); // 添加StorageService实例
+  final SystemTrayService _systemTrayService = SystemTrayService(); // 添加系统托盘服务实例
 
   // 播放状态
   bool _isPlaying = false;
@@ -665,6 +667,13 @@ class PlayerProvider with ChangeNotifier {
       // 恢复播放时，重新初始化记录时间和位置
       _lastRecordTime = DateTime.now();
       _lastRecordedPosition = _position;
+    }
+
+    // 更新托盘菜单
+    try {
+      await _systemTrayService.updatePlayPauseMenuItem();
+    } catch (e) {
+      // 忽略错误，可能托盘未初始化
     }
   }
 

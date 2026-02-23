@@ -18,9 +18,17 @@ class SystemTrayService with TrayListener {
   bool _isInitialized = false;
   bool _isMinimizedToTray = false;
 
+  // 保存播放器引用，以便在托盘菜单事件中使用
+  PlayerProvider? _playerProvider;
+  MusicProvider? _musicProvider;
+
   /// 初始化系统托盘
   Future<void> initialize(BuildContext context) async {
     if (_isInitialized) return;
+
+    // 保存播放器引用
+    _playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+    _musicProvider = Provider.of<MusicProvider>(context, listen: false);
 
     // 添加监听器
     trayManager.addListener(this);
@@ -125,6 +133,43 @@ class SystemTrayService with TrayListener {
     await trayManager.setContextMenu(menu);
   }
 
+  /// 更新播放/暂停菜单项
+  Future<void> updatePlayPauseMenuItem() async {
+    if (!_isInitialized || _playerProvider == null) return;
+
+    // 延迟执行，确保状态已更新
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // 创建新菜单，更新播放/暂停标签
+    Menu menu = Menu(items: [
+      MenuItem(
+        key: 'show_window',
+        label: '显示窗口',
+      ),
+      MenuItem.separator(),
+      MenuItem(
+        key: 'play_pause',
+        label: _playerProvider!.isPlaying ? '暂停' : '播放',
+      ),
+      MenuItem(
+        key: 'previous',
+        label: '上一曲',
+      ),
+      MenuItem(
+        key: 'next',
+        label: '下一曲',
+      ),
+      MenuItem.separator(),
+      MenuItem(
+        key: 'exit',
+        label: '退出',
+      ),
+    ]);
+
+    // 重新设置菜单
+    await trayManager.setContextMenu(menu);
+  }
+
   /// 销毁系统托盘
   Future<void> destroy() async {
     if (!_isInitialized) return;
@@ -180,14 +225,24 @@ class SystemTrayService with TrayListener {
         await restoreFromTray();
         break;
       case 'play_pause':
-        // 这里需要获取当前播放状态并切换
-        // 由于在静态方法中无法直接访问Provider，需要通过全局变量或其他方式
+        // 切换播放/暂停状态
+        if (_playerProvider != null) {
+          _playerProvider!.togglePlayPause();
+          // 更新菜单项标签
+          await updatePlayPauseMenuItem();
+        }
         break;
       case 'previous':
         // 播放上一曲
+        if (_playerProvider != null) {
+          _playerProvider!.playPrevious();
+        }
         break;
       case 'next':
         // 播放下一曲
+        if (_playerProvider != null) {
+          _playerProvider!.playNext();
+        }
         break;
       case 'exit':
         await windowManager.close();
