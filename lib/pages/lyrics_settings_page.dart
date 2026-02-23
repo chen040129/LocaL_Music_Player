@@ -35,22 +35,22 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   _buildBasicSettings(context),
                   const SizedBox(height: 24),
 
-                  // 字体设置
-                  _buildSectionHeader('字体设置'),
+                  // 字体与样式设置
+                  _buildSectionHeader('字体与样式'),
                   const SizedBox(height: 16),
                   _buildFontSettings(context),
                   const SizedBox(height: 24),
 
-                  // 渐变效果设置
-                  _buildSectionHeader('渐变效果'),
-                  const SizedBox(height: 16),
-                  _buildGradientSettings(context),
-                  const SizedBox(height: 24),
-
-                  // 动画设置
+                  // 动画效果设置
                   _buildSectionHeader('动画效果'),
                   const SizedBox(height: 16),
                   _buildAnimationSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 渐变与视觉效果设置
+                  _buildSectionHeader('渐变与视觉效果'),
+                  const SizedBox(height: 16),
+                  _buildGradientSettings(context),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],
@@ -111,6 +111,21 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
           color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
           fontSize: 14,
           fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  /// 构建子章节标题
+  Widget _buildSectionSubHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -385,6 +400,10 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                 ),
                 const Divider(height: 32),
 
+                // 滚动动画设置组
+                _buildSectionSubHeader('滚动动画'),
+                const SizedBox(height: 8),
+
                 // 滚动动画时长滑块
                 _buildSliderTile(
                   title: '滚动动画时长',
@@ -398,6 +417,20 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   onChanged: (value) => settings.setScrollDuration(value.toInt()),
                 ),
                 const Divider(height: 32),
+
+                // 滚动动画曲线选择
+                _buildCurveTile(
+                  title: '滚动动画曲线',
+                  subtitle: '选择滚动动画的缓动曲线',
+                  icon: CupertinoIcons.graph_circle,
+                  value: settings.scrollCurve,
+                  onChanged: (value) => settings.setScrollCurve(value),
+                ),
+                const Divider(height: 32),
+
+                // 自动恢复动画设置组
+                _buildSectionSubHeader('自动恢复动画'),
+                const SizedBox(height: 8),
 
                 // 选中行自动恢复时长滑块
                 _buildSliderTile(
@@ -424,16 +457,6 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   divisions: 18,
                   label: '${settings.activeAutoResumeDuration}ms',
                   onChanged: (value) => settings.setActiveAutoResumeDuration(value.toInt()),
-                ),
-                const Divider(height: 32),
-
-                // 滚动动画曲线选择
-                _buildCurveTile(
-                  title: '滚动动画曲线',
-                  subtitle: '选择滚动动画的缓动曲线',
-                  icon: CupertinoIcons.graph_circle,
-                  value: settings.scrollCurve,
-                  onChanged: (value) => settings.setScrollCurve(value),
                 ),
               ],
             ),

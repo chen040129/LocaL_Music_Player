@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -126,6 +127,14 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                       // 获取当前设置
                       final settingsData = await settings.exportSettings();
 
+                      // 添加版本信息和元数据
+                      final exportData = {
+                        'version': '1.0.0',
+                        'exportDate': DateTime.now().toIso8601String(),
+                        'appName': 'Local Music Player',
+                        'settings': settingsData,
+                      };
+
                       // 选择保存位置
                       String? outputPath = await FilePicker.platform.saveFile(
                         dialogTitle: '导出设置配置文件',
@@ -137,16 +146,73 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                       if (outputPath != null) {
                         // 写入文件
                         final file = File(outputPath);
-                        await file.writeAsString(settingsData);
+                        await file.writeAsString(jsonEncode(exportData));
 
-                        // 显示成功消息
+                        // 显示顶部通知
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('设置配置文件导出成功'),
-                              duration: Duration(seconds: 2),
+                          OverlayEntry? overlayEntry;
+                          overlayEntry = OverlayEntry(
+                            builder: (context) => Positioned(
+                              top: 50,
+                              left: 20,
+                              right: 20,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.inverseSurface,
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.checkmark_circle,
+                                        color: Theme.of(context).colorScheme.primary,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          '设置配置文件已导出',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.onInverseSurface,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          CupertinoIcons.clear,
+                                          color: Theme.of(context).colorScheme.onInverseSurface,
+                                          size: 16,
+                                        ),
+                                        onPressed: () {
+                                          overlayEntry?.remove();
+                                        },
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           );
+
+                          Overlay.of(context).insert(overlayEntry!);
+
+                          // 3秒后自动移除
+                          Future.delayed(const Duration(seconds: 3), () {
+                            overlayEntry?.remove();
+                          });
                         }
                       }
                     } catch (e) {
@@ -156,6 +222,13 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                           SnackBar(
                             content: Text('导出失败: $e'),
                             duration: const Duration(seconds: 3),
+                            action: SnackBarAction(
+                              label: '重试',
+                              onPressed: () {
+                                // 重新尝试导出
+                                // 这里可以添加重新尝试的逻辑
+                              },
+                            ),
                           ),
                         );
                       }
@@ -180,19 +253,65 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                       if (result != null && result.files.single.path != null) {
                         // 读取文件
                         final file = File(result.files.single.path!);
-                        final settingsData = await file.readAsString();
+                        final fileContent = await file.readAsString();
 
-                        // 导入设置
-                        await settings.importSettings(settingsData);
+                        // 解析文件内容
+                        final Map<String, dynamic> fileData = jsonDecode(fileContent);
 
-                        // 显示成功消息
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('设置配置文件导入成功'),
-                              duration: Duration(seconds: 2),
+                        // 检查文件格式
+                        if (!fileData.containsKey('settings')) {
+                          throw Exception('无效的配置文件格式');
+                        }
+
+                        // 显示导入确认对话框
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('确认导入设置'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('应用: ${fileData['appName'] ?? '未知'}'),
+                                Text('版本: ${fileData['version'] ?? '未知'}'),
+                                Text('导出日期: ${fileData['exportDate'] != null ? 
+                                  DateTime.parse(fileData['exportDate']).toString().substring(0, 19) : '未知'}'),
+                                const SizedBox(height: 16),
+                                const Text('导入此配置文件将覆盖当前所有设置，是否继续？'),
+                              ],
                             ),
-                          );
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('取消'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('导入'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          // 导入设置
+                          await settings.importSettings(fileData['settings']);
+
+                          // 显示成功消息
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('设置配置文件导入成功，正在应用更改...'),
+                                duration: const Duration(seconds: 3),
+                                action: SnackBarAction(
+                                  label: '查看',
+                                  onPressed: () {
+                                    // 这里可以添加跳转到设置页面的逻辑
+                                  },
+                                ),
+                              ),
+                            );
+                          }
                         }
                       }
                     } catch (e) {
@@ -202,6 +321,13 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                           SnackBar(
                             content: Text('导入失败: $e'),
                             duration: const Duration(seconds: 3),
+                            action: SnackBarAction(
+                              label: '重试',
+                              onPressed: () {
+                                // 重新尝试导入
+                                // 这里可以添加重新尝试的逻辑
+                              },
+                            ),
                           ),
                         );
                       }

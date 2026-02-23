@@ -1044,6 +1044,11 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['custom_image_path'] = prefs.getString('custom_image_path') ?? '';
     settingsMap['image_fit_type'] = prefs.getInt('image_fit_type') ?? 1;
 
+    // 封面设置
+    settingsMap['cover_shape'] = prefs.getInt('cover_shape') ?? 0;
+    settingsMap['circle_cover_state'] = prefs.getInt('circle_cover_state') ?? 0;
+    settingsMap['cover_border_radius'] = prefs.getDouble('cover_border_radius') ?? 16.0;
+
     // 流体背景参数
     settingsMap['fluid_bubbles_size'] = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
     settingsMap['fluid_velocity'] = prefs.getDouble('fluid_velocity') ?? 120.0;

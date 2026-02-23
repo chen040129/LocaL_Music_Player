@@ -35,9 +35,28 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader('界面设置'),
+                  // 主题设置
+                  _buildSectionHeader('主题设置'),
                   const SizedBox(height: 16),
-                  _buildUISettings(context),
+                  _buildThemeSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 背景设置
+                  _buildSectionHeader('背景设置'),
+                  const SizedBox(height: 16),
+                  _buildBackgroundSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 播放栏设置
+                  _buildSectionHeader('播放栏设置'),
+                  const SizedBox(height: 16),
+                  _buildPlayerBarSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 界面元素设置
+                  _buildSectionHeader('界面元素设置'),
+                  const SizedBox(height: 16),
+                  _buildUIElementsSettings(context),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],
@@ -100,6 +119,574 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  /// 构建子章节标题
+  Widget _buildSectionSubHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// 构建主题设置
+  Widget _buildThemeSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 主题切换
+                _buildSwitchTile(
+                  title: '深色模式',
+                  subtitle: '切换深色/浅色主题',
+                  icon: CupertinoIcons.moon,
+                  value: Provider.of<ThemeProvider>(context, listen: false).isDarkMode,
+                  onChanged: (value) {
+                    Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建背景设置
+  Widget _buildBackgroundSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 背景类型选择
+                const Text('背景类型'),
+                const SizedBox(height: 8),
+                SegmentedButton<UIBackgroundType>(
+                  segments: const [
+                    ButtonSegment(
+                      value: UIBackgroundType.normal,
+                      label: Text('默认'),
+                      icon: Icon(CupertinoIcons.square),
+                    ),
+                    ButtonSegment(
+                      value: UIBackgroundType.fluid,
+                      label: Text('流体'),
+                      icon: Icon(CupertinoIcons.waveform_path),
+                    ),
+                    ButtonSegment(
+                      value: UIBackgroundType.gradient,
+                      label: Text('渐变'),
+                      icon: Icon(CupertinoIcons.color_filter),
+                    ),
+                    ButtonSegment(
+                      value: UIBackgroundType.customImage,
+                      label: Text('自定义图片'),
+                      icon: Icon(CupertinoIcons.photo_on_rectangle),
+                    ),
+                  ],
+                  selected: {settings.uiBackgroundType},
+                  onSelectionChanged: (Set<UIBackgroundType> newSelection) {
+                    settings.setUIBackgroundType(newSelection.first);
+                  },
+                ),
+                // 流体背景设置
+                if (settings.uiBackgroundType == UIBackgroundType.fluid)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('流体背景设置'),
+                        const SizedBox(height: 8),
+                        _buildSwitchTile(
+                          title: '流体动态效果',
+                          subtitle: '启用流体背景的动态效果',
+                          icon: CupertinoIcons.waveform_path,
+                          value: settings.isFluidDynamic,
+                          onChanged: (value) => settings.setIsFluidDynamic(value),
+                        ),
+                      ],
+                    ),
+                  ),
+                // 默认背景类型的设置
+                if (settings.uiBackgroundType == UIBackgroundType.normal)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('默认背景设置'),
+                        const SizedBox(height: 8),
+                        // 窗口背景透明度滑块
+                        _buildSliderTile(
+                          title: '窗口背景透明度',
+                          subtitle: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? '液态玻璃样式下窗口背景不透明度为0%'
+                              : '调整整个应用窗口的背景透明度',
+                          icon: CupertinoIcons.eye,
+                          value: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? 0.0
+                              : 1.0 - settings.windowOpacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          label: settings.playerBarStyle == PlayerBarStyle.liquidGlass
+                              ? '0%'
+                              : '${((1.0 - settings.windowOpacity) * 100).toInt()}%',
+                          onChanged: (value) => settings.setWindowOpacity(1.0 - value),
+                          enabled: settings.canControlWindowOpacity,
+                        ),
+                      ],
+                    ),
+                  ),
+                // 渐变背景设置
+                if (settings.uiBackgroundType == UIBackgroundType.gradient)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('渐变背景设置'),
+                        const SizedBox(height: 8),
+                        // 同步渐变设置选项
+                        SwitchListTile(
+                          title: const Text('同步渐变设置'),
+                          subtitle: const Text('与歌曲页面的渐变设置保持一致'),
+                          value: settings.syncGradientSettings,
+                          onChanged: (value) {
+                            settings.setSyncGradientSettings(value);
+                            // 如果启用同步，立即同步当前设置
+                            if (value) {
+                              settings.setUIGradientType(settings.uiGradientType);
+                              settings.setUIGradientSongColorRatio(settings.uiGradientSongColorRatio);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // 渐变类型选择
+                        const Text('渐变类型'),
+                        const SizedBox(height: 8),
+                        SegmentedButton<GradientType>(
+                          segments: const [
+                            ButtonSegment(
+                              value: GradientType.static,
+                              label: Text('静态'),
+                              icon: Icon(CupertinoIcons.pause),
+                            ),
+                            ButtonSegment(
+                              value: GradientType.dynamic,
+                              label: Text('动态'),
+                              icon: Icon(CupertinoIcons.play),
+                            ),
+                          ],
+                          selected: {settings.uiGradientType},
+                          onSelectionChanged: (Set<GradientType> newSelection) {
+                            settings.setUIGradientType(newSelection.first);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // 歌曲主题色占比
+                        Row(
+                          children: [
+                            const Text('歌曲主题色占比'),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Slider(
+                                value: settings.uiGradientSongColorRatio,
+                                min: 0.0,
+                                max: 1.0,
+                                divisions: 100,
+                                label: '${(settings.uiGradientSongColorRatio * 100).toInt()}%',
+                                onChanged: (value) {
+                                  settings.setUIGradientSongColorRatio(value);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                // 自定义图片路径选择
+                if (settings.uiBackgroundType == UIBackgroundType.customImage)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('自定义图片设置'),
+                        const SizedBox(height: 8),
+                        // 图片路径选择
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  labelText: '自定义图片路径',
+                                  hintText: '请输入图片路径',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                controller: TextEditingController(text: settings.uiCustomImagePath),
+                                onChanged: (value) {
+                                  settings.setUICustomImagePath(value);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(CupertinoIcons.folder),
+                              onPressed: () async {
+                                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                                  type: FileType.image,
+                                  allowMultiple: false,
+                                );
+                                if (result != null && result.files.single.path != null) {
+                                  settings.setUICustomImagePath(result.files.single.path!);
+                                }
+                              },
+                              tooltip: '选择图片',
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(CupertinoIcons.arrow_right_square),
+                              onPressed: () async {
+                                // 将用户界面背景图片同步到歌词页面
+                                if (settings.uiCustomImagePath.isNotEmpty) {
+                                  await settings.setCustomImagePath(settings.uiCustomImagePath);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('已将背景图片同步到歌词页面'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('请先选择一张图片'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                              tooltip: '同步到歌词页面',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // 图片布局方式选择
+                        const Text('图片布局方式'),
+                        const SizedBox(height: 8),
+                        SegmentedButton<ImageFitType>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ImageFitType.fill,
+                              label: Text('填充'),
+                              icon: Icon(CupertinoIcons.resize),
+                            ),
+                            ButtonSegment(
+                              value: ImageFitType.cover,
+                              label: Text('覆盖'),
+                              icon: Icon(CupertinoIcons.photo),
+                            ),
+                            ButtonSegment(
+                              value: ImageFitType.contain,
+                              label: Text('包含'),
+                              icon: Icon(CupertinoIcons.square),
+                            ),
+                            ButtonSegment(
+                              value: ImageFitType.fitWidth,
+                              label: Text('适应宽度'),
+                              icon: Icon(CupertinoIcons.arrow_left_right),
+                            ),
+                            ButtonSegment(
+                              value: ImageFitType.fitHeight,
+                              label: Text('适应高度'),
+                              icon: Icon(CupertinoIcons.arrow_up_down),
+                            ),
+                            ButtonSegment(
+                              value: ImageFitType.none,
+                              label: Text('原始大小'),
+                              icon: Icon(CupertinoIcons.square_on_square),
+                            ),
+                          ],
+                          selected: {settings.uiImageFitType},
+                          onSelectionChanged: (Set<ImageFitType> newSelection) {
+                            settings.setUIImageFitType(newSelection.first);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建播放栏设置
+  Widget _buildPlayerBarSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 播放栏玻璃材质开关
+                _buildSwitchTile(
+                  title: '播放栏玻璃材质',
+                  subtitle: '为底部播放栏应用玻璃材质效果',
+                  icon: CupertinoIcons.music_note_2,
+                  value: settings.usePlayerGlass,
+                  onChanged: (value) => settings.setUsePlayerGlass(value),
+                ),
+                const Divider(height: 32),
+
+                // 玻璃透明度滑块
+                _buildSliderTile(
+                  title: '玻璃透明度',
+                  subtitle: '调整玻璃材质的透明度',
+                  icon: CupertinoIcons.eye,
+                  value: 1.0 - settings.glassOpacity,
+                  min: 0.0,
+                  max: 1.0,
+                  divisions: 100,
+                  label: '${((1.0 - settings.glassOpacity) * 100).toInt()}%',
+                  onChanged: (value) => settings.setGlassOpacity(1.0 - value),
+                ),
+                const Divider(height: 32),
+
+                // 播放栏样式选择
+                const Text('播放栏样式'),
+                const SizedBox(height: 8),
+                SegmentedButton<PlayerBarStyle>(
+                  segments: const [
+                    ButtonSegment(
+                      value: PlayerBarStyle.normal,
+                      label: Text('默认'),
+                      icon: Icon(CupertinoIcons.rectangle),
+                    ),
+                    ButtonSegment(
+                      value: PlayerBarStyle.liquidGlass,
+                      label: Text('液态玻璃'),
+                      icon: Icon(CupertinoIcons.drop),
+                    ),
+                  ],
+                  selected: {settings.playerBarStyle},
+                  onSelectionChanged: (Set<PlayerBarStyle> newSelection) {
+                    settings.setPlayerBarStyle(newSelection.first);
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // 播放栏长度选择
+                const Text('播放栏长度'),
+                const SizedBox(height: 8),
+                SegmentedButton<PlayerBarLength>(
+                  segments: const [
+                    ButtonSegment(
+                      value: PlayerBarLength.fullWidth,
+                      label: Text('全宽'),
+                      icon: Icon(CupertinoIcons.rectangle_on_rectangle),
+                    ),
+                    ButtonSegment(
+                      value: PlayerBarLength.contentWidth,
+                      label: Text('内容宽度'),
+                      icon: Icon(CupertinoIcons.rectangle),
+                    ),
+                  ],
+                  selected: {settings.playerBarLength},
+                  onSelectionChanged: (Set<PlayerBarLength> newSelection) {
+                    settings.setPlayerBarLength(newSelection.first);
+                  },
+                ),
+
+                // 液态玻璃参数设置
+                if (settings.playerBarStyle == PlayerBarStyle.liquidGlass)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('液态玻璃参数'),
+                        const SizedBox(height: 8),
+                        _buildSliderTile(
+                          title: '扭曲强度',
+                          subtitle: '调整液态玻璃的扭曲效果强度',
+                          icon: CupertinoIcons.waveform_path,
+                          value: settings.liquidGlassDistortion < 0.01 ? 0.075 : settings.liquidGlassDistortion,
+                          min: 0.01,
+                          max: 0.5,
+                          divisions: 50,
+                          label: '${(settings.liquidGlassDistortion < 0.01 ? 0.075 : settings.liquidGlassDistortion * 100).toInt()}%',
+                          onChanged: (value) => settings.setLiquidGlassDistortion(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '扭曲宽度',
+                          subtitle: '调整液态玻璃的扭曲区域宽度',
+                          icon: CupertinoIcons.rectangle,
+                          value: settings.liquidGlassDistortionWidth,
+                          min: 10.0,
+                          max: 80.0,
+                          divisions: 70,
+                          label: '${settings.liquidGlassDistortionWidth.toInt()}',
+                          onChanged: (value) => settings.setLiquidGlassDistortionWidth(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '色差强度',
+                          subtitle: '调整液态玻璃的色差效果强度',
+                          icon: CupertinoIcons.color_filter,
+                          value: settings.liquidGlassChromaticAberration < 0.001 ? 0.002 : settings.liquidGlassChromaticAberration,
+                          min: 0.001,
+                          max: 0.01,
+                          divisions: 100,
+                          label: '${(settings.liquidGlassChromaticAberration < 0.001 ? 0.002 : settings.liquidGlassChromaticAberration * 1000).toInt()}‰',
+                          onChanged: (value) => settings.setLiquidGlassChromaticAberration(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '饱和度',
+                          subtitle: '调整液态玻璃的颜色饱和度',
+                          icon: CupertinoIcons.photo,
+                          value: settings.liquidGlassSaturation < 0.1 ? 1.0 : settings.liquidGlassSaturation,
+                          min: 0.1,
+                          max: 2.0,
+                          divisions: 20,
+                          label: '${(settings.liquidGlassSaturation < 0.1 ? 1.0 : settings.liquidGlassSaturation * 100).toInt()}%',
+                          onChanged: (value) => settings.setLiquidGlassSaturation(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '模糊强度',
+                          subtitle: '调整液态玻璃的模糊效果强度',
+                          icon: CupertinoIcons.eye,
+                          value: settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma,
+                          min: 0.1,
+                          max: 60.0,
+                          divisions: 60,
+                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toInt()}',
+                          onChanged: (value) => settings.setLiquidGlassBlurSigma(value),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSliderTile(
+                          title: '放大倍数',
+                          subtitle: '调整液态玻璃的放大效果',
+                          icon: CupertinoIcons.zoom_in,
+                          value: settings.liquidGlassMagnification,
+                          min: 0.8,
+                          max: 1.5,
+                          divisions: 70,
+                          label: '${settings.liquidGlassMagnification.toStringAsFixed(2)}x',
+                          onChanged: (value) => settings.setLiquidGlassMagnification(value),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建界面元素设置
+  Widget _buildUIElementsSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 边框弧度值滑块
+                _buildSliderTile(
+                  title: '边框弧度值',
+                  subtitle: '调整主页面元素的边框弧度',
+                  icon: CupertinoIcons.rectangle,
+                  value: settings.borderRadius,
+                  min: 0.0,
+                  max: 20.0,
+                  divisions: 20,
+                  label: '${settings.borderRadius.toInt()}',
+                  onChanged: (value) => settings.setBorderRadius(value),
+                ),
+                const Divider(height: 32),
+
+                // 音乐卡片透明度滑块
+                _buildSliderTile(
+                  title: '音乐卡片透明度',
+                  subtitle: '调整音乐卡片的背景透明度',
+                  icon: CupertinoIcons.rectangle_on_rectangle,
+                  value: 1.0 - settings.cardOpacity,
+                  min: 0.0,
+                  max: 1.0,
+                  divisions: 100,
+                  label: '${((1.0 - settings.cardOpacity) * 100).toInt()}%',
+                  onChanged: (value) => settings.setCardOpacity(1.0 - value),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

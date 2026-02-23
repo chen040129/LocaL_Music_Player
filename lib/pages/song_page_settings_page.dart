@@ -28,9 +28,20 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader('歌曲页面设置'),
+                  // 背景设置
+                  _buildSectionHeader('背景设置'),
                   const SizedBox(height: 16),
-                  _buildSongPageSettings(context),
+                  _buildBackgroundSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 封面设置
+                  _buildSectionHeader('封面设置'),
+                  const SizedBox(height: 16),
+                  Consumer<SettingsProvider>(
+                    builder: (context, settings, child) {
+                      return _buildCoverSettings(context, settings);
+                    },
+                  ),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],
@@ -95,6 +106,187 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  /// 构建子章节标题
+  Widget _buildSectionSubHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// 构建背景设置
+  Widget _buildBackgroundSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 背景类型选择
+                _buildBackgroundTypeTile(context, settings),
+                const Divider(height: 32),
+
+                // 根据背景类型显示不同的设置选项
+                if (settings.songPageBackgroundType == SongPageBackgroundType.fluid) ...[
+                  _buildSectionSubHeader('流体效果'),
+                  const SizedBox(height: 8),
+                  _buildSwitchTile(
+                    title: '流体动态效果',
+                    subtitle: '启用流体背景的动态效果',
+                    icon: CupertinoIcons.waveform_path,
+                    value: settings.isFluidDynamic,
+                    onChanged: (value) => settings.setIsFluidDynamic(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体球大小',
+                    subtitle: '调整流体背景中球的大小',
+                    icon: CupertinoIcons.circle,
+                    value: settings.fluidBubblesSize,
+                    min: 100.0,
+                    max: 1000.0,
+                    divisions: 90,
+                    label: '${settings.fluidBubblesSize.toInt()}',
+                    onChanged: (value) => settings.setFluidBubblesSize(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体偏移量',
+                    subtitle: '调整流体效果的偏移程度',
+                    icon: CupertinoIcons.move,
+                    value: settings.fluidOffsetAmount,
+                    min: 0.0,
+                    max: 100.0,
+                    divisions: 100,
+                    label: '${settings.fluidOffsetAmount.toInt()}',
+                    onChanged: (value) => settings.setFluidOffsetAmount(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体层透明度',
+                    subtitle: '调整流体层的透明度',
+                    icon: CupertinoIcons.eye_slash,
+                    value: settings.fluidLayerOpacity,
+                    min: 0.1,
+                    max: 1.0,
+                    divisions: 90,
+                    label: '${(settings.fluidLayerOpacity * 100).toInt()}%',
+                    onChanged: (value) => settings.setFluidLayerOpacity(value),
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '流体动画时长',
+                    subtitle: '调整流体动画的持续时间',
+                    icon: CupertinoIcons.time,
+                    value: settings.fluidAnimationDuration.toDouble(),
+                    min: 500,
+                    max: 10000,
+                    divisions: 95,
+                    label: '${settings.fluidAnimationDuration}ms',
+                    onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
+                  ),
+                  const Divider(height: 32),
+                ],
+
+                if (settings.songPageBackgroundType == SongPageBackgroundType.blur) ...[
+                  _buildSectionSubHeader('模糊效果'),
+                  const SizedBox(height: 8),
+                  _buildSliderTile(
+                    title: '模糊程度',
+                    subtitle: '调整背景的模糊程度',
+                    icon: CupertinoIcons.photo,
+                    value: settings.blurAmount,
+                    min: 0.0,
+                    max: 50.0,
+                    divisions: 50,
+                    label: '${settings.blurAmount.toInt()}',
+                    onChanged: (value) => settings.setBlurAmount(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+
+                if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
+                  _buildSectionSubHeader('渐变效果'),
+                  const SizedBox(height: 8),
+                  _buildGradientTypeTile(context, settings),
+                  const Divider(height: 32),
+                  SwitchListTile(
+                    title: const Text('同步渐变设置'),
+                    subtitle: const Text('与用户界面的渐变设置保持一致'),
+                    value: settings.syncGradientSettings,
+                    onChanged: (value) {
+                      settings.setSyncGradientSettings(value);
+                      // 如果启用同步，立即同步当前设置
+                      if (value) {
+                        settings.setGradientType(settings.gradientType);
+                        settings.setGradientSongColorRatio(settings.gradientSongColorRatio);
+                      }
+                    },
+                  ),
+                  const Divider(height: 32),
+                  _buildSliderTile(
+                    title: '歌曲主题色占比',
+                    subtitle: '调整渐变中歌曲主题色的占比',
+                    icon: CupertinoIcons.color_filter,
+                    value: settings.gradientSongColorRatio,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 100,
+                    label: '${(settings.gradientSongColorRatio * 100).toInt()}%',
+                    onChanged: (value) => settings.setGradientSongColorRatio(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+
+                if (settings.songPageBackgroundType == SongPageBackgroundType.transparent) ...[
+                  _buildSectionSubHeader('透明效果'),
+                  const SizedBox(height: 8),
+                  _buildSliderTile(
+                    title: '页面透明度',
+                    subtitle: '调整歌曲页面的透明度',
+                    icon: CupertinoIcons.eye,
+                    value: settings.pageOpacity,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions:100,
+                    label: '${(settings.pageOpacity * 100).toInt()}%',
+                    onChanged: (value) => settings.setPageOpacity(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+
+                if (settings.songPageBackgroundType == SongPageBackgroundType.customImage) ...[
+                  _buildSectionSubHeader('自定义图片'),
+                  const SizedBox(height: 8),
+                  _buildCustomImageTile(context, settings),
+                  const Divider(height: 32),
+                  _buildImageFitTile(context, settings),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

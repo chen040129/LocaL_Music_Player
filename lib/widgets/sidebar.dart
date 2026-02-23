@@ -227,12 +227,69 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(16),
                         child: InkWell(
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('音效设置功能也许可能在后面版本推出'),
-                                duration: Duration(seconds: 2),
+                            OverlayEntry? overlayEntry;
+                            overlayEntry = OverlayEntry(
+                              builder: (context) => Positioned(
+                                top: 50,
+                                left: 20,
+                                right: 20,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.inverseSurface,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          AppIcons.qualityHigh,
+                                          color: Theme.of(context).colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            '音效设置功能也许可能在后面版本推出',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.onInverseSurface,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            CupertinoIcons.clear,
+                                            color: Theme.of(context).colorScheme.onInverseSurface,
+                                            size: 16,
+                                          ),
+                                          onPressed: () {
+                                            overlayEntry?.remove();
+                                          },
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             );
+
+                            Overlay.of(context).insert(overlayEntry!);
+
+                            // 3秒后自动移除
+                            Future.delayed(const Duration(seconds: 3), () {
+                              overlayEntry?.remove();
+                            });
                           },
                           splashColor: Colors.transparent,
                           highlightColor: Colors.transparent,
