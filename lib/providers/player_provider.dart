@@ -41,6 +41,7 @@ class PlayerProvider with ChangeNotifier {
   Duration _lastRecordedPosition = Duration.zero; // 上次记录的播放位置
   DateTime? _lastRecordTime; // 上次记录的时间
   int _totalPlayDuration = 0; // 总播放时长（秒）
+  String? _currentLyricsRaw; // 当前原始歌词内容
 
   // 播放列表
   List<MusicInfo> _playlist = [];
@@ -935,16 +936,19 @@ class PlayerProvider with ChangeNotifier {
     try {
       final lyrics = await LyricsService.loadLyricsForMusic(musicFilePath);
       if (lyrics != null && lyrics.hasLyrics) {
-        _currentLyrics = LyricsService.lyricsToLrc(lyrics);
+        _currentLyricsRaw = LyricsService.lyricsToLrc(lyrics);
+        _currentLyrics = _currentLyricsRaw!;
         debugPrint('歌词加载成功，共 ${lyrics.lines.length} 行');
       } else {
-        _currentLyrics = LyricsService.getDefaultLyrics();
+        _currentLyricsRaw = LyricsService.getDefaultLyrics();
+        _currentLyrics = _currentLyricsRaw!;
         debugPrint('未找到歌词文件，使用默认歌词');
       }
       notifyListeners();
     } catch (e) {
       debugPrint('加载歌词失败: $e');
-      _currentLyrics = LyricsService.getDefaultLyrics();
+      _currentLyricsRaw = LyricsService.getDefaultLyrics();
+      _currentLyrics = _currentLyricsRaw!;
       notifyListeners();
     }
   }
@@ -1037,4 +1041,7 @@ class PlayerProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// 获取当前原始歌词内容
+  String? get currentLyricsRaw => _currentLyricsRaw;
 }

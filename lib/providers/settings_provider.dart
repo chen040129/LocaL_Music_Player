@@ -63,6 +63,12 @@ enum LyricsAlignment {
   right,        // 右对齐
 }
 
+/// 歌词效果类型枚举
+enum LyricsEffectType {
+  shadow,       // 阴影效果
+  glow,         // 辉光效果
+}
+
 /// 封面形状枚举
 enum CoverShape {
   square,       // 方形
@@ -102,6 +108,9 @@ class SettingsProvider with ChangeNotifier {
   double _activeLyricsFontSize = 22.0; // 当前歌词字体大小
   bool _showTranslation = true;        // 是否显示翻译
   bool _enableLyricsBlur = true;       // 是否启用歌词模糊
+  bool _useCustomBlur = true;           // 是否使用自定义模糊效果（而不是内置渐变）
+  bool _enableLyricsSelectionEffects = true;  // 是否启用歌词选择效果
+  LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow;  // 歌词效果类型
   double _lyricsOpacity = 1.0;         // 歌词不透明度
   int _lyricsLineGap = 8;              // 歌词行间距
   int _scrollDuration = 500;          // 滚动动画时长(毫秒)
@@ -198,6 +207,14 @@ class SettingsProvider with ChangeNotifier {
   double get activeLyricsFontSize => _activeLyricsFontSize;
   bool get showTranslation => _showTranslation;
   bool get enableLyricsBlur => _enableLyricsBlur;
+  bool get useCustomBlur => _useCustomBlur;
+  bool get enableLyricsSelectionEffects => _enableLyricsSelectionEffects;
+  LyricsEffectType get lyricsEffectType => _lyricsEffectType;
+  Future<void> setLyricsEffectType(LyricsEffectType value) async {
+    _lyricsEffectType = value;
+    await _saveSetting('lyrics_effect_type', value.index);
+    notifyListeners();
+  }
   double get lyricsOpacity => _lyricsOpacity;
   int get lyricsLineGap => _lyricsLineGap;
   int get scrollDuration => _scrollDuration;
@@ -264,6 +281,10 @@ class SettingsProvider with ChangeNotifier {
     _activeLyricsFontSize = (prefs.getDouble('active_lyrics_font_size') ?? 22.0).toDouble();
     _showTranslation = prefs.getBool('show_translation') ?? true;
     _enableLyricsBlur = prefs.getBool('enable_lyrics_blur') ?? true;
+    _useCustomBlur = prefs.getBool('use_custom_blur') ?? true;
+    _enableLyricsSelectionEffects = prefs.getBool('enable_lyrics_selection_effects') ?? true;
+    final lyricsEffectTypeIndex = prefs.getInt('lyrics_effect_type') ?? 0;
+    _lyricsEffectType = LyricsEffectType.values[lyricsEffectTypeIndex];
     _lyricsOpacity = (prefs.getDouble('lyrics_opacity') ?? 1.0).toDouble();
     _lyricsLineGap = prefs.getInt('lyrics_line_gap') ?? 8;
     _scrollDuration = prefs.getInt('scroll_duration') ?? 500;
@@ -518,6 +539,18 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setEnableLyricsBlur(bool value) async {
     _enableLyricsBlur = value;
     await _saveSetting('enable_lyrics_blur', value);
+    notifyListeners();
+  }
+
+  Future<void> setUseCustomBlur(bool value) async {
+    _useCustomBlur = value;
+    await _saveSetting('use_custom_blur', value);
+    notifyListeners();
+  }
+
+  Future<void> setEnableLyricsSelectionEffects(bool value) async {
+    _enableLyricsSelectionEffects = value;
+    await _saveSetting('enable_lyrics_selection_effects', value);
     notifyListeners();
   }
 

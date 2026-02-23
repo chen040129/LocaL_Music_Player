@@ -12,7 +12,7 @@ import 'package:fluid_background/fluid_background.dart';
 import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
-import '../widgets/lyrics_widget_new.dart' as lyrics_widgets;
+import '../widgets/enhanced_lyrics_widget.dart';
 import '../widgets/album_cover_widget.dart';
 
 // 自定义SliderTrackShape，用于控制进度条的宽度
@@ -1357,11 +1357,11 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                         return Padding(
                                           padding: const EdgeInsets.only(
                                               left: 48, right: 48, bottom: 80),
-                                          child: playerProvider.currentLyrics !=
+                                          child: playerProvider.currentLyricsRaw !=
                                                   null
-                                              ? lyrics_widgets.LyricsWidget(
+                                              ? EnhancedLyricsWidget(
                                                   lyrics: playerProvider
-                                                      .currentLyrics!,
+                                                      .currentLyricsRaw!,
                                                   position: position,
                                                   onLineTap: (duration) {
                                                     playerProvider

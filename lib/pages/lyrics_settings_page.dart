@@ -125,6 +125,16 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                 ),
                 const Divider(height: 32),
 
+                // 歌词效果类型
+                _buildLyricsEffectTypeTile(
+                  title: '歌词效果',
+                  subtitle: '选择歌词的视觉效果',
+                  icon: CupertinoIcons.photo,
+                  value: settings.lyricsEffectType,
+                  onChanged: (value) async => await settings.setLyricsEffectType(value),
+                ),
+                const Divider(height: 32),
+
                 // 歌词字体大小滑块
                 _buildSliderTile(
                   title: '歌词字体大小',
@@ -170,6 +180,28 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   icon: CupertinoIcons.photo,
                   value: settings.enableLyricsBlur,
                   onChanged: (value) => settings.setEnableLyricsBlur(value),
+                ),
+                if (settings.enableLyricsBlur) ...
+[
+                  const SizedBox(height: 16),
+                  // 使用自定义模糊效果开关
+                  _buildSwitchTile(
+                    title: '使用自定义模糊',
+                    subtitle: '使用自定义高斯模糊效果（关闭则使用内置渐变效果）',
+                    icon: CupertinoIcons.slider_horizontal_3,
+                    value: settings.useCustomBlur,
+                    onChanged: (value) => settings.setUseCustomBlur(value),
+                  ),
+                ],
+                const Divider(height: 32),
+
+                // 启用歌词选择效果开关
+                _buildSwitchTile(
+                  title: '启用歌词选择效果',
+                  subtitle: '在歌词行选择时显示特殊效果',
+                  icon: CupertinoIcons.pin,
+                  value: settings.enableLyricsSelectionEffects,
+                  onChanged: (value) => settings.setEnableLyricsSelectionEffects(value),
                 ),
                 const Divider(height: 32),
 
@@ -390,6 +422,80 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
           divisions: divisions,
           label: label,
           onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  /// 构建歌词效果类型选择项
+  Widget _buildLyricsEffectTypeTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required LyricsEffectType value,
+    required ValueChanged<LyricsEffectType> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SegmentedButton<LyricsEffectType>(
+          segments: const [
+            ButtonSegment(
+              value: LyricsEffectType.shadow,
+              label: Text('阴影'),
+              icon: Icon(Icons.format_color_fill),
+            ),
+            ButtonSegment(
+              value: LyricsEffectType.glow,
+              label: Text('辉光'),
+              icon: Icon(Icons.blur_on),
+            ),
+          ],
+          selected: {value},
+          onSelectionChanged: (Set<LyricsEffectType> newSelection) {
+            onChanged(newSelection.first);
+          },
         ),
       ],
     );

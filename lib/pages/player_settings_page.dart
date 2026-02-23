@@ -130,15 +130,15 @@ class _PlayerSettingsPageState extends State<PlayerSettingsPage> {
                 // ),
                 // const Divider(height: 32),
 
-                // TODO: 播放器中显示歌词开关（后续版本实现）
-                // _buildSwitchTile(
-                //   title: '播放器中显示歌词',
-                //   subtitle: '在播放器界面中显示歌词',
-                //   icon: CupertinoIcons.music_note,
-                //   value: settings.showLyricsInPlayer,
-                //   onChanged: (value) => settings.setShowLyricsInPlayer(value),
-                // ),
-                // const Divider(height: 32),
+                // 播放器中显示歌词开关
+                _buildSwitchTile(
+                  title: '播放器中显示歌词',
+                  subtitle: '在播放器界面中显示歌词',
+                  icon: CupertinoIcons.music_note,
+                  value: settings.showLyricsInPlayer,
+                  onChanged: (value) => settings.setShowLyricsInPlayer(value),
+                ),
+                const Divider(height: 32),
 
                 // 自动播放下一首开关
                 _buildSwitchTile(

@@ -35,6 +35,8 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   final ScrollController _scrollController = ScrollController();
   // 是否正在滑动
   bool _isDragging = false;
+  // 是否正在自动滚动
+  bool _isAutoScrolling = false;
   // 记录用户最后交互时间，用于自动恢复播放进度
   DateTime _lastInteractionTime = DateTime.now();
   // 恢复播放进度的定时器
@@ -121,12 +123,28 @@ class _LyricsWidgetState extends State<LyricsWidget> {
   void initState() {
     super.initState();
     _lyricController = LyricController();
+    
+    // 添加滚动监听器
+    _scrollController.addListener(() {
+      // 如果是用户滚动，则设置拖动状态
+      if (_scrollController.hasClients && !_isAutoScrolling) {
+        _isDragging = true;
+        _lyricController.isSelectingNotifier.value = true;
+        
+        // 重置自动恢复定时器
+        _resetResumeTimer();
+      }
+    });
+    
     // 延迟加载歌词，确保widget完全初始化
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _lyricController.loadLyric(widget.lyrics);
       _lyricController.setProgress(widget.position);
       // 重置选择状态，确保动画正常工作
       _lyricController.isSelectingNotifier.value = false;
+      
+      // 滚动到当前播放的歌词行
+      _scrollToCurrentLine();
     });
     _lyricController.setOnTapLineCallback((duration) {
       widget.onLineTap?.call(duration);
@@ -143,10 +161,37 @@ class _LyricsWidgetState extends State<LyricsWidget> {
       _lyricController.isSelectingNotifier.value = false;
     }
     // 只在非选择状态下更新进度，避免用户滚动时被打断
-    if (oldWidget.position != widget.position &&
-        !_lyricController.isSelectingNotifier.value) {
+    if (oldWidget.position != widget.position && !_lyricController.isSelectingNotifier.value) {
       _lyricController.setProgress(widget.position);
+      
+      // 滚动到当前播放的歌词行
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToCurrentLine();
+      });
     }
+  }
+  
+  // 滚动到当前播放的歌词行
+  void _scrollToCurrentLine() {
+    if (!_scrollController.hasClients || _isDragging) return;
+    
+    final currentIndex = _lyricController.activeIndexNotifiter.value;
+    final lyricModel = _lyricController.lyricNotifier.value;
+    if (lyricModel == null || lyricModel.lines.isEmpty) return;
+    
+    // 计算滚动位置，使当前行位于视图中心
+    final screenHeight = MediaQuery.of(context).size.height;
+    final itemHeight = 48.0; // 估算每个歌词项的高度
+    final targetOffset = (currentIndex * itemHeight) - (screenHeight / 2) + (itemHeight / 2);
+    
+    _isAutoScrolling = true;
+    _scrollController.animateTo(
+      targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    ).then((_) {
+      _isAutoScrolling = false;
+    });
   }
 
   @override
@@ -164,7 +209,10 @@ class _LyricsWidgetState extends State<LyricsWidget> {
     _lastInteractionTime = DateTime.now();
     _resumeTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
+        _isDragging = false;
         _lyricController.isSelectingNotifier.value = false;
+        // 恢复到当前播放位置
+        _scrollToCurrentLine();
       }
     });
   }
@@ -247,11 +295,9 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           // 滚动动画时长 - 使用设置中的值
           scrollDuration: Duration(milliseconds: settings.scrollDuration),
           // 选中行自动恢复时长 - 使用设置中的值
-          selectionAutoResumeDuration:
-              Duration(milliseconds: settings.selectionAutoResumeDuration),
+          selectionAutoResumeDuration: Duration(milliseconds: settings.selectionAutoResumeDuration),
           // 播放行自动恢复时长 - 使用设置中的值
-          activeAutoResumeDuration:
-              Duration(milliseconds: settings.activeAutoResumeDuration),
+          activeAutoResumeDuration: Duration(milliseconds: settings.activeAutoResumeDuration),
           // 滚动动画曲线 - 使用设置中的值
           scrollCurve: _getCurve(settings.scrollCurve),
           // 禁用触摸事件 - 由GestureDetector处理
@@ -271,13 +317,13 @@ class _LyricsWidgetState extends State<LyricsWidget> {
             children: [
               // 歌词视图 - 支持滚轮滚动
               Listener(
-                behavior: HitTestBehavior.deferToChild,
-                onPointerSignal: (event) {
-                  if (event is PointerScrollEvent) {
-                    // 将滚轮滚动转为歌词拖动偏移，保持与手势一致的方向
-                    final dy = event.scrollDelta.dy;
-                    // setDragTranslationY 来自 LyricTouchMixin
-                    setDragTranslationY(scrollY - dy);
+                onPointerSignal: (pointerSignal) {
+                  if (pointerSignal is PointerScrollEvent) {
+                    // 触发拖动状态，让LyricView知道用户正在手动滚动
+                    _lyricController.isSelectingNotifier.value = true;
+                    
+                    // 延迟恢复到播放行 - 增加延迟时间到5秒
+                    _resetResumeTimer();
                   }
                 },
                 child: Stack(
@@ -292,9 +338,52 @@ class _LyricsWidgetState extends State<LyricsWidget> {
                         focusColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () {},
-                        child: LyricView(
-                          controller: _lyricController,
-                          style: adjustedStyle,
+                        child: ValueListenableBuilder(
+                          valueListenable: _lyricController.lyricNotifier,
+                          builder: (context, lyricModel, child) {
+                            if (lyricModel == null) return const SizedBox.shrink();
+                            
+                            return CustomScrollView(
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              slivers: [
+                                SliverPadding(
+                                  padding: EdgeInsets.zero,
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        final line = lyricModel.lines[index];
+                                        final isActive = index == _lyricController.activeIndexNotifiter.value;
+                                        final isSelecting = _lyricController.isSelectingNotifier.value;
+                                        
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              widget.onLineTap?.call(line.start);
+                                              _lyricController.stopSelection();
+                                            },
+                                            child: AnimatedDefaultTextStyle(
+                                              duration: const Duration(milliseconds: 200),
+                                              style: isActive
+                                                  ? adjustedStyle.activeStyle
+                                                  : adjustedStyle.textStyle,
+                                              child: Text(
+                                                line.mainText,
+                                                textAlign: adjustedStyle.lineTextAlign,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      childCount: lyricModel.lines.length,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                         ),
                       ),
                     ),
