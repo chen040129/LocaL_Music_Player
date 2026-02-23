@@ -14,6 +14,8 @@ import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
 import '../widgets/enhanced_lyrics_widget.dart';
 import '../widgets/album_cover_widget.dart';
+import '../widgets/custom_title_bar.dart';
+import '../services/system_tray_service.dart';
 
 // 自定义SliderTrackShape，用于控制进度条的宽度
 class CustomSliderTrackShape extends SliderTrackShape {
@@ -107,10 +109,6 @@ class LyricsPage extends StatefulWidget {
 }
 
 class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
-  bool _isHoveringPin = false;
-  bool _isHoveringMinimize = false;
-  bool _isHoveringMaximize = false;
-  bool _isHoveringClose = false;
   bool _isAlwaysOnTop = false;
   bool _isLiked = false;
   double _volume = 0.7;
@@ -131,6 +129,9 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   bool _isHoveringPrevious = false;
   bool _isHoveringPlayPause = false;
   bool _isHoveringNext = false;
+
+  // 系统托盘服务
+  final SystemTrayService _systemTrayService = SystemTrayService();
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -160,6 +161,9 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         final size = await windowManager.getSize();
         await windowManager.setSize(size);
       });
+
+      // 初始化系统托盘
+      _systemTrayService.initialize(context);
     }
 
     _fadeController = AnimationController(
@@ -181,6 +185,8 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   void dispose() {
     _fadeController.dispose();
     _pageSwitchController.dispose();
+    // 销毁系统托盘
+    _systemTrayService.destroy();
     // 恢复窗口透明度
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.setOpacity(1.0);
@@ -1424,54 +1430,44 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                       ),
                     ),
                     // 透明标题栏
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: AnimatedOpacity(
-                        opacity: _isImmersiveMode ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: Container(
-                          height: 32,
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              // 拖动区域
-                              Expanded(
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onPanStart: (Platform.isWindows ||
-                                          Platform.isLinux ||
-                                          Platform.isMacOS)
-                                      ? (_) => windowManager.startDragging()
-                                      : null,
-                                  child: Container(color: Colors.transparent),
-                                ),
-                              ),
-                              // 窗口控制按钮
-                              Consumer<SettingsProvider>(
-                                builder: (context, settings, child) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(
-                                      right: 3.6,
-                                      top: 3.6,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        _buildPinButton(),
-                                        _buildMinimizeButton(),
-                                        _buildMaximizeButton(),
-                                        _buildCloseButton(),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                    if (Platform.isWindows)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: AnimatedOpacity(
+                          opacity: _isImmersiveMode ? 0.0 : 1.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: CustomTitleBar(
+                            title: '歌词',
+                            onMinimize: () async {
+                              await windowManager.minimize();
+                            },
+                            onMaximize: () async {
+                              bool isMaximized = await windowManager.isMaximized();
+                              if (isMaximized) {
+                                await windowManager.unmaximize();
+                              } else {
+                                await windowManager.maximize();
+                              }
+                            },
+                            onClose: () async {
+                              await windowManager.close();
+                            },
+                            onAlwaysOnTop: () async {
+                              final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+                              await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
+                              setState(() {
+                                _isAlwaysOnTop = !isAlwaysOnTop;
+                              });
+                            },
+                            isAlwaysOnTop: _isAlwaysOnTop,
+                            onMinimizeToTray: () async {
+                              await _systemTrayService.minimizeToTray();
+                            },
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               );
@@ -1508,163 +1504,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildPinButton() {
-    final theme = Theme.of(context);
-    final iconColor = theme.iconTheme.color;
-    final colorScheme = theme.colorScheme;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHoveringPin = true),
-      onExit: (_) => setState(() => _isHoveringPin = false),
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(0),
-            child: InkWell(
-              onTap: () async {
-                final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
-                await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
-                setState(() {
-                  _isAlwaysOnTop = !_isAlwaysOnTop;
-                });
-              },
-              borderRadius: BorderRadius.circular(0),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              child: Container(
-                constraints: _iconButtonConstraints,
-                child: AnimatedScale(
-                  scale: _isHoveringPin ? _hoverScale : _normalScale,
-                  duration: _animationDuration,
-                  child: Icon(
-                    _isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
-                    size: _iconSize,
-                    color: _isAlwaysOnTop ? Colors.blue : iconColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMinimizeButton() {
-    final theme = Theme.of(context);
-    final iconColor = theme.iconTheme.color;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHoveringMinimize = true),
-      onExit: (_) => setState(() => _isHoveringMinimize = false),
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(0),
-            child: InkWell(
-              onTap: () => windowManager.minimize(),
-              borderRadius: BorderRadius.circular(0),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              child: Container(
-                constraints: _iconButtonConstraints,
-                child: AnimatedScale(
-                  scale: _isHoveringMinimize ? _hoverScale : _normalScale,
-                  duration: _animationDuration,
-                  child: Icon(
-                    CupertinoIcons.minus,
-                    size: _iconSize,
-                    color: iconColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMaximizeButton() {
-    final theme = Theme.of(context);
-    final iconColor = theme.iconTheme.color;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHoveringMaximize = true),
-      onExit: (_) => setState(() => _isHoveringMaximize = false),
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(0),
-            child: InkWell(
-              onTap: () => windowManager.maximize(),
-              borderRadius: BorderRadius.circular(0),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              child: Container(
-                constraints: _iconButtonConstraints,
-                child: AnimatedScale(
-                  scale: _isHoveringMaximize ? _hoverScale : _normalScale,
-                  duration: _animationDuration,
-                  child: Icon(
-                    CupertinoIcons.fullscreen,
-                    size: _iconSize,
-                    color: iconColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCloseButton() {
-    final theme = Theme.of(context);
-    final iconColor = theme.iconTheme.color;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHoveringClose = true),
-      onExit: (_) => setState(() => _isHoveringClose = false),
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(0),
-            child: InkWell(
-              onTap: () async {
-                // 触发窗口关闭事件，让main.dart中的onWindowClose处理
-                await windowManager.close();
-              },
-              borderRadius: BorderRadius.circular(0),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              child: Container(
-                constraints: _iconButtonConstraints,
-                child: AnimatedScale(
-                  scale: _isHoveringClose ? _hoverScale : _normalScale,
-                  duration: _animationDuration,
-                  child: Icon(
-                    CupertinoIcons.xmark,
-                    size: _iconSize,
-                    color: iconColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  // 移除了原有的标题栏按钮构建方法，现在使用CustomTitleBar组件
 
   Widget _buildTimeUnit(int value, String label, ColorScheme colorScheme) {
     return Column(

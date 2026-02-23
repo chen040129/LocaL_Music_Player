@@ -9,6 +9,8 @@ flutter:
   shaders:
     - shaders/liquidglass.frag
     - shaders/liquid_glass_player_bar.frag
+  assets:
+    - windows/runner/resources/app_icon.ico
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -48,6 +50,8 @@ dependencies:
   url_launcher: ^6.2.2
 
   window_manager: ^0.3.7
+  tray_manager: ^0.2.0
+  package_info_plus: ^4.2.0
 
   shared_preferences: ^2.2.2
   hive: ^2.2.3

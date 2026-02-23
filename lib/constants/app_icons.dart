@@ -27,6 +27,7 @@ class AppIcons {
   static const IconData minimize = CupertinoIcons.minus;
   static const IconData maximize = CupertinoIcons.fullscreen;
   static const IconData close = CupertinoIcons.xmark;
+  static const IconData tray = CupertinoIcons.rectangle_on_rectangle;
 
   // 侧边栏图标
   static const IconData sidebarLeft = CupertinoIcons.sidebar_left;

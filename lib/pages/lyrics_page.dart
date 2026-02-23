@@ -7,6 +7,8 @@ import 'dart:io' show Platform;
 import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
+import '../widgets/custom_title_bar.dart';
+import '../services/system_tray_service.dart';
 
 class LyricsPage extends StatefulWidget {
   const LyricsPage({Key? key}) : super(key: key);
@@ -16,11 +18,10 @@ class LyricsPage extends StatefulWidget {
 }
 
 class _LyricsPageState extends State<LyricsPage> {
-  bool _isHoveringPin = false;
-  bool _isHoveringMinimize = false;
-  bool _isHoveringMaximize = false;
-  bool _isHoveringClose = false;
   bool _isAlwaysOnTop = false;
+
+  // 系统托盘服务
+  final SystemTrayService _systemTrayService = SystemTrayService();
 
   static const Duration _animationDuration = Duration(milliseconds: 200);
   static const BoxConstraints _iconButtonConstraints = BoxConstraints(
@@ -36,6 +37,11 @@ class _LyricsPageState extends State<LyricsPage> {
   void initState() {
     super.initState();
     _checkAlwaysOnTop();
+
+    // 初始化系统托盘
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      _systemTrayService.initialize(context);
+    }
   }
 
   Future<void> _checkAlwaysOnTop() async {
@@ -45,6 +51,13 @@ class _LyricsPageState extends State<LyricsPage> {
         _isAlwaysOnTop = isAlwaysOnTop;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // 销毁系统托盘
+    _systemTrayService.destroy();
+    super.dispose();
   }
 
   @override
@@ -183,16 +196,41 @@ class _LyricsPageState extends State<LyricsPage> {
               ),
               ),
               // 透明标题栏
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 32,
-                  color: Colors.transparent,
-                  child: Row(
-                    children: [
-                      // 拖动区域
+              if (Platform.isWindows)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: CustomTitleBar(
+                    title: '歌词',
+                    onMinimize: () async {
+                      await windowManager.minimize();
+                    },
+                    onMaximize: () async {
+                      bool isMaximized = await windowManager.isMaximized();
+                      if (isMaximized) {
+                        await windowManager.unmaximize();
+                      } else {
+                        await windowManager.maximize();
+                      }
+                    },
+                    onClose: () async {
+                      await windowManager.close();
+                    },
+                    onAlwaysOnTop: () async {
+                      final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
+                      await windowManager.setAlwaysOnTop(!isAlwaysOnTop);
+                      setState(() {
+                        _isAlwaysOnTop = !isAlwaysOnTop;
+                      });
+                    },
+                    isAlwaysOnTop: _isAlwaysOnTop,
+                    onMinimizeToTray: () async {
+                      await _systemTrayService.minimizeToTray();
+                    },
+                  ),
+                ),
+              ),
                       Expanded(
                         child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
@@ -203,13 +241,18 @@ class _LyricsPageState extends State<LyricsPage> {
                         ),
                       ),
                       // 窗口控制按钮
-                      Row(
-                        children: [
-                          _buildPinButton(),
-                          _buildMinimizeButton(),
-                          _buildMaximizeButton(),
-                          _buildCloseButton(),
-                        ],
+                      SizedBox(
+                        width: 160, // 增加窗口控制按钮区域的宽度
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _buildPinButton(),
+                            _buildTrayButton(),
+                            _buildMinimizeButton(),
+                            _buildMaximizeButton(),
+                            _buildCloseButton(),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -255,6 +298,42 @@ class _LyricsPageState extends State<LyricsPage> {
           },
           padding: EdgeInsets.zero,
           constraints: _iconButtonConstraints,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrayButton() {
+    final theme = Theme.of(context);
+    final iconColor = theme.iconTheme.color;
+    final hoverBackgroundColor = theme.colorScheme.surfaceContainerHighest.withOpacity(0.5);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringTray = true),
+      onExit: (_) => setState(() => _isHoveringTray = false),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(0),
+        child: InkWell(
+          onTap: () async {
+            _minimizeToTray();
+          },
+          borderRadius: BorderRadius.circular(0),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          child: Container(
+            constraints: _iconButtonConstraints,
+            child: AnimatedScale(
+              scale: _isHoveringTray ? _hoverScale : _normalScale,
+              duration: _animationDuration,
+              child: Icon(
+                Icons.keyboard_arrow_down,
+                size: _iconSize,
+                color: iconColor,
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -15,6 +15,7 @@ import 'package:flutter_music_player/pages/albums_page.dart';
 import 'providers/navigation_provider.dart';
 import 'widgets/animated_theme.dart';
 import 'services/global_hotkey_service.dart';
+import 'services/system_tray_service.dart';
 
 // 全局变量保存Provider引用
 MusicProvider? globalMusicProvider;
@@ -22,6 +23,7 @@ PlayerProvider? globalPlayerProvider;
 bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
 final globalLiquidGlassViewController = LiquidGlassViewController();
 final globalHotkeyService = GlobalHotkeyService();
+final globalSystemTrayService = SystemTrayService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,17 +95,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
   void onWindowClose() async {
     // 先隐藏窗口，让用户感觉立即关闭
     await windowManager.hide();
-    // 保存播放进度
-    if (globalPlayerProvider != null) {
-      await globalPlayerProvider!.savePlayProgress();
-      globalPlayerProvider!.stop();
-    }
-    // 然后在后台保存数据
-    if (globalMusicProvider != null) {
-      await globalMusicProvider!.saveData();
-    }
-    // 最后彻底关闭窗口
-    await windowManager.destroy();
+    // 最小化到托盘而不是关闭
+    await globalSystemTrayService.minimizeToTray();
   }
 
   @override

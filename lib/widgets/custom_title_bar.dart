@@ -14,6 +14,7 @@ class CustomTitleBar extends StatefulWidget {
   final VoidCallback onAlwaysOnTop;
   final bool isAlwaysOnTop;
   final VoidCallback? onToggleSidebar;
+  final VoidCallback? onMinimizeToTray;
 
   const CustomTitleBar({
     Key? key,
@@ -24,6 +25,7 @@ class CustomTitleBar extends StatefulWidget {
     required this.onAlwaysOnTop,
     this.isAlwaysOnTop = false,
     this.onToggleSidebar,
+    this.onMinimizeToTray,
   }) : super(key: key);
 
   @override
@@ -35,6 +37,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
   bool _isHoveringMinimize = false;
   bool _isHoveringMaximize = false;
   bool _isHoveringClose = false;
+  bool _isHoveringTray = false;
   Size? _windowSize;
 
   // 缓存平台检查结果，避免每次build都检查
@@ -95,6 +98,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
               Row(
                 children: [
                   _buildPinButton(hoverBackgroundColor),
+                  if (widget.onMinimizeToTray != null) _buildTrayButton(hoverBackgroundColor, iconColor),
                   _buildMinimizeButton(hoverBackgroundColor, iconColor),
                   _buildMaximizeButton(iconColor),
                   _buildCloseButton(iconColor),
@@ -131,6 +135,40 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
                     widget.isAlwaysOnTop ? AppIcons.pinFill : AppIcons.pin,
                     size: _iconSize,
                     color: widget.isAlwaysOnTop ? Colors.blue : null,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTrayButton(Color hoverBackgroundColor, Color? iconColor) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHoveringTray = true),
+      onExit: (_) => setState(() => _isHoveringTray = false),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+            child: InkWell(
+              onTap: widget.onMinimizeToTray,
+              borderRadius: BorderRadius.circular(settings.borderRadius),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                constraints: _iconButtonConstraints,
+                child: AnimatedScale(
+                  scale: _isHoveringTray ? _hoverScale : _normalScale,
+                  duration: _animationDuration,
+                  child: Icon(
+                    AppIcons.tray,
+                    size: _iconSize,
+                    color: iconColor,
                   ),
                 ),
               ),
