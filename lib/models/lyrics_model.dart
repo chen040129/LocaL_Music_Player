@@ -23,7 +23,7 @@ class Lyrics {
   });
 
   /// 解析LRC格式歌词
-  factory Lyrics.parseLrc(String lrcContent) {
+  factory Lyrics.parseLrc(String lrcContent, {String? source}) {
     final lyricsLines = <LyricsLine>[];
     final regex = RegExp(r'\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)');
 
@@ -45,7 +45,7 @@ class Lyrics {
     // 按时间排序
     lyricsLines.sort((a, b) => a.time.compareTo(b.time));
 
-    return Lyrics(lines: lyricsLines, source: 'lrc');
+    return Lyrics(lines: lyricsLines, source: source ?? 'lrc');
   }
 
   /// 根据当前播放时间获取当前歌词行索引

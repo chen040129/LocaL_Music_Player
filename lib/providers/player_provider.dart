@@ -44,6 +44,7 @@ class PlayerProvider with ChangeNotifier {
   DateTime? _lastRecordTime; // 上次记录的时间
   int _totalPlayDuration = 0; // 总播放时长（秒）
   String? _currentLyricsRaw; // 当前原始歌词内容
+  String? _currentLyricsSource; // 当前歌词来源
 
   // 播放列表
   List<MusicInfo> _playlist = [];
@@ -334,6 +335,7 @@ class PlayerProvider with ChangeNotifier {
   String? get sourceIdentifier => _sourceIdentifier;
   MusicInfo? get currentMusic => _currentMusic;
   String? get currentLyrics => _currentLyrics;
+  String? get currentLyricsSource => _currentLyricsSource;
   int get totalPlayDuration => _totalPlayDuration;
   
   // 倒计时相关getter
@@ -947,10 +949,12 @@ class PlayerProvider with ChangeNotifier {
       if (lyrics != null && lyrics.hasLyrics) {
         _currentLyricsRaw = LyricsService.lyricsToLrc(lyrics);
         _currentLyrics = _currentLyricsRaw!;
-        debugPrint('歌词加载成功，共 ${lyrics.lines.length} 行');
+        _currentLyricsSource = lyrics.source;
+        debugPrint('歌词加载成功，共 ${lyrics.lines.length} 行，来源: ${lyrics.source}');
       } else {
         _currentLyricsRaw = LyricsService.getDefaultLyrics();
         _currentLyrics = _currentLyricsRaw!;
+        _currentLyricsSource = 'default';
         debugPrint('未找到歌词文件，使用默认歌词');
       }
       notifyListeners();
@@ -958,13 +962,15 @@ class PlayerProvider with ChangeNotifier {
       debugPrint('加载歌词失败: $e');
       _currentLyricsRaw = LyricsService.getDefaultLyrics();
       _currentLyrics = _currentLyricsRaw!;
+      _currentLyricsSource = 'default';
       notifyListeners();
     }
   }
 
   /// 手动设置歌词
-  void setLyrics(String lyrics) {
+  void setLyrics(String lyrics, {String? source}) {
     _currentLyrics = lyrics;
+    _currentLyricsSource = source ?? 'manual';
     notifyListeners();
   }
 
