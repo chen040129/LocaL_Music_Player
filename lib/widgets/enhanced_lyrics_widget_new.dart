@@ -51,7 +51,9 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
     // 修改歌词加载方式，添加前导空行以确保第一句歌词居中显示
     // 在歌词前添加一些空行，使第一句歌词能够显示在中间位置
     final emptyLines = List<String>.filled(10, '[00:00.00]');
-    final modifiedLyrics = emptyLines.join('\n') + '\n' + widget.lyrics;
+    final modifiedLyrics = emptyLines.join('
+') + '
+' + widget.lyrics;
 
     // 加载修改后的歌词
     _lyricController.loadLyric(modifiedLyrics);
@@ -89,7 +91,9 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
       // 修改歌词加载方式，添加前导空行以确保第一句歌词居中显示
       // 在歌词前添加一些空行，使第一句歌词能够显示在中间位置
       final emptyLines = List<String>.filled(10, '[00:00.00]');
-      final modifiedLyrics = emptyLines.join('\n') + '\n' + widget.lyrics;
+      final modifiedLyrics = emptyLines.join('
+') + '
+' + widget.lyrics;
 
       // 加载修改后的歌词
       _lyricController.loadLyric(modifiedLyrics);

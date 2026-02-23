@@ -47,31 +47,22 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
   void initState() {
     super.initState();
     _lyricController = LyricController();
-
-    // 修改歌词加载方式，添加前导空行以确保第一句歌词居中显示
-    // 在歌词前添加一些空行，使第一句歌词能够显示在中间位置
-    final emptyLines = List<String>.filled(10, '[00:00.00]');
-    final modifiedLyrics = emptyLines.join('\n') + '\n' + widget.lyrics;
-
-    // 加载修改后的歌词
-    _lyricController.loadLyric(modifiedLyrics);
+    // 直接加载歌词，不添加空白行
+    _lyricController.loadLyric(widget.lyrics);
 
     // 初始化时立即设置进度为0，确保第一句歌词显示在中间
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // 使用一个简单的延迟来确保UI已经完全加载
-      Future.delayed(const Duration(milliseconds: 200), () {
-        // 设置进度为第一个非空行，确保第一句歌词显示在中间
+      Future.delayed(const Duration(milliseconds: 50), () {
+        // 先设置进度为0，确保第一句歌词显示在中间
         _lyricController.setProgress(Duration.zero);
 
-        // 等待一小段时间，确保设置生效
-        Future.delayed(const Duration(milliseconds: 100), () {
-          // 立即触发动画，确保歌词居中显示
-          _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
+        // 立即触发动画，确保歌词居中显示
+        _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
 
-          // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
-          Future.delayed(const Duration(milliseconds: 100), () {
-            _lyricController.setProgress(widget.position);
-          });
+        // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _lyricController.setProgress(widget.position);
         });
       });
     });
@@ -86,33 +77,24 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
   void didUpdateWidget(EnhancedLyricsWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.lyrics != widget.lyrics) {
-      // 修改歌词加载方式，添加前导空行以确保第一句歌词居中显示
-      // 在歌词前添加一些空行，使第一句歌词能够显示在中间位置
-      final emptyLines = List<String>.filled(10, '[00:00.00]');
-      final modifiedLyrics = emptyLines.join('\n') + '\n' + widget.lyrics;
-
-      // 加载修改后的歌词
-      _lyricController.loadLyric(modifiedLyrics);
+      // 直接加载歌词，不添加空白行
+      _lyricController.loadLyric(widget.lyrics);
 
       // 加载新歌词后，设置初始位置为中间
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // 使用一个简单的延迟来确保UI已经完全加载
-        Future.delayed(const Duration(milliseconds: 200), () {
-          // 设置进度为第一个非空行，确保第一句歌词显示在中间
+        Future.delayed(const Duration(milliseconds: 50), () {
+          // 先设置进度为0，确保第一句歌词显示在中间
           _lyricController.setProgress(Duration.zero);
 
-          // 等待一小段时间，确保设置生效
+          // 立即触发动画，确保歌词居中显示
+          _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
+
+          // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
           Future.delayed(const Duration(milliseconds: 100), () {
-            // 立即触发动画，确保歌词居中显示
-            _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
-
-            // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
-            Future.delayed(const Duration(milliseconds: 100), () {
-              _lyricController.setProgress(widget.position);
-
-              // 确保切换歌曲时不会显示虚线和时间
-              _lyricController.isSelectingNotifier.value = false;
-            });
+            _lyricController.setProgress(widget.position);
+            // 确保切换歌曲时不会显示虚线和时间
+            _lyricController.isSelectingNotifier.value = false;
           });
         });
       });
