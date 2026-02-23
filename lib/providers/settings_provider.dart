@@ -108,6 +108,11 @@ class SettingsProvider with ChangeNotifier {
   double _activeLyricsFontSize = 22.0; // 当前歌词字体大小
   bool _showTranslation = true;        // 是否显示翻译
   bool _enableLyricsBlur = true;       // 是否启用歌词模糊
+  double _fadeRangeTop = 200.0;       // 歌词顶部渐变范围
+  double _fadeRangeBottom = 200.0;     // 歌词底部渐变范围
+  int _fadeDirection = 0;              // 渐变方向 (0: 上下, 1: 左右, 2: 对角线)
+  double _fadeOpacity = 0.8;            // 渐变不透明度
+  int _blendModeIndex = 0;             // 混合模式索引
   bool _useCustomBlur = true;           // 是否使用自定义模糊效果（而不是内置渐变）
   bool _enableLyricsSelectionEffects = true;  // 是否启用歌词选择效果
   LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow;  // 歌词效果类型
@@ -207,6 +212,67 @@ class SettingsProvider with ChangeNotifier {
   double get activeLyricsFontSize => _activeLyricsFontSize;
   bool get showTranslation => _showTranslation;
   bool get enableLyricsBlur => _enableLyricsBlur;
+  double get fadeRangeTop => _fadeRangeTop;
+  double get fadeRangeBottom => _fadeRangeBottom;
+  int get fadeDirection => _fadeDirection;
+  double get fadeOpacity => _fadeOpacity;
+  int get blendModeIndex => _blendModeIndex;
+
+  // 获取混合模式
+  BlendMode get blendMode {
+    switch (_blendModeIndex) {
+      case 0:
+        return BlendMode.dstIn;
+      case 1:
+        return BlendMode.dstOut;
+      case 2:
+        return BlendMode.srcIn;
+      case 3:
+        return BlendMode.srcOut;
+      case 4:
+        return BlendMode.srcATop;
+      case 5:
+        return BlendMode.dstATop;
+      case 6:
+        return BlendMode.xor;
+      case 7:
+        return BlendMode.plus;
+      case 8:
+        return BlendMode.modulate;
+      case 9:
+        return BlendMode.screen;
+      case 10:
+        return BlendMode.overlay;
+      case 11:
+        return BlendMode.darken;
+      case 12:
+        return BlendMode.lighten;
+      case 13:
+        return BlendMode.colorDodge;
+      case 14:
+        return BlendMode.colorBurn;
+      case 15:
+        return BlendMode.hardLight;
+      case 16:
+        return BlendMode.softLight;
+      case 17:
+        return BlendMode.difference;
+      case 18:
+        return BlendMode.exclusion;
+      case 19:
+        return BlendMode.multiply;
+      case 20:
+        return BlendMode.hue;
+      case 21:
+        return BlendMode.saturation;
+      case 22:
+        return BlendMode.color;
+      case 23:
+        return BlendMode.luminosity;
+      default:
+        return BlendMode.dstIn;
+    }
+  }
   bool get useCustomBlur => _useCustomBlur;
   bool get enableLyricsSelectionEffects => _enableLyricsSelectionEffects;
   LyricsEffectType get lyricsEffectType => _lyricsEffectType;
@@ -281,6 +347,11 @@ class SettingsProvider with ChangeNotifier {
     _activeLyricsFontSize = (prefs.getDouble('active_lyrics_font_size') ?? 22.0).toDouble();
     _showTranslation = prefs.getBool('show_translation') ?? true;
     _enableLyricsBlur = prefs.getBool('enable_lyrics_blur') ?? true;
+    _fadeRangeTop = (prefs.getDouble('fade_range_top') ?? 200.0);
+    _fadeRangeBottom = (prefs.getDouble('fade_range_bottom') ?? 200.0);
+    _fadeDirection = (prefs.getInt('fade_direction') ?? 0);
+    _fadeOpacity = (prefs.getDouble('fade_opacity') ?? 0.8);
+    _blendModeIndex = (prefs.getInt('blend_mode_index') ?? 0);
     _useCustomBlur = prefs.getBool('use_custom_blur') ?? true;
     _enableLyricsSelectionEffects = prefs.getBool('enable_lyrics_selection_effects') ?? true;
     final lyricsEffectTypeIndex = prefs.getInt('lyrics_effect_type') ?? 0;
@@ -519,13 +590,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setLyricsFontSize(double value) async {
-    _lyricsFontSize = value.clamp(12.0, 24.0);
+    _lyricsFontSize = value.clamp(12.0, 32.0);
     await _saveSetting('lyrics_font_size', _lyricsFontSize);
     notifyListeners();
   }
 
   Future<void> setActiveLyricsFontSize(double value) async {
-    _activeLyricsFontSize = value.clamp(16.0, 32.0);
+    _activeLyricsFontSize = value.clamp(16.0, 36.0);
     await _saveSetting('active_lyrics_font_size', _activeLyricsFontSize);
     notifyListeners();
   }
@@ -539,6 +610,36 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setEnableLyricsBlur(bool value) async {
     _enableLyricsBlur = value;
     await _saveSetting('enable_lyrics_blur', value);
+    notifyListeners();
+  }
+
+  Future<void> setFadeRangeTop(double value) async {
+    _fadeRangeTop = value.clamp(50.0, 500.0);
+    await _saveSetting('fade_range_top', _fadeRangeTop);
+    notifyListeners();
+  }
+
+  Future<void> setFadeRangeBottom(double value) async {
+    _fadeRangeBottom = value.clamp(50.0, 500.0);
+    await _saveSetting('fade_range_bottom', _fadeRangeBottom);
+    notifyListeners();
+  }
+
+  Future<void> setFadeDirection(int value) async {
+    _fadeDirection = value.clamp(0, 2);
+    await _saveSetting('fade_direction', _fadeDirection);
+    notifyListeners();
+  }
+
+  Future<void> setFadeOpacity(double value) async {
+    _fadeOpacity = value.clamp(0.1, 1.0);
+    await _saveSetting('fade_opacity', _fadeOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setBlendModeIndex(int value) async {
+    _blendModeIndex = value.clamp(0, 23);
+    await _saveSetting('blend_mode_index', _blendModeIndex);
     notifyListeners();
   }
 
@@ -561,7 +662,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setLyricsLineGap(int value) async {
-    _lyricsLineGap = value.clamp(4, 16);
+    _lyricsLineGap = value.clamp(4, 20);
     await _saveSetting('lyrics_line_gap', _lyricsLineGap);
     notifyListeners();
   }

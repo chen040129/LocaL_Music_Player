@@ -8,6 +8,7 @@ flutter:
   uses-material-design: true
   shaders:
     - shaders/liquidglass.frag
+    - shaders/liquid_glass_player_bar.frag
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

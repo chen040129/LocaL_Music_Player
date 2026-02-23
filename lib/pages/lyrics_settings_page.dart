@@ -29,9 +29,28 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader('歌词显示设置'),
+                  // 基础设置
+                  _buildSectionHeader('基础设置'),
                   const SizedBox(height: 16),
-                  _buildLyricsSettings(context),
+                  _buildBasicSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 字体设置
+                  _buildSectionHeader('字体设置'),
+                  const SizedBox(height: 16),
+                  _buildFontSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 渐变效果设置
+                  _buildSectionHeader('渐变效果'),
+                  const SizedBox(height: 16),
+                  _buildGradientSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 动画设置
+                  _buildSectionHeader('动画效果'),
+                  const SizedBox(height: 16),
+                  _buildAnimationSettings(context),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],
@@ -97,8 +116,8 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
     );
   }
 
-  /// 构建歌词设置
-  Widget _buildLyricsSettings(BuildContext context) {
+  /// 构建基础设置
+  Widget _buildBasicSettings(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
         return Card(
@@ -125,25 +144,63 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                 ),
                 const Divider(height: 32),
 
-                // 歌词效果类型
-                _buildLyricsEffectTypeTile(
-                  title: '歌词效果',
-                  subtitle: '选择歌词的视觉效果',
-                  icon: CupertinoIcons.photo,
-                  value: settings.lyricsEffectType,
-                  onChanged: (value) async => await settings.setLyricsEffectType(value),
+                // 显示翻译开关
+                _buildSwitchTile(
+                  title: '显示翻译',
+                  subtitle: '显示歌词的翻译文本',
+                  icon: CupertinoIcons.globe,
+                  value: settings.showTranslation,
+                  onChanged: (value) => settings.setShowTranslation(value),
                 ),
                 const Divider(height: 32),
 
+                // 歌词行间距滑块
+                _buildSliderTile(
+                  title: '歌词行间距',
+                  subtitle: '调整歌词行之间的间距',
+                  icon: CupertinoIcons.line_horizontal_3,
+                  value: settings.lyricsLineGap.toDouble(),
+                  min: 4.0,
+                  max: 20.0,
+                  divisions: 16,
+                  label: '${settings.lyricsLineGap}',
+                  onChanged: (value) => settings.setLyricsLineGap(value.toInt()),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建字体设置
+  Widget _buildFontSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 // 歌词字体大小滑块
                 _buildSliderTile(
-                  title: '歌词字体大小',
+                  title: '普通歌词字体大小',
                   subtitle: '调整普通歌词的字体大小',
                   icon: CupertinoIcons.textformat,
                   value: settings.lyricsFontSize,
                   min: 12.0,
-                  max: 24.0,
-                  divisions: 12,
+                  max: 32.0,
+                  divisions: 20,
                   label: '${settings.lyricsFontSize.toInt()}',
                   onChanged: (value) => settings.setLyricsFontSize(value),
                 ),
@@ -156,52 +213,20 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   icon: CupertinoIcons.textformat_size,
                   value: settings.activeLyricsFontSize,
                   min: 16.0,
-                  max: 32.0,
-                  divisions: 16,
+                  max: 36.0,
+                  divisions: 20,
                   label: '${settings.activeLyricsFontSize.toInt()}',
                   onChanged: (value) => settings.setActiveLyricsFontSize(value),
                 ),
                 const Divider(height: 32),
 
-                // 显示翻译开关
-                _buildSwitchTile(
-                  title: '显示翻译',
-                  subtitle: '显示歌词的翻译文本',
-                  icon: CupertinoIcons.globe,
-                  value: settings.showTranslation,
-                  onChanged: (value) => settings.setShowTranslation(value),
-                ),
-                const Divider(height: 32),
-
-                // 启用歌词模糊开关
-                _buildSwitchTile(
-                  title: '启用歌词模糊',
-                  subtitle: '在歌词上下区域添加模糊效果',
+                // 歌词效果类型
+                _buildLyricsEffectTypeTile(
+                  title: '歌词效果',
+                  subtitle: '选择歌词的视觉效果',
                   icon: CupertinoIcons.photo,
-                  value: settings.enableLyricsBlur,
-                  onChanged: (value) => settings.setEnableLyricsBlur(value),
-                ),
-                if (settings.enableLyricsBlur) ...
-[
-                  const SizedBox(height: 16),
-                  // 使用自定义模糊效果开关
-                  _buildSwitchTile(
-                    title: '使用自定义模糊',
-                    subtitle: '使用自定义高斯模糊效果（关闭则使用内置渐变效果）',
-                    icon: CupertinoIcons.slider_horizontal_3,
-                    value: settings.useCustomBlur,
-                    onChanged: (value) => settings.setUseCustomBlur(value),
-                  ),
-                ],
-                const Divider(height: 32),
-
-                // 启用歌词选择效果开关
-                _buildSwitchTile(
-                  title: '启用歌词选择效果',
-                  subtitle: '在歌词行选择时显示特殊效果',
-                  icon: CupertinoIcons.pin,
-                  value: settings.enableLyricsSelectionEffects,
-                  onChanged: (value) => settings.setEnableLyricsSelectionEffects(value),
+                  value: settings.lyricsEffectType,
+                  onChanged: (value) async => await settings.setLyricsEffectType(value),
                 ),
                 const Divider(height: 32),
 
@@ -217,19 +242,146 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   label: '${(settings.lyricsOpacity * 100).toInt()}%',
                   onChanged: (value) => settings.setLyricsOpacity(value),
                 ),
-                const Divider(height: 32),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-                // 歌词行间距滑块
-                _buildSliderTile(
-                  title: '歌词行间距',
-                  subtitle: '调整歌词行之间的间距',
-                  icon: CupertinoIcons.line_horizontal_3,
-                  value: settings.lyricsLineGap.toDouble(),
-                  min: 4.0,
-                  max: 16.0,
-                  divisions: 12,
-                  label: '${settings.lyricsLineGap}',
-                  onChanged: (value) => settings.setLyricsLineGap(value.toInt()),
+  /// 构建渐变效果设置
+  Widget _buildGradientSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 启用歌词模糊开关
+                _buildSwitchTile(
+                  title: '启用歌词模糊',
+                  subtitle: '在歌词上下区域添加模糊效果',
+                  icon: CupertinoIcons.photo,
+                  value: settings.enableLyricsBlur,
+                  onChanged: (value) => settings.setEnableLyricsBlur(value),
+                ),
+
+                if (settings.enableLyricsBlur) ...[
+                  const SizedBox(height: 16),
+                  _buildSliderTile(
+                    title: '顶部渐变范围',
+                    subtitle: '调整歌词顶部渐变效果的范围',
+                    icon: CupertinoIcons.arrow_up,
+                    value: settings.fadeRangeTop,
+                    min: 50.0,
+                    max: 500.0,
+                    divisions: 45,
+                    label: '${settings.fadeRangeTop.round()}',
+                    onChanged: (value) => settings.setFadeRangeTop(value),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSliderTile(
+                    title: '底部渐变范围',
+                    subtitle: '调整歌词底部渐变效果的范围',
+                    icon: CupertinoIcons.arrow_down,
+                    value: settings.fadeRangeBottom,
+                    min: 50.0,
+                    max: 500.0,
+                    divisions: 45,
+                    label: '${settings.fadeRangeBottom.round()}',
+                    onChanged: (value) => settings.setFadeRangeBottom(value),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSliderTile(
+                    title: '渐变不透明度',
+                    subtitle: '调整渐变效果的不透明度',
+                    icon: CupertinoIcons.photo,
+                    value: settings.fadeOpacity,
+                    min: 0.1,
+                    max: 1.0,
+                    divisions: 18,
+                    label: '${(settings.fadeOpacity * 100).round()}%',
+                    onChanged: (value) => settings.setFadeOpacity(value),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAlignmentTile(
+                    title: '渐变方向',
+                    subtitle: '选择渐变效果的方向',
+                    icon: CupertinoIcons.arrow_up,
+                    value: settings.fadeDirection == 0 
+                        ? LyricsAlignment.left 
+                        : settings.fadeDirection == 1 
+                            ? LyricsAlignment.center 
+                            : LyricsAlignment.right,
+                    onChanged: (value) {
+                      final direction = value == LyricsAlignment.left 
+                          ? 0 
+                          : value == LyricsAlignment.center 
+                              ? 1 
+                              : 2;
+                      settings.setFadeDirection(direction);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSegmentTile(
+                    title: '混合模式',
+                    subtitle: '选择渐变效果的混合模式',
+                    icon: CupertinoIcons.color_filter,
+                    value: settings.blendModeIndex,
+                    options: const [
+                      'DstIn', 'DstOut', 'SrcIn', 'SrcOut', 'SrcATop', 'DstATop',
+                      'Xor', 'Plus', 'Modulate', 'Screen', 'Overlay',
+                      'Darken', 'Lighten', 'ColorDodge', 'ColorBurn',
+                      'HardLight', 'SoftLight', 'Difference', 'Exclusion',
+                      'Multiply', 'Hue', 'Saturation', 'Color', 'Luminosity'
+                    ],
+                    onChanged: (index) => settings.setBlendModeIndex(index),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建动画设置
+  Widget _buildAnimationSettings(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 启用歌词选择效果开关
+                _buildSwitchTile(
+                  title: '启用歌词选择效果',
+                  subtitle: '在歌词行选择时显示特殊效果',
+                  icon: CupertinoIcons.pin,
+                  value: settings.enableLyricsSelectionEffects,
+                  onChanged: (value) => settings.setEnableLyricsSelectionEffects(value),
                 ),
                 const Divider(height: 32),
 
@@ -580,6 +732,85 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
     );
   }
 
+  /// 构建分段选择项
+  Widget _buildSegmentTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required int value,
+    required List<String> options,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(options.length, (index) {
+              final isSelected = value == index;
+              return Padding(
+                padding: EdgeInsets.only(right: index < options.length - 1 ? 8 : 0),
+                child: FilterChip(
+                  label: Text(options[index]),
+                  selected: isSelected,
+                  onSelected: (bool selected) {
+                    if (selected) {
+                      onChanged(index);
+                    }
+                  },
+                  selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  checkmarkColor: Theme.of(context).colorScheme.primary,
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 构建滚动曲线选择项
   Widget _buildCurveTile({
     required String title,
@@ -677,6 +908,29 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // 添加曲线预览组件
+        Container(
+          height: 160,
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            ),
+          ),
+          child: Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              // 导入曲线预览组件
+              return _CurvePreviewWidget(
+                curve: _getCurve(value),
+                duration: settings.scrollDuration.toDouble() / 1000,
+              );
+            },
+          ),
+        ),
+
         ...curveCategories.entries.map((entry) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,5 +970,289 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
         }).toList(),
       ],
     );
+  }
+
+  // 根据字符串获取对应的Curve对象
+  Curve _getCurve(String curveName) {
+    switch (curveName) {
+      case 'linear':
+        return Curves.linear;
+      case 'ease':
+        return Curves.ease;
+      case 'easeIn':
+        return Curves.easeIn;
+      case 'easeOut':
+        return Curves.easeOut;
+      case 'easeInOut':
+        return Curves.easeInOut;
+      case 'easeInCubic':
+        return Curves.easeInCubic;
+      case 'easeOutCubic':
+        return Curves.easeOutCubic;
+      case 'easeInOutCubic':
+        return Curves.easeInOutCubic;
+      case 'easeInQuad':
+        return Curves.easeInQuad;
+      case 'easeOutQuad':
+        return Curves.easeOutQuad;
+      case 'easeInOutQuad':
+        return Curves.easeInOutQuad;
+      case 'easeInQuart':
+        return Curves.easeInQuart;
+      case 'easeOutQuart':
+        return Curves.easeOutQuart;
+      case 'easeInOutQuart':
+        return Curves.easeInOutQuart;
+      case 'easeInSine':
+        return Curves.easeInSine;
+      case 'easeOutSine':
+        return Curves.easeOutSine;
+      case 'easeInOutSine':
+        return Curves.easeInOutSine;
+      case 'easeInQuint':
+        return Curves.easeInQuint;
+      case 'easeOutQuint':
+        return Curves.easeOutQuint;
+      case 'easeInOutQuint':
+        return Curves.easeInOutQuint;
+      case 'easeInExpo':
+        return Curves.easeInExpo;
+      case 'easeOutExpo':
+        return Curves.easeOutExpo;
+      case 'easeInOutExpo':
+        return Curves.easeInOutExpo;
+      case 'easeInCirc':
+        return Curves.easeInCirc;
+      case 'easeOutCirc':
+        return Curves.easeOutCirc;
+      case 'easeInOutCirc':
+        return Curves.easeInOutCirc;
+      case 'easeInBack':
+        return Curves.easeInBack;
+      case 'easeOutBack':
+        return Curves.easeOutBack;
+      case 'easeInOutBack':
+        return Curves.easeInOutBack;
+      case 'fastOutSlowIn':
+        return Curves.fastOutSlowIn;
+      case 'slowMiddle':
+        return Curves.slowMiddle;
+      case 'elasticOut':
+        return Curves.elasticOut;
+      case 'elasticIn':
+        return Curves.elasticIn;
+      case 'elasticInOut':
+        return Curves.elasticInOut;
+      default:
+        return Curves.easeInOutCubic;
+    }
+  }
+}
+
+// 曲线预览组件
+class _CurvePreviewWidget extends StatefulWidget {
+  final Curve curve;
+  final double duration;
+
+  const _CurvePreviewWidget({
+    Key? key,
+    required this.curve,
+    required this.duration,
+  }) : super(key: key);
+
+  @override
+  State<_CurvePreviewWidget> createState() => _CurvePreviewWidgetState();
+}
+
+class _CurvePreviewWidgetState extends State<_CurvePreviewWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: (widget.duration * 1000).round()),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: widget.curve),
+    );
+
+    _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_CurvePreviewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 如果动画时长改变，更新动画控制器
+    if (oldWidget.duration != widget.duration) {
+      _controller.duration = Duration(milliseconds: (widget.duration * 1000).round());
+      if (_controller.isAnimating) {
+        _controller.reset();
+        _controller.repeat();
+      }
+    }
+
+    // 如果曲线改变，更新动画曲线
+    if (oldWidget.curve != widget.curve) {
+      _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _controller, curve: widget.curve),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _CurvePreviewPainter(
+            curve: widget.curve,
+            duration: widget.duration,
+            progress: _animation.value,
+          ),
+          child: Container(),
+        );
+      },
+    );
+  }
+}
+
+// 曲线预览绘制器
+class _CurvePreviewPainter extends CustomPainter {
+  final Curve curve;
+  final double duration;
+  final double progress;
+
+  _CurvePreviewPainter({
+    required this.curve,
+    required this.duration,
+    required this.progress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制背景
+    final bgPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final bgRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(bgRect, bgPaint);
+
+    // 绘制坐标轴
+    final axisPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.5)
+      ..strokeWidth = 1.5;
+
+    // X轴
+    canvas.drawLine(
+      Offset(15, size.height - 15),
+      Offset(size.width - 15, size.height - 15),
+      axisPaint,
+    );
+
+    // Y轴
+    canvas.drawLine(
+      Offset(15, 15),
+      Offset(15, size.height - 15),
+      axisPaint,
+    );
+
+    // 绘制曲线
+    final curvePaint = Paint()
+      ..color = Colors.blue
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    final curvePath = Path();
+    final curveWidth = size.width - 30;
+    final curveHeight = size.height - 30;
+
+    // 绘制曲线
+    for (double t = 0; t <= 1.0; t += 0.01) {
+      final x = 15 + t * curveWidth;
+      final y = size.height - 15 - curve.transform(t) * curveHeight;
+
+      if (t == 0) {
+        curvePath.moveTo(x, y);
+      } else {
+        curvePath.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(curvePath, curvePaint);
+
+    // 绘制动画点
+    final animationPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    // 确保动画点不会超出边界
+    final adjustedProgress = progress.clamp(0.0, 0.99);  // 使用0.99而不是1.0，防止超出边界
+
+    // 计算动画点位置，确保从左下角开始
+    final startX = 15.0;  // X轴起点
+    final startY = size.height - 15.0;  // Y轴起点
+
+    // 计算当前点位置
+    final pointX = startX + adjustedProgress * curveWidth;
+    final pointY = startY - curve.transform(adjustedProgress) * curveHeight;
+
+    // 绘制动画点
+    canvas.drawCircle(Offset(pointX, pointY), 6.0, animationPaint);
+
+    // 绘制动画点轨迹
+    final trailPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    // 绘制轨迹点
+    for (double t = 0; t <= adjustedProgress; t += 0.02) {
+      final trailX = startX + t * curveWidth;
+      final trailY = startY - curve.transform(t) * curveHeight;
+      final radius = 2.0 * (1.0 - t) + 1.0;
+      canvas.drawCircle(Offset(trailX, trailY), radius, trailPaint);
+    }
+
+    // 添加动画时长标题
+    final durationPainter = TextPainter(
+      text: TextSpan(
+        text: '动画时长: ${duration}秒',
+        style: TextStyle(
+          color: Colors.grey[700],
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    durationPainter.layout();
+    durationPainter.paint(
+      canvas,
+      Offset(size.width / 2 - durationPainter.width / 2, 5),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CurvePreviewPainter oldDelegate) {
+    return oldDelegate.curve != curve || 
+           oldDelegate.duration != duration || 
+           oldDelegate.progress != progress;
   }
 }

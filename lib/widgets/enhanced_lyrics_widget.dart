@@ -256,8 +256,8 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
           disableTouchEvent: false,
           selectionAutoResumeMode: SelectionAutoResumeMode.afterSelecting,
           // 添加渐变效果 - 更明显的渐变
-          fadeRange: settings.enableLyricsBlur && !settings.useCustomBlur
-              ? FadeRange(top: 80.0, bottom: 80.0)
+          fadeRange: settings.enableLyricsBlur
+              ? FadeRange(top: settings.fadeRangeTop, bottom: settings.fadeRangeBottom)
               : null,
         );
 
@@ -267,11 +267,13 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
           ),
           child: Stack(
             children: [
-              // 歌词视图 - 使用LyricView，内置了滚轮滚动支持
-              LyricView(
-                controller: _lyricController,
-                style: adjustedStyle,
-
+              // 歌词视图 - 使用RepaintBoundary包裹以便截图
+              RepaintBoundary(
+                key: ValueKey('lyrics_view_${_lyricController.hashCode}'),
+                child: LyricView(
+                  controller: _lyricController,
+                  style: adjustedStyle,
+                ),
               ),
               // 拖动时显示时间和虚线
               SelectListenableBuilder(
@@ -330,52 +332,7 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                   );
                 },
               ),
-              // 如果需要，添加自定义高斯模糊蒙版（作为备选方案）
-              if (settings.enableLyricsBlur && settings.useCustomBlur)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Column(
-                      children: [
-                        // 上半部分高斯模糊蒙版
-                        Expanded(
-                          child: ClipRect(
-                            child: ImageFiltered(
-                              imageFilter: ui.ImageFilter.blur(
-                                sigmaX: 8.0,
-                                sigmaY: 8.0,
-                                tileMode: ui.TileMode.decal,
-                              ),
-                              child: Container(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // 中间透明区域（当前歌词）
-                        Expanded(
-                          child: Container(
-                            color: Colors.transparent,
-                          ),
-                        ),
-                        // 下半部分高斯模糊蒙版
-                        Expanded(
-                          child: ClipRect(
-                            child: ImageFiltered(
-                              imageFilter: ui.ImageFilter.blur(
-                                sigmaX: 8.0,
-                                sigmaY: 8.0,
-                                tileMode: ui.TileMode.decal,
-                              ),
-                              child: Container(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+
             ],
           ),
         );

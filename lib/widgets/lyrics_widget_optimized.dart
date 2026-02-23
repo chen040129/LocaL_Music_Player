@@ -129,6 +129,22 @@ class _OptimizedLyricsWidgetState extends State<OptimizedLyricsWidget> {
                 : Colors.black.withOpacity(0.4 * settings.lyricsOpacity),
             fontSize: settings.lyricsFontSize,
             height: 1.8,
+            shadows: settings.lyricsEffectType == LyricsEffectType.shadow
+                ? [
+                    // 添加阴影效果
+                    Shadow(
+                      color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+                      blurRadius: 2.0,
+                      offset: const Offset(1.0, 1.0),
+                    ),
+                  ]
+                : [
+                    // 添加辉光效果
+                    Shadow(
+                      color: Colors.white.withOpacity(0.3),
+                      blurRadius: 2.0,
+                    ),
+                  ],
           ),
           activeStyle: TextStyle(
             color: isDark
@@ -137,6 +153,31 @@ class _OptimizedLyricsWidgetState extends State<OptimizedLyricsWidget> {
             fontSize: settings.activeLyricsFontSize,
             fontWeight: FontWeight.bold,
             height: 1.8,
+            shadows: settings.lyricsEffectType == LyricsEffectType.shadow
+                ? [
+                    // 添加阴影效果
+                    Shadow(
+                      color: isDark ? Colors.black.withOpacity(0.6) : Colors.grey.withOpacity(0.6),
+                      blurRadius: 4.0,
+                      offset: const Offset(2.0, 2.0),
+                    ),
+                    Shadow(
+                      color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+                      blurRadius: 8.0,
+                      offset: const Offset(1.0, 1.0),
+                    ),
+                  ]
+                : [
+                    // 添加辉光效果
+                    Shadow(
+                      color: Colors.white.withOpacity(0.7),
+                      blurRadius: 3.0,
+                    ),
+                    Shadow(
+                      color: Colors.white.withOpacity(0.4),
+                      blurRadius: 6.0,
+                    ),
+                  ],
           ),
           translationStyle: TextStyle(
             color: isDark

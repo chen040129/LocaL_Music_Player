@@ -31,7 +31,7 @@ void main() async {
 
     const windowOptions = WindowOptions(
       size: Size(1200, 800),
-      minimumSize: Size(800, 600),
+      minimumSize: Size(1000, 700), // 增加最小尺寸，确保所有UI元素都能正常显示
       center: true,
       backgroundColor: Colors.transparent, // 使用透明背景，避免主题切换时出现白色边框
       skipTaskbar: false,

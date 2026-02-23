@@ -865,7 +865,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           thumbShape:
                                                                               const RoundSliderThumbShape(enabledThumbRadius: 0),
                                                                           overlayShape:
-                                                                              const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                              const RoundSliderOverlayShape(overlayRadius: 16),
                                                                           activeTrackColor: currentMusic?.coverColor != null
                                                                               ? Color(currentMusic!.coverColor!)
                                                                               : colorScheme.primary,
@@ -873,15 +873,35 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                               .onSurface
                                                                               .withOpacity(0.2),
                                                                           thumbColor:
-                                                                              Colors.transparent,
+                                                                              currentMusic?.coverColor != null
+                                                                                  ? Color(currentMusic!.coverColor!)
+                                                                                  : colorScheme.primary,
                                                                           overlayColor:
-                                                                              Colors.transparent,
+                                                                              (currentMusic?.coverColor != null
+                                                                                  ? Color(currentMusic!.coverColor!)
+                                                                                  : colorScheme.primary).withOpacity(0.2),
+                                                                          valueIndicatorColor: currentMusic?.coverColor != null
+                                                                              ? Color(currentMusic!.coverColor!)
+                                                                              : colorScheme.primary,
+                                                                          valueIndicatorTextStyle: TextStyle(
+                                                                            color: (currentMusic?.coverColor != null
+                                                                                ? Color(currentMusic!.coverColor!)
+                                                                                : colorScheme.primary).computeLuminance() > 0.5 
+                                                                                    ? Colors.black 
+                                                                                    : Colors.white,
+                                                                            fontSize: 12,
+                                                                            fontWeight: FontWeight.bold,
+                                                                          ),
+                                                                          showValueIndicator: ShowValueIndicator.always,
                                                                         ),
                                                                         child:
                                                                             Slider(
                                                                           value: _isDragging
                                                                               ? _dragPosition.clamp(0.0, 1.0)
                                                                               : progress.clamp(0.0, 1.0),
+                                                                          label: _formatDuration(_isDragging 
+                                                                              ? Duration(milliseconds: (_dragPosition * duration.inMilliseconds).round())
+                                                                              : position),
                                                                           onChanged:
                                                                               (value) {
                                                                             setState(() {
@@ -1193,26 +1213,39 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                               if (_showVolumeControl)
                                                                                 Padding(
                                                                                   padding: const EdgeInsets.only(left: 8),
-                                                                                  child: SizedBox(
-                                                                                    width: 280,
-                                                                                    child: SliderTheme(
-                                                                                      data: SliderThemeData(
-                                                                                        trackHeight: 3,
-                                                                                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                                                                                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                                                                                        activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
-                                                                                        inactiveTrackColor: colorScheme.onSurface.withOpacity(0.3),
-                                                                                        thumbColor: Colors.transparent,
-                                                                                        overlayColor: Colors.transparent,
-                                                                                      ),
-                                                                                      child: Slider(
-                                                                                        value: _volume.clamp(0.0, 1.0),
-                                                                                        onChanged: (value) {
-                                                                                          setState(() {
-                                                                                            _volume = value.clamp(0.0, 1.0);
-                                                                                          });
-                                                                                          playerProvider.setVolume(value.clamp(0.0, 1.0));
-                                                                                        },
+                                                                                  child: Listener(
+                                                                                    onPointerSignal: (pointerSignal) {
+                                                                                      if (pointerSignal is PointerScrollEvent) {
+                                                                                        // 限制单次滚动的最大调整量，防止快速滚动时超出范围
+                                                                                        final delta = (pointerSignal.scrollDelta.dy * 0.001).clamp(-0.1, 0.1);
+                                                                                        final newVolume = (_volume - delta).clamp(0.0, 1.0);
+                                                                                        setState(() {
+                                                                                          _volume = newVolume;
+                                                                                        });
+                                                                                        playerProvider.setVolume(newVolume);
+                                                                                      }
+                                                                                    },
+                                                                                    child: SizedBox(
+                                                                                      width: 280,
+                                                                                      child: SliderTheme(
+                                                                                        data: SliderThemeData(
+                                                                                          trackHeight: 3,
+                                                                                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                                                                                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                                                                                          activeTrackColor: _getActiveTrackColor(playerProvider, colorScheme),
+                                                                                          inactiveTrackColor: colorScheme.onSurface.withOpacity(0.3),
+                                                                                          thumbColor: Colors.transparent,
+                                                                                          overlayColor: Colors.transparent,
+                                                                                        ),
+                                                                                        child: Slider(
+                                                                                          value: _volume.clamp(0.0, 1.0),
+                                                                                          onChanged: (value) {
+                                                                                            setState(() {
+                                                                                              _volume = value.clamp(0.0, 1.0);
+                                                                                            });
+                                                                                            playerProvider.setVolume(value.clamp(0.0, 1.0));
+                                                                                          },
+                                                                                        ),
                                                                                       ),
                                                                                     ),
                                                                                   ),
