@@ -641,15 +641,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Expanded(
                                         child: _buildCurrentPage(),
                                       ),
-                                      // 播放栏 - 放在主内容区域内
-                                      // 注意：液态玻璃样式的播放栏由 LiquidGlassView 处理
-                                      // 只有在内容宽度模式下才在这里显示播放栏
-                                      if (settings.playerBarStyle == PlayerBarStyle.normal &&
-                                          settings.playerBarLength == PlayerBarLength.contentWidth)
-                                        const Padding(
-                                          padding: EdgeInsets.all(16),
-                                          child: PlayerControlBar(),
-                                        ),
                                     ],
                                   ),
                                 ),
@@ -658,14 +649,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      // 默认模式下的全宽播放栏 - 放在 Stack 顶层以覆盖导航栏
-                      if (settings.playerBarStyle == PlayerBarStyle.normal &&
-                          settings.playerBarLength == PlayerBarLength.fullWidth)
-                        const Positioned(
-                          left: 16,
+                      // 默认模式下的播放栏 - 放在 Stack 顶层以覆盖导航栏
+                      if (settings.playerBarStyle == PlayerBarStyle.normal)
+                        Positioned(
+                          left: settings.playerBarLength == PlayerBarLength.fullWidth ? 16 : (_getContentPosition()?.dx ?? 0) + 16,
                           right: 16,
                           bottom: 16,
-                          child: PlayerControlBar(),
+                          child: const PlayerControlBar(),
                         ),
 
                     ],
@@ -689,7 +679,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? MediaQuery.of(context).size.width - 32
               : contentWidth - 32;
 
-          // 计算左边距：内容宽度模式下需要加上侧边栏的宽度
+          // 计算左边距：全宽模式使用16，内容宽度模式使用contentPosition?.dx + 16
           final double leftMargin = settings.playerBarLength == PlayerBarLength.fullWidth
               ? 16
               : (contentPosition?.dx ?? 0) + 16;

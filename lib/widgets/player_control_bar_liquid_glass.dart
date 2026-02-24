@@ -24,6 +24,8 @@ class _PlayerControlBarLiquidGlassState
   bool _isHoveringPlay = false;
   bool _isHoveringNext = false;
   bool _isHoveringPlaylist = false;
+  bool _isHoveringBar = false;
+  bool _isHoveringDragBar = false;
 
   static const Duration _animationDuration = Duration(milliseconds: 200);
   static const double _hoverScale = 1.2;
@@ -54,39 +56,46 @@ class _PlayerControlBarLiquidGlassState
             return Material(
               color: Colors.transparent,
               elevation: 0,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        return Consumer<SettingsProvider>(
-                          builder: (context, settings, child) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.zero,
-                              child: const LyricsPage(),
-                            );
-                          },
-                        );
-                      },
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      transitionDuration: const Duration(milliseconds: 300),
-                    ),
-                  );
-                },
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Container(
-                      width: constraints.maxWidth,
-                      height: 80,
-                      child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 48, vertical: 12),
-                            child: Row(
-                              children: [
+              child: MouseRegion(
+                onEnter: (_) => setState(() => _isHoveringBar = true),
+                onExit: (_) => setState(() => _isHoveringBar = false),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return Consumer<SettingsProvider>(
+                            builder: (context, settings, child) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.zero,
+                                child: const LyricsPage(),
+                              );
+                            },
+                          );
+                        },
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
+                  },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Container(
+                        width: constraints.maxWidth,
+                        height: 80,
+                        child: Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 48, vertical: 16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
                                 // 专辑封面
                                 Container(
                                   width: 48,
@@ -215,10 +224,10 @@ class _PlayerControlBarLiquidGlassState
                                     const SizedBox(width: 20),
                                     // 播放/暂停
                                     MouseRegion(
-                                      onEnter: (_) =>
-                                          setState(() => _isHoveringPlay = true),
-                                      onExit: (_) =>
-                                          setState(() => _isHoveringPlay = false),
+                                      onEnter: (_) => setState(
+                                          () => _isHoveringPlay = true),
+                                      onExit: (_) => setState(
+                                          () => _isHoveringPlay = false),
                                       child: Material(
                                         color: Colors.transparent,
                                         borderRadius: BorderRadius.circular(
@@ -271,10 +280,10 @@ class _PlayerControlBarLiquidGlassState
                                     const SizedBox(width: 20),
                                     // 下一曲
                                     MouseRegion(
-                                      onEnter: (_) =>
-                                          setState(() => _isHoveringNext = true),
-                                      onExit: (_) =>
-                                          setState(() => _isHoveringNext = false),
+                                      onEnter: (_) => setState(
+                                          () => _isHoveringNext = true),
+                                      onExit: (_) => setState(
+                                          () => _isHoveringNext = false),
                                       child: Material(
                                         color: Colors.transparent,
                                         borderRadius: BorderRadius.circular(
@@ -309,16 +318,17 @@ class _PlayerControlBarLiquidGlassState
                                     ),
                                     // 播放列表
                                     MouseRegion(
-                                      onEnter: (_) =>
-                                          setState(() => _isHoveringPlaylist = true),
-                                      onExit: (_) =>
-                                          setState(() => _isHoveringPlaylist = false),
+                                      onEnter: (_) => setState(
+                                          () => _isHoveringPlaylist = true),
+                                      onExit: (_) => setState(
+                                          () => _isHoveringPlaylist = false),
                                       child: Material(
                                         color: Colors.transparent,
                                         borderRadius: BorderRadius.circular(
                                             settings.borderRadius),
                                         child: InkWell(
-                                          onTap: () => _showPlaylistPopup(context),
+                                          onTap: () =>
+                                              _showPlaylistPopup(context),
                                           borderRadius: BorderRadius.circular(
                                               settings.borderRadius),
                                           splashColor: Colors.transparent,
@@ -346,11 +356,49 @@ class _PlayerControlBarLiquidGlassState
                                     ),
                                   ],
                                 ),
-                              ],
+                              ]),
                             ),
-                          ),
-                    );
-                  },
+                            // 可拖动的小条
+                            Positioned(
+                              top: 4,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: MouseRegion(
+                                  onEnter: (_) => setState(() => _isHoveringDragBar = true),
+                                  onExit: (_) => setState(() => _isHoveringDragBar = false),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // 点击拖动条时的反馈
+                                      setState(() {
+                                        // 可以在这里添加一些状态变化
+                                      });
+                                    },
+                                    child: AnimatedOpacity(
+                                      opacity: _isHoveringBar ? 1.0 : 0.0,
+                                      duration: const Duration(milliseconds: 200),
+                                      child: AnimatedContainer(
+                                        duration: _animationDuration,
+                                        width: _isHoveringDragBar ? 60 : 40,
+                                        height: _isHoveringDragBar ? 6 : 4,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(_isHoveringDragBar ? 0.8 : 0.6),
+                                          borderRadius: BorderRadius.circular(_isHoveringDragBar ? 3 : 2),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             );
