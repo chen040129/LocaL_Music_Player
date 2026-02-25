@@ -25,7 +25,7 @@ class _PlayerControlBarState extends State<PlayerControlBar>
   bool _isHoveringNext = false;
   bool _isHoveringPlaylist = false;
   bool _isHoveringBar = false;
-  bool _isHoveringDragBar = false;
+  bool _isClickingDragBar = false;
 
   static const Duration _animationDuration = Duration(milliseconds: 200);
   static const double _hoverScale = 1.2;
@@ -420,42 +420,7 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                                 ),
                               ]),
                             ),
-                            // 可拖动的小条
-                            Positioned(
-                              top: 4,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: MouseRegion(
-                                  onEnter: (_) => setState(() => _isHoveringDragBar = true),
-                                  onExit: (_) => setState(() => _isHoveringDragBar = false),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      // 点击拖动条时的反馈
-                                      setState(() {
-                                        // 可以在这里添加一些状态变化
-                                      });
-                                    },
-                                    child: AnimatedOpacity(
-                                      opacity: _isHoveringBar ? 1.0 : 0.0,
-                                      duration: const Duration(milliseconds: 200),
-                                      child: AnimatedContainer(
-                                        duration: _animationDuration,
-                                        width: _isHoveringDragBar ? 60 : 40,
-                                        height: _isHoveringDragBar ? 6 : 4,
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(_isHoveringDragBar ? 0.8 : 0.6),
-                                          borderRadius: BorderRadius.circular(_isHoveringDragBar ? 3 : 2),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+
                           ],
                         ),
                       ),
