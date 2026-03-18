@@ -90,6 +90,7 @@ class SettingsProvider with ChangeNotifier {
   bool _usePlayerGlass = true;         // 是否使用播放栏玻璃材质
   double _glassOpacity = 0.2;         // 玻璃材质透明度
   double _borderRadius = 0.0;          // 主页面边框弧度值（默认为0，无弧度）
+  double _playerBarCoverRadius = 8.0;  // 音乐栏封面圆角值
   double _windowBorderRadius = 12.0;   // 窗口边框弧度值
   double _windowOpacity = 0.85;        // 窗口背景透明度
   double _cardOpacity = 0.85;           // 音乐卡片透明度
@@ -192,6 +193,7 @@ class SettingsProvider with ChangeNotifier {
   bool get usePlayerGlass => _usePlayerGlass;
   double get glassOpacity => _glassOpacity;
   double get borderRadius => _borderRadius;
+  double get playerBarCoverRadius => _playerBarCoverRadius;
   double get windowBorderRadius => _windowBorderRadius;
   double get windowOpacity => _windowOpacity;
   double get cardOpacity => _cardOpacity;
@@ -326,6 +328,7 @@ class SettingsProvider with ChangeNotifier {
     _usePlayerGlass = prefs.getBool('use_player_glass') ?? true;
     _glassOpacity = (prefs.getDouble('glass_opacity') ?? 0.2).toDouble();
     _borderRadius = (prefs.getDouble('border_radius') ?? 0.0).toDouble();
+    _playerBarCoverRadius = (prefs.getDouble('player_bar_cover_radius') ?? 8.0).toDouble();
     _windowBorderRadius = (prefs.getDouble('window_border_radius') ?? 12.0).toDouble();
     _windowOpacity = (prefs.getDouble('window_opacity') ?? 0.85).toDouble();
     _cardOpacity = (prefs.getDouble('card_opacity') ?? 0.85).toDouble();
@@ -389,6 +392,7 @@ class SettingsProvider with ChangeNotifier {
 
     _liquidGlassBlurSigma = (prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5).toDouble();
     if (_liquidGlassBlurSigma < 0.1) _liquidGlassBlurSigma = 0.5;
+    if (_liquidGlassBlurSigma > 3.0) _liquidGlassBlurSigma = 3.0;
 
     _liquidGlassMagnification = (prefs.getDouble('liquid_glass_magnification') ?? 1.0).toDouble();
 
@@ -483,6 +487,12 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setBorderRadius(double value) async {
     _borderRadius = value.clamp(0.0, 20.0);
     await _saveSetting('border_radius', _borderRadius);
+    notifyListeners();
+  }
+
+  Future<void> setPlayerBarCoverRadius(double value) async {
+    _playerBarCoverRadius = value.clamp(0.0, 24.0);
+    await _saveSetting('player_bar_cover_radius', _playerBarCoverRadius);
     notifyListeners();
   }
 
@@ -991,6 +1001,7 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['use_player_glass'] = prefs.getBool('use_player_glass') ?? true;
     settingsMap['glass_opacity'] = prefs.getDouble('glass_opacity') ?? 0.2;
     settingsMap['border_radius'] = prefs.getDouble('border_radius') ?? 8.0;
+    settingsMap['player_bar_cover_radius'] = prefs.getDouble('player_bar_cover_radius') ?? 8.0;
     settingsMap['window_border_radius'] = prefs.getDouble('window_border_radius') ?? 12.0;
     settingsMap['window_opacity'] = prefs.getDouble('window_opacity') ?? 0.85;
     settingsMap['card_opacity'] = prefs.getDouble('card_opacity') ?? 0.85;

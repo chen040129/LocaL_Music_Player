@@ -59,6 +59,7 @@ class _PlayerControlBarLiquidGlassState
               child: MouseRegion(
                 onEnter: (_) => setState(() => _isHoveringBar = true),
                 onExit: (_) => setState(() => _isHoveringBar = false),
+                cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -102,7 +103,7 @@ class _PlayerControlBarLiquidGlassState
                                   height: 48,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(
-                                        settings.borderRadius),
+                                        settings.playerBarCoverRadius),
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface
@@ -110,7 +111,7 @@ class _PlayerControlBarLiquidGlassState
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(
-                                        settings.borderRadius),
+                                        settings.playerBarCoverRadius),
                                     child: currentMusic?.coverArt != null
                                         ? Image.memory(
                                             currentMusic!.coverArt!,

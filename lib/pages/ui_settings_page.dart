@@ -610,9 +610,9 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           icon: CupertinoIcons.eye,
                           value: settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma,
                           min: 0.1,
-                          max: 60.0,
-                          divisions: 60,
-                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toInt()}',
+                          max: 3.0,
+                          divisions: 30,
+                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toStringAsFixed(1)}',
                           onChanged: (value) => settings.setLiquidGlassBlurSigma(value),
                         ),
                         const SizedBox(height: 16),
@@ -667,6 +667,20 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                   divisions: 20,
                   label: '${settings.borderRadius.toInt()}',
                   onChanged: (value) => settings.setBorderRadius(value),
+                ),
+                const Divider(height: 32),
+
+                // 音乐栏封面圆角滑块
+                _buildSliderTile(
+                  title: '音乐栏封面圆角',
+                  subtitle: '调整音乐栏中专辑封面的圆角',
+                  icon: CupertinoIcons.music_note_2,
+                  value: settings.playerBarCoverRadius,
+                  min: 0.0,
+                  max: 24.0,
+                  divisions: 24,
+                  label: '${settings.playerBarCoverRadius.toInt()}',
+                  onChanged: (value) => settings.setPlayerBarCoverRadius(value),
                 ),
                 const Divider(height: 32),
 
@@ -1009,6 +1023,20 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                   label: '${settings.borderRadius.toInt()}',
                   onChanged: (value) => settings.setBorderRadius(value),
                 ),
+                  const Divider(height: 32),
+                // 音乐栏封面圆角滑块
+                _buildSliderTile(
+                  title: '音乐栏封面圆角',
+                  subtitle: '调整音乐栏中专辑封面的圆角',
+                  icon: CupertinoIcons.music_note_2,
+                  value: settings.playerBarCoverRadius,
+                  min: 0.0,
+                  max: 24.0,
+                  divisions: 24,
+                  label: '${settings.playerBarCoverRadius.toInt()}',
+                  onChanged: (value) => settings.setPlayerBarCoverRadius(value),
+                ),
+
                 const Divider(height: 32),
                 // 音乐卡片透明度滑块
                 _buildSliderTile(
@@ -1127,9 +1155,9 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           icon: CupertinoIcons.eye,
                           value: settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma,
                           min: 0.1,
-                          max: 60.0,
-                          divisions: 60,
-                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toInt()}',
+                          max: 3.0,
+                          divisions: 30,
+                          label: '${(settings.liquidGlassBlurSigma < 0.1 ? 0.5 : settings.liquidGlassBlurSigma).toStringAsFixed(1)}',
                           onChanged: (value) => settings.setLiquidGlassBlurSigma(value),
                         ),
                         const SizedBox(height: 16),
