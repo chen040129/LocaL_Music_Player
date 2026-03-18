@@ -159,12 +159,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _maximizeWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+      // 保存当前的播放栏样式
+      final originalStyle = settingsProvider.playerBarStyle;
+
+      // 如果当前是液态玻璃样式，先切换到默认样式
+      if (originalStyle == PlayerBarStyle.liquidGlass) {
+        await settingsProvider.setPlayerBarStyle(PlayerBarStyle.normal);
+      }
+
       bool isMaximized = await windowManager.isMaximized();
       if (isMaximized) {
         await windowManager.unmaximize();
       } else {
         await windowManager.maximize();
       }
+
       // 窗口大小变化后，更新窗口大小并触发液态玻璃重新捕获
       await _updateWindowSize();
       if (mounted) {
@@ -173,6 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted) {
             _updateContentDimensions();
+            // 如果原先是液态玻璃样式，现在切换回来
+            if (originalStyle == PlayerBarStyle.liquidGlass) {
+              settingsProvider.setPlayerBarStyle(PlayerBarStyle.liquidGlass);
+            }
           }
         });
       }

@@ -341,9 +341,9 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                   return Stack(
                     children: [
                       Positioned(
-                        left: _position.dx,
-                        bottom: 16 + _position.dy,
-                        right: 16,
+                        left: settings.playerBarLength == PlayerBarLength.fullWidth ? 0.0 : _position.dx,
+                        bottom: settings.playerBarLength == PlayerBarLength.fullWidth ? 0.0 : 16.0 + _position.dy,
+                        right: settings.playerBarLength == PlayerBarLength.fullWidth ? 0.0 : 16.0,
                         child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTapUp: (details) {
