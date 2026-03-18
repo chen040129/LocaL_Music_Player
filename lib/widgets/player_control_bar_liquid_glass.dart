@@ -316,6 +316,7 @@ class _PlayerControlBarLiquidGlassState
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 20),
                                     // 播放列表
                                     MouseRegion(
                                       onEnter: (_) => setState(

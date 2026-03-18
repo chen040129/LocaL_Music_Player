@@ -690,7 +690,7 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                                       },
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  const SizedBox(width: 12),
                                   // 播放/暂停
                                   MouseRegion(
                                     onEnter: (_) =>
@@ -752,7 +752,7 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                                       },
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  const SizedBox(width: 12),
                                   // 下一曲
                                   MouseRegion(
                                     onEnter: (_) =>
@@ -798,7 +798,7 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                                   ),
                                 ],
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               // 锁定/解锁按钮
                               MouseRegion(
                                 onEnter: (_) =>
@@ -850,7 +850,7 @@ class _DraggablePlayerControlBarState extends State<DraggablePlayerControlBar>
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               // 播放列表按钮
                               MouseRegion(
                                 onEnter: (_) =>
