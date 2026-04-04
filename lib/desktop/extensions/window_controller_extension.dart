@@ -71,6 +71,13 @@ extension WindowControllerExtension on WindowController {
         case 'unlock':
           await windowManager.setIgnoreMouseEvents(false);
           break;
+        case 'update_desktop_lyrics_font_size':
+          print('update_desktop_lyrics_font_size called with value: ${call.arguments}');
+          if (call.arguments is double) {
+            desktopLyricsFontSize = call.arguments as double;
+            updateDesktopLyricsNotifier.value++;
+          }
+          break;
         default:
           throw MissingPluginException('Not implemented: ${call.method}');
       }
@@ -85,7 +92,8 @@ extension WindowControllerExtension on WindowController {
       switch (call.method) {
         case 'hide_desktop_lyrics':
           print('Hiding desktop lyrics');
-          lyricsWindowVisible = false;
+          // 调用PlayerProvider的hideDesktopLyrics方法来更新设置
+          await playerProvider.hideDesktopLyrics();
           break;
         case 'skip_to_previous':
           print('Calling playPrevious');
@@ -147,6 +155,10 @@ extension WindowControllerExtension on WindowController {
 
   Future<void> skipToNext() {
     return invokeMethod('skip_to_next');
+  }
+
+  Future<void> updateDesktopLyricsFontSize(double fontSize) {
+    return invokeMethod('update_desktop_lyrics_font_size', fontSize);
   }
 
   Future<void> unlock() {

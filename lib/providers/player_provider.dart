@@ -1117,9 +1117,13 @@ class PlayerProvider with ChangeNotifier {
   /// 隐藏桌面歌词窗口
   Future<void> hideDesktopLyrics() async {
     try {
-      if (lyricsWindowController != null && lyricsWindowVisible) {
+      if (lyricsWindowController != null) {
         await lyricsWindowController!.hide();
         lyricsWindowVisible = false;
+        // 更新设置中的enableDesktopLyrics值
+        if (_settingsProvider != null) {
+          await _settingsProvider!.setEnableDesktopLyrics(false);
+        }
       }
     } catch (e) {
       debugPrint('隐藏桌面歌词失败: $e');

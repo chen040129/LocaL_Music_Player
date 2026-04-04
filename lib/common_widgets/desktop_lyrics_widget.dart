@@ -14,7 +14,7 @@ class DesktopLyricsWidget extends StatelessWidget {
           return Text(
             'Music Player',
             style: TextStyle(
-              fontSize: isMobile ? 20 : 30,
+              fontSize: isMobile ? 20 : desktopLyricsFontSize,
               color: Colors.white,
               shadows: [
                 Shadow(
@@ -32,7 +32,7 @@ class DesktopLyricsWidget extends StatelessWidget {
             key: ValueKey(desktopLyricLine),
             line: desktopLyricLine!,
             position: desktopLyricsCurrentPosition,
-            fontSize: isMobile ? 20 : 30,
+            fontSize: isMobile ? 20 : desktopLyricsFontSize,
             expanded: false,
             isDesktopLyrics: true,
           );
@@ -40,7 +40,7 @@ class DesktopLyricsWidget extends StatelessWidget {
           return Text(
             desktopLyricLine!.text,
             style: TextStyle(
-              fontSize: isMobile ? 20 : 30,
+              fontSize: isMobile ? 20 : desktopLyricsFontSize,
               color: Colors.white,
               shadows: [
                 Shadow(

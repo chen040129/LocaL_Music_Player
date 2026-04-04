@@ -44,39 +44,6 @@ class DesktopLyricsSettingsBuilder {
                 ),
                 const Divider(height: 32),
 
-                // 显示锁定按钮
-                _buildSwitchTile(
-                  context: context,
-                  title: '显示锁定按钮',
-                  subtitle: '在歌词窗口上显示锁定按钮',
-                  icon: CupertinoIcons.lock,
-                  value: settings.showLockButton,
-                  onChanged: (value) => settings.setShowLockButton(value),
-                ),
-                const Divider(height: 32),
-
-                // 显示控制按钮
-                _buildSwitchTile(
-                  context: context,
-                  title: '显示控制按钮',
-                  subtitle: '在歌词窗口上显示播放控制按钮',
-                  icon: CupertinoIcons.play_rectangle,
-                  value: settings.showControlButtons,
-                  onChanged: (value) => settings.setShowControlButtons(value),
-                ),
-                const Divider(height: 32),
-
-                // 启用卡拉OK效果
-                _buildSwitchTile(
-                  context: context,
-                  title: '启用卡拉OK效果',
-                  subtitle: '歌词逐字高亮显示',
-                  icon: CupertinoIcons.music_note,
-                  value: settings.enableKaraokeEffect,
-                  onChanged: (value) => settings.setEnableKaraokeEffect(value),
-                ),
-                const Divider(height: 32),
-
                 // 字体大小滑块
                 _buildSliderTile(
                   context: context,
@@ -89,28 +56,6 @@ class DesktopLyricsSettingsBuilder {
                   divisions: 30,
                   label: '${settings.desktopLyricsFontSize.toInt()}',
                   onChanged: (value) => settings.setDesktopLyricsFontSize(value),
-                ),
-                const Divider(height: 32),
-
-                // 鼠标悬停显示背景
-                _buildSwitchTile(
-                  context: context,
-                  title: '鼠标悬停显示背景',
-                  subtitle: '鼠标悬停时显示半透明背景',
-                  icon: CupertinoIcons.cursor_rays,
-                  value: settings.showBackgroundOnHover,
-                  onChanged: (value) => settings.setShowBackgroundOnHover(value),
-                ),
-                const Divider(height: 32),
-
-                // 始终置顶
-                _buildSwitchTile(
-                  context: context,
-                  title: '始终置顶',
-                  subtitle: '歌词窗口始终显示在其他窗口之上',
-                  icon: CupertinoIcons.arrow_up,
-                  value: settings.alwaysOnTop,
-                  onChanged: (value) => settings.setAlwaysOnTop(value),
                 ),
               ],
             ),
@@ -129,27 +74,49 @@ class DesktopLyricsSettingsBuilder {
     required bool value,
     required Function(bool) onChanged,
   }) {
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Theme.of(context).textTheme.bodyLarge?.color,
-          fontSize: 16,
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
         ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: Theme.of(context).textTheme.bodySmall?.color,
-          fontSize: 14,
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: Theme.of(context).colorScheme.primary,
-      ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 

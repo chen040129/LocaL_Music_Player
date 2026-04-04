@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'package:flutter_music_player/common.dart';
 import 'package:flutter_music_player/common_widgets/desktop_lyrics_widget.dart';
@@ -66,14 +67,17 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
         valueListenable: _isTransparentNotifier,
         builder: (context, isTransparent, child) {
           bool isDragging = false;
-          return GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onPanStart: (details) async {
-              isDragging = true;
-              await windowManager.startDragging();
-              isDragging = false;
-            },
-            child: MouseRegion(
+          return Stack(
+            children: [
+              // 主内容区域
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onPanStart: _isLocked ? null : (details) async {
+                  isDragging = true;
+                  await windowManager.startDragging();
+                  isDragging = false;
+                },
+                child: MouseRegion(
               onEnter: (_) {
                 _isTransparentNotifier.value = false;
               },
@@ -84,7 +88,7 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                 _isTransparentNotifier.value = true;
               },
               child: Material(
-                color: isTransparent ? Colors.transparent : Colors.black45,
+                color: (isTransparent || _isLocked) ? Colors.transparent : Colors.black45,
                 shape: SmoothRectangleBorder(
                   smoothness: 1,
                   borderRadius: BorderRadius.circular(5),
@@ -94,18 +98,123 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        height: 50,
-                        child: isTransparent ? null : controlsRow(),
+                      // 锁定状态下的解锁按钮区域
+                      if (_isLocked)
+                        SizedBox(
+                          height: 50,
+                          child: MouseRegion(
+                            onEnter: (_) {
+                              setState(() => _isHoveringLock = true);
+                            },
+                            onExit: (_) {
+                              setState(() => _isHoveringLock = false);
+                            },
+                            child: AnimatedOpacity(
+                              opacity: _isHoveringLock ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: InkWell(
+                                    onTap: () async {
+                                      setState(() {
+                                        _isLocked = false;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(5),
+                                    splashColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    hoverColor: Colors.transparent,
+                                    child: AnimatedScale(
+                                      scale: _isHoveringLock ? 1.1 : 1.0,
+                                      duration: const Duration(milliseconds: 150),
+                                      child: Icon(
+                                        Icons.lock_open_rounded,
+                                        color: Colors.grey.shade50,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      // 非锁定状态下的控制按钮
+                      if (!_isLocked)
+                        SizedBox(
+                          height: 50,
+                          child: isTransparent ? const SizedBox.shrink() : controlsRow(),
+                        ),
+                      Expanded(
+                        child: Center(
+                          child: DesktopLyricsWidget(),
+                        ),
                       ),
-                      DesktopLyricsWidget(),
                     ],
                   ),
                 ),
               ),
             ),
+              ),
+              // 窗口边缘的调整大小手柄
+              if (!_isLocked)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Row(
+                    children: [
+                      // 左边缘
+                      _buildResizeEdge(ResizeEdge.left),
+                      Expanded(child: Container()),
+                      // 右边缘
+                      _buildResizeEdge(ResizeEdge.right),
+                    ],
+                  ),
+                ),
+              if (!_isLocked)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Column(
+                    children: [
+                      // 上边缘
+                      _buildResizeEdge(ResizeEdge.top),
+                      Expanded(child: Container()),
+                      // 下边缘
+                      _buildResizeEdge(ResizeEdge.bottom),
+                    ],
+                  ),
+                ),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildResizeEdge(ResizeEdge edge) {
+    final isHorizontal = edge == ResizeEdge.left || edge == ResizeEdge.right;
+    return MouseRegion(
+      cursor: isHorizontal
+          ? (edge == ResizeEdge.left ? SystemMouseCursors.resizeLeft : SystemMouseCursors.resizeRight)
+          : (edge == ResizeEdge.top ? SystemMouseCursors.resizeUp : SystemMouseCursors.resizeDown),
+      child: GestureDetector(
+        onPanStart: (_) async {
+          _isTransparentNotifier.value = false;
+          await windowManager.startResizing(edge);
+        },
+        child: Container(
+          width: isHorizontal ? 10 : double.infinity,
+          height: isHorizontal ? double.infinity : 10,
+          color: Colors.transparent,
+        ),
       ),
     );
   }
@@ -125,7 +234,6 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                 setState(() {
                   _isLocked = !_isLocked;
                 });
-                await windowManager.setIgnoreMouseEvents(_isLocked);
               },
               borderRadius: BorderRadius.circular(5),
               splashColor: Colors.transparent,

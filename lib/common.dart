@@ -80,6 +80,7 @@ class LyricToken {
 LyricLine? desktopLyricLine;
 Duration desktopLyricsCurrentPosition = Duration.zero;
 bool desktopLyricsIsKaraoke = false;
+double desktopLyricsFontSize = 30.0;
 
 final updateDesktopLyricsNotifier = ValueNotifier(0);
 

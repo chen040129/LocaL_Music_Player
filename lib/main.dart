@@ -47,6 +47,8 @@ void main() async {
       WindowOptions windowOptions = WindowOptions(
         title: "Desktop Lyrics",
         size: Platform.isLinux ? Size(850, 200) : Size(800, 150),
+        minimumSize: const Size(300, 80),
+        maximumSize: const Size(1920, 300),
         center: true,
         backgroundColor: Colors.transparent,
         titleBarStyle: TitleBarStyle.hidden,
@@ -62,6 +64,9 @@ void main() async {
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         print('Setting up frameless window...');
         await windowManager.setAsFrameless();
+        print('Setting minimum and maximum size...');
+        await windowManager.setMinimumSize(const Size(300, 120));
+        await windowManager.setMaximumSize(const Size(1920, 300));
         print('Showing window...');
         await windowManager.show();
       });

@@ -2,6 +2,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../common.dart' as common;
+import '../desktop/extensions/window_controller_extension.dart';
 
 /// 设置类别枚举
 enum SettingsCategory {
@@ -823,6 +825,19 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setDesktopLyricsFontSize(double value) async {
     _desktopLyricsFontSize = value.clamp(20.0, 50.0);
     await _saveSetting('desktop_lyrics_font_size', _desktopLyricsFontSize);
+
+    // 更新全局的桌面歌词字体大小
+    common.desktopLyricsFontSize = _desktopLyricsFontSize;
+
+    // 通知桌面歌词窗口更新字体大小
+    if (common.lyricsWindowController != null) {
+      try {
+        await common.lyricsWindowController!.updateDesktopLyricsFontSize(_desktopLyricsFontSize);
+      } catch (e) {
+        print('Error updating desktop lyrics font size: $e');
+      }
+    }
+
     notifyListeners();
   }
 
