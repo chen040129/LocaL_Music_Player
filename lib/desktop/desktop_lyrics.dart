@@ -1,0 +1,298 @@
+import 'dart:io';
+
+import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import 'package:flutter_music_player/common.dart';
+import 'package:flutter_music_player/common_widgets/desktop_lyrics_widget.dart';
+import 'package:flutter_music_player/desktop/extensions/window_controller_extension.dart';
+import 'package:smooth_corner/smooth_corner.dart';
+import 'package:window_manager/window_manager.dart';
+
+Future<void> initDesktopLyrics() async {
+  print('Creating desktop lyrics window controller...');
+  lyricsWindowController = await WindowController.create(
+    WindowConfiguration(hiddenAtLaunch: true, arguments: 'desktop_lyrics'),
+  );
+  print('Desktop lyrics window controller created: ${lyricsWindowController?.windowId}');
+}
+
+class DesktopLyrics extends StatefulWidget {
+  const DesktopLyrics({super.key});
+
+  @override
+  State<DesktopLyrics> createState() => _DesktopLyricsState();
+}
+
+class _DesktopLyricsState extends State<DesktopLyrics> {
+  final ValueNotifier<bool> _isTransparentNotifier = ValueNotifier(false);
+  bool _isHoveringPrevious = false;
+  bool _isHoveringNext = false;
+  bool _isHoveringLock = false;
+  bool _isHoveringPlay = false;
+  bool _isHoveringClose = false;
+  bool _isLocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    print('DesktopLyrics created');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print('DesktopLyrics build called');
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: Platform.isWindows
+          ? ThemeData(fontFamily: 'Microsoft YaHei')
+          : null,
+
+      home: ValueListenableBuilder(
+        valueListenable: _isTransparentNotifier,
+        builder: (context, isTransparent, child) {
+          bool isDragging = false;
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onPanStart: (details) async {
+              isDragging = true;
+              await windowManager.startDragging();
+              isDragging = false;
+            },
+            child: MouseRegion(
+              onEnter: (_) {
+                _isTransparentNotifier.value = false;
+              },
+              onExit: (_) {
+                if (isDragging) {
+                  return;
+                }
+                _isTransparentNotifier.value = true;
+              },
+              child: Material(
+                color: isTransparent ? Colors.transparent : Colors.black45,
+                shape: SmoothRectangleBorder(
+                  smoothness: 1,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 50,
+                        child: isTransparent ? null : controlsRow(),
+                      ),
+                      DesktopLyricsWidget(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget controlsRow() {
+    return Row(
+      children: [
+        Spacer(),
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHoveringLock = true),
+          onExit: (_) => setState(() => _isHoveringLock = false),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+            child: InkWell(
+              onTap: () async {
+                setState(() {
+                  _isLocked = !_isLocked;
+                });
+                await windowManager.setIgnoreMouseEvents(_isLocked);
+              },
+              borderRadius: BorderRadius.circular(5),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: AnimatedScale(
+                  scale: _isHoveringLock ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(
+                    _isLocked ? Icons.lock_open_rounded : Icons.lock_rounded,
+                    color: Colors.grey.shade50,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        MouseRegion(
+          onEnter: (_) => _isHoveringPrevious = true,
+          onExit: (_) => _isHoveringPrevious = false,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+            child: InkWell(
+              onTap: () async {
+                final controllers = await WindowController.getAll();
+                print('Found ${controllers.length} windows');
+                for (final controller in controllers) {
+                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
+                  if (controller.arguments.isEmpty) {
+                    print('Calling skipToPrevious on main window (ID: ${controller.windowId})');
+                    await controller.skipToPrevious();
+                    print('skipToPrevious called successfully');
+                    break;
+                  }
+                }
+              },
+              borderRadius: BorderRadius.circular(5),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: AnimatedScale(
+                  scale: _isHoveringPrevious ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(
+                    CupertinoIcons.backward_end_fill,
+                    color: Colors.grey.shade50,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHoveringPlay = true),
+          onExit: (_) => setState(() => _isHoveringPlay = false),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+            child: InkWell(
+              onTap: () async {
+                final controllers = await WindowController.getAll();
+                print('Found ${controllers.length} windows');
+                for (final controller in controllers) {
+                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
+                  if (controller.arguments.isEmpty) {
+                    print('Calling togglePlay on main window (ID: ${controller.windowId})');
+                    await controller.togglePlay();
+                    print('togglePlay called successfully');
+                    break;
+                  }
+                }
+              },
+              borderRadius: BorderRadius.circular(5),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: AnimatedScale(
+                  scale: _isHoveringPlay ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: ValueListenableBuilder(
+                    valueListenable: isPlayingNotifier,
+                    builder: (_, isPlaying, __) {
+                      return Icon(
+                        isPlaying ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
+                        color: Colors.grey.shade50,
+                        size: 32,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        MouseRegion(
+          onEnter: (_) => _isHoveringNext = true,
+          onExit: (_) => _isHoveringNext = false,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+            child: InkWell(
+              onTap: () async {
+                final controllers = await WindowController.getAll();
+                print('Found ${controllers.length} windows');
+                for (final controller in controllers) {
+                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
+                  if (controller.arguments.isEmpty) {
+                    print('Calling skipToNext on main window (ID: ${controller.windowId})');
+                    await controller.skipToNext();
+                    print('skipToNext called successfully');
+                    break;
+                  }
+                }
+              },
+              borderRadius: BorderRadius.circular(5),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: AnimatedScale(
+                  scale: _isHoveringNext ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(
+                    CupertinoIcons.forward_end_fill,
+                    color: Colors.grey.shade50,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHoveringClose = true),
+          onExit: (_) => setState(() => _isHoveringClose = false),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+            child: InkWell(
+              onTap: () async {
+                final controllers = await WindowController.getAll();
+                for (final controller in controllers) {
+                  if (controller.arguments.isEmpty) {
+                    controller.hideDesktopLyrics();
+                  }
+                }
+                windowManager.hide();
+              },
+              borderRadius: BorderRadius.circular(5),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: AnimatedScale(
+                  scale: _isHoveringClose ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.grey.shade50,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        
+        Spacer(),
+      ],
+    );
+  }
+}

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/player_provider.dart';
+import 'lyrics_settings_page_desktop.dart';
 
 class LyricsSettingsPage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -51,6 +53,12 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   _buildSectionHeader('渐变与视觉效果'),
                   const SizedBox(height: 16),
                   _buildGradientSettings(context),
+                  const SizedBox(height: 24),
+
+                  // 桌面歌词设置
+                  _buildSectionHeader('桌面歌词'),
+                  const SizedBox(height: 16),
+                  DesktopLyricsSettingsBuilder.build(context),
                   // 底部占位区域，确保内容滚动到底部时不被播放栏遮挡
                   const SizedBox(height: 90),
                 ],

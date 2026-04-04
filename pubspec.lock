@@ -321,6 +321,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.6"
+  desktop_multi_window:
+    dependency: "direct main"
+    description:
+      name: desktop_multi_window
+      sha256: "60ba38725b8887b60e44d15afdcf0c3813568b5da2ccaf1e7f6fd09a380a6e24"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.3.0"
   device_info_plus:
     dependency: transitive
     description:
@@ -1082,6 +1090,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smooth_corner:
+    dependency: "direct main"
+    description:
+      name: smooth_corner
+      sha256: "112d7331f82ead81ec870c5d1eb0624f2e7e367eccd166c2fffe4c11d4f87c4f"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.1.1"
   source_gen:
     dependency: transitive
     description:

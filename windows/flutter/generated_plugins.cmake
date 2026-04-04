@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
+  desktop_multi_window
   just_audio_windows
   screen_brightness_windows
   screen_retriever

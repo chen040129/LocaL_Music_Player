@@ -4,6 +4,7 @@ import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'theme/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
@@ -16,6 +17,10 @@ import 'providers/navigation_provider.dart';
 import 'widgets/animated_theme.dart';
 import 'services/global_hotkey_service.dart';
 import 'services/system_tray_service.dart';
+import 'desktop/desktop_lyrics.dart';
+import 'desktop/extensions/window_controller_extension.dart';
+import 'common.dart';
+import 'package:flutter/services.dart';
 
 // 全局变量保存Provider引用
 MusicProvider? globalMusicProvider;
@@ -28,8 +33,45 @@ final globalSystemTrayService = SystemTrayService();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 初始化桌面多窗口
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     await windowManager.ensureInitialized();
+
+    // 检查是否是桌面歌词窗口
+    final windowController = await WindowController.fromCurrentEngine();
+    print('Window arguments: ${windowController.arguments}');
+    if (windowController.arguments == 'desktop_lyrics') {
+      print('Initializing desktop lyrics window...');
+      await windowController.desktopLyricsCustomInitialize();
+
+      WindowOptions windowOptions = WindowOptions(
+        title: "Desktop Lyrics",
+        size: Platform.isLinux ? Size(850, 200) : Size(800, 150),
+        center: true,
+        backgroundColor: Colors.transparent,
+        titleBarStyle: TitleBarStyle.hidden,
+        skipTaskbar: Platform.isMacOS ? false : true,
+        alwaysOnTop: true,
+      );
+
+      print('Window options: ${windowOptions.toString()}');
+
+      print('Running DesktopLyrics app...');
+      runApp(DesktopLyrics());
+
+      await windowManager.waitUntilReadyToShow(windowOptions, () async {
+        print('Setting up frameless window...');
+        await windowManager.setAsFrameless();
+        print('Showing window...');
+        await windowManager.show();
+      });
+
+      return;
+    }
+
+    // 初始化桌面歌词窗口控制器
+    print('Initializing desktop lyrics window controller...');
+    await initDesktopLyrics();
 
     const windowOptions = WindowOptions(
       size: Size(1200, 800),
@@ -58,6 +100,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListener {
+  static bool _isWindowMethodsInitialized = false;
+  static bool _isInitializing = false;
+
   @override
   void initState() {
     super.initState();
@@ -144,8 +189,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
           },
         ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      child: Consumer2<ThemeProvider, PlayerProvider>(
+        builder: (context, themeProvider, playerProvider, child) {
+          // 初始化窗口方法处理器（只初始化一次）
+          if (!_isWindowMethodsInitialized && !_isInitializing) {
+            _isInitializing = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final windowController = await WindowController.fromCurrentEngine();
+              print('Initializing main window custom methods...');
+              print('playerProvider is null: ${playerProvider == null}');
+
+              if (playerProvider != null) {
+                print('playerProvider is initialized, setting up method handler...');
+                await windowController.mainCustomInitialize(playerProvider);
+                _isWindowMethodsInitialized = true;
+                _isInitializing = false;
+              } else {
+                print('Error: playerProvider is null');
+                _isInitializing = false;
+              }
+            });
+          }
+
           return MaterialApp(
             title: 'Music Player',
             debugShowCheckedModeBanner: false,

@@ -124,11 +124,20 @@ class SettingsProvider with ChangeNotifier {
   int _activeAutoResumeDuration = 3500;    // 播放行自动恢复时长(毫秒)
   String _scrollCurve = 'easeInOutCubic';  // 滚动动画曲线
 
+  // 桌面歌词设置
+  bool _enableDesktopLyrics = false;  // 是否启用桌面歌词
+  bool _showLockButton = true;        // 是否显示锁定按钮
+  bool _showControlButtons = true;    // 是否显示控制按钮
+  bool _enableKaraokeEffect = false;  // 是否启用卡拉OK效果
+  double _desktopLyricsFontSize = 30.0;  // 桌面歌词字体大小
+  bool _showBackgroundOnHover = true;  // 鼠标悬停时显示背景
+  bool _alwaysOnTop = true;          // 是否始终置顶
+
   // 播放器设置
   bool _autoPlayNext = true;           // 是否自动播放下一首
   bool _savePlayProgress = true;       // 是否保存播放进度
   bool _showPlayCount = true;          // 是否显示播放次数
-  bool _enableFadeEffect = true;       // 是否启用淡入淡出效果
+  bool _enableFadeEffect = false;      // 是否启用淡入淡出效果
   double _fadeDuration = 2.0;          // 淡入淡出时长(秒)
   int _defaultVolume = 70;             // 默认音量(0-100)
   bool _showLyricsInPlayer = true;     // 播放器中是否显示歌词
@@ -288,6 +297,15 @@ class SettingsProvider with ChangeNotifier {
   int get scrollDuration => _scrollDuration;
   int get selectionAutoResumeDuration => _selectionAutoResumeDuration;
   int get activeAutoResumeDuration => _activeAutoResumeDuration;
+
+  // 桌面歌词设置 getters
+  bool get enableDesktopLyrics => _enableDesktopLyrics;
+  bool get showLockButton => _showLockButton;
+  bool get showControlButtons => _showControlButtons;
+  bool get enableKaraokeEffect => _enableKaraokeEffect;
+  double get desktopLyricsFontSize => _desktopLyricsFontSize;
+  bool get showBackgroundOnHover => _showBackgroundOnHover;
+  bool get alwaysOnTop => _alwaysOnTop;
   String get scrollCurve => _scrollCurve;
 
   // 歌曲页面设置 getters
@@ -366,11 +384,20 @@ class SettingsProvider with ChangeNotifier {
     _activeAutoResumeDuration = prefs.getInt('active_auto_resume_duration') ?? 3500;
     _scrollCurve = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
 
+    // 加载桌面歌词设置
+    _enableDesktopLyrics = prefs.getBool('enable_desktop_lyrics') ?? false;
+    _showLockButton = prefs.getBool('show_lock_button') ?? true;
+    _showControlButtons = prefs.getBool('show_control_buttons') ?? true;
+    _enableKaraokeEffect = prefs.getBool('enable_karaoke_effect') ?? false;
+    _desktopLyricsFontSize = (prefs.getDouble('desktop_lyrics_font_size') ?? 30.0).toDouble();
+    _showBackgroundOnHover = prefs.getBool('show_background_on_hover') ?? true;
+    _alwaysOnTop = prefs.getBool('always_on_top') ?? true;
+
     // 加载播放器设置
     _autoPlayNext = prefs.getBool('auto_play_next') ?? true;
     _savePlayProgress = prefs.getBool('save_play_progress') ?? true;
     _showPlayCount = prefs.getBool('show_play_count') ?? true;
-    _enableFadeEffect = prefs.getBool('enable_fade_effect') ?? true;
+    _enableFadeEffect = prefs.getBool('enable_fade_effect') ?? false;
     _fadeDuration = prefs.getDouble('fade_duration') ?? 2.0;
     _defaultVolume = prefs.getInt('default_volume') ?? 70;
     _showLyricsInPlayer = prefs.getBool('show_lyrics_in_player') ?? true;
@@ -765,6 +792,49 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setPlayerBarLength(PlayerBarLength value) async {
     _playerBarLength = value;
     await _saveSetting('player_bar_length', value.index);
+    notifyListeners();
+  }
+
+  // 桌面歌词设置 setters
+  Future<void> setEnableDesktopLyrics(bool value) async {
+    _enableDesktopLyrics = value;
+    await _saveSetting('enable_desktop_lyrics', value);
+    notifyListeners();
+  }
+
+  Future<void> setShowLockButton(bool value) async {
+    _showLockButton = value;
+    await _saveSetting('show_lock_button', value);
+    notifyListeners();
+  }
+
+  Future<void> setShowControlButtons(bool value) async {
+    _showControlButtons = value;
+    await _saveSetting('show_control_buttons', value);
+    notifyListeners();
+  }
+
+  Future<void> setEnableKaraokeEffect(bool value) async {
+    _enableKaraokeEffect = value;
+    await _saveSetting('enable_karaoke_effect', value);
+    notifyListeners();
+  }
+
+  Future<void> setDesktopLyricsFontSize(double value) async {
+    _desktopLyricsFontSize = value.clamp(20.0, 50.0);
+    await _saveSetting('desktop_lyrics_font_size', _desktopLyricsFontSize);
+    notifyListeners();
+  }
+
+  Future<void> setShowBackgroundOnHover(bool value) async {
+    _showBackgroundOnHover = value;
+    await _saveSetting('show_background_on_hover', value);
+    notifyListeners();
+  }
+
+  Future<void> setAlwaysOnTop(bool value) async {
+    _alwaysOnTop = value;
+    await _saveSetting('always_on_top', value);
     notifyListeners();
   }
 
