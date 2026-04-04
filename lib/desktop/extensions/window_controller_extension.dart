@@ -17,10 +17,15 @@ void sendDesktopLyricMessage(Duration position, LyricLine? lyricLine, bool isKar
 }
 
 void sendPlayingMessage(bool playing) async {
-  if (lyricsWindowController == null) return;
+  if (lyricsWindowController == null) {
+    print('sendPlayingMessage: lyricsWindowController is null');
+    return;
+  }
 
   try {
+    print('sendPlayingMessage: sending playing=$playing to desktop lyrics');
     await lyricsWindowController!.sendPlaying(playing);
+    print('sendPlayingMessage: message sent successfully');
   } catch (e) {
     print('Error sending playing message to desktop lyrics: $e');
   }
@@ -59,7 +64,9 @@ extension WindowControllerExtension on WindowController {
           getDesktopLyricFromMap(call.arguments);
           break;
         case 'set_playing':
+          print('set_playing called with value: ${call.arguments}');
           isPlayingNotifier.value = call.arguments as bool;
+          print('isPlayingNotifier.value updated to: ${isPlayingNotifier.value}');
           break;
         case 'unlock':
           await windowManager.setIgnoreMouseEvents(false);
@@ -91,6 +98,10 @@ extension WindowControllerExtension on WindowController {
         case 'skip_to_next':
           print('Calling playNext');
           await playerProvider.playNext();
+          break;
+        case 'get_playing_state':
+          print('Sending playing state to desktop lyrics: ${playerProvider.isPlaying}');
+          sendPlayingMessage(playerProvider.isPlaying);
           break;
         default:
           throw MissingPluginException('Not implemented: ${call.method}');

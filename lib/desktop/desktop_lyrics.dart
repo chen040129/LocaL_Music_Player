@@ -38,6 +38,19 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   void initState() {
     super.initState();
     print('DesktopLyrics created');
+    // 请求主窗口同步播放状态
+    _requestPlayingState();
+  }
+
+  Future<void> _requestPlayingState() async {
+    final controllers = await WindowController.getAll();
+    for (final controller in controllers) {
+      if (controller.arguments.isEmpty) {
+        print('Requesting playing state from main window');
+        await controller.invokeMethod('get_playing_state');
+        break;
+      }
+    }
   }
 
   @override

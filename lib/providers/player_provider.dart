@@ -214,8 +214,26 @@ class PlayerProvider with ChangeNotifier {
 
       // 监听播放状态
       _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
-        _isPlaying = state.playing;
-        notifyListeners();
+        print('Player state changed: playing=${state.playing}, processingState=${state.processingState}');
+        // 只在实际播放状态改变时更新
+        if (_isPlaying != state.playing) {
+          print('_isPlaying changed from $_isPlaying to ${state.playing}');
+          _isPlaying = state.playing;
+          notifyListeners();
+          // 更新桌面歌词窗口的播放状态
+          // 只在播放状态稳定时发送消息（避免loading状态）
+          if (state.processingState == ProcessingState.ready) {
+            print('Sending playing message to desktop lyrics: $_isPlaying');
+            sendPlayingMessage(_isPlaying);
+          } else {
+            print('Skipping playing message: processingState is ${state.processingState}');
+          }
+        }
+
+        // 监听播放完成
+        if (state.processingState == ProcessingState.completed) {
+          _onPlayerComplete();
+        }
       });
 
       // 监听播放位置
@@ -273,13 +291,6 @@ class PlayerProvider with ChangeNotifier {
         if (duration != null) {
           _duration = duration;
           notifyListeners();
-        }
-      });
-
-      // 监听播放完成
-      _playerCompleteSubscription = _audioPlayer.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
-          _onPlayerComplete();
         }
       });
 
@@ -528,23 +539,27 @@ class PlayerProvider with ChangeNotifier {
       _lastRecordTime = DateTime.now();
       _lastRecordedPosition = startPosition ?? Duration.zero;
 
-      // 播放音频
-      if (shouldAutoPlay) {
-        await _audioPlayer.setAudioSource(source);
-        await _audioPlayer.play();
-      } else {
-        await _audioPlayer.setAudioSource(source);
-        if (startPosition != null) {
-          await _audioPlayer.seek(startPosition);
-        }
-      }
+      // 先设置音量
       await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null
           ? (_settingsProvider!.defaultVolume / 100)
           : 0.7);
 
+      // 播放音频
+      await _audioPlayer.setAudioSource(source);
+
+      if (shouldAutoPlay) {
+        // 确保播放器开始播放
+        await _audioPlayer.play();
+        // 使用延迟检查，确保播放器状态已更新
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (!_audioPlayer.playing) {
+          await _audioPlayer.play();
+        }
+      } else if (startPosition != null) {
+        await _audioPlayer.seek(startPosition);
+      }
 
       debugPrint('播放命令已发送');
-      _isPlaying = shouldAutoPlay;
 
       // 记录播放统计
       _musicProvider?.recordPlay(music);
@@ -598,22 +613,33 @@ class PlayerProvider with ChangeNotifier {
           final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
           await _audioPlayer.setVolume(0);
           await _audioPlayer.setAudioSource(source);
+          // 确保播放器开始播放
           await _audioPlayer.play();
+          // 使用延迟检查，确保播放器状态已更新
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (!_audioPlayer.playing) {
+            await _audioPlayer.play();
+          }
           await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
               ? (_settingsProvider!.defaultVolume / 100) 
               : 0.7);
         } else {
           await _audioPlayer.setAudioSource(source);
-          await _audioPlayer.play();
-          if (startPosition != null) {
+          if (autoPlay) {
+            // 确保播放器开始播放
+            await _audioPlayer.play();
+            // 使用延迟检查，确保播放器状态已更新
+            await Future.delayed(const Duration(milliseconds: 100));
+            if (!_audioPlayer.playing) {
+              await _audioPlayer.play();
+            }
+          } else if (startPosition != null) {
             await _audioPlayer.seek(startPosition);
           }
           await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
               ? (_settingsProvider!.defaultVolume / 100) 
               : 0.7);
         }
-
-        _isPlaying = autoPlay;
 
         // 记录播放统计
         _musicProvider?.recordPlay(music);
@@ -686,9 +712,6 @@ class PlayerProvider with ChangeNotifier {
     } catch (e) {
       // 忽略错误，可能托盘未初始化
     }
-
-    // 更新桌面歌词窗口的播放状态
-    sendPlayingMessage(_isPlaying);
   }
 
   /// 停止播放
@@ -769,7 +792,7 @@ class PlayerProvider with ChangeNotifier {
   }
 
   /// 播放完成后的处理
-  void _onPlayerComplete() {
+  Future<void> _onPlayerComplete() async {
     if (_playMode == PlayMode.loop) {
       // 单曲循环，重新播放当前歌曲
       _audioPlayer.seek(Duration.zero);
@@ -781,8 +804,7 @@ class PlayerProvider with ChangeNotifier {
         playNext();
       } else {
         // 不自动播放下一首，停止播放
-        _isPlaying = false;
-        notifyListeners();
+        await _audioPlayer.pause();
       }
     }
   }
