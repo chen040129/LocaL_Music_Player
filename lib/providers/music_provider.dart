@@ -19,6 +19,9 @@ class MusicProvider with ChangeNotifier {
   List<String> _scannedFolders = [];
   bool _hasInitialized = false;
   double _scanProgress = 0.0;
+
+  /// 是否已初始化
+  bool get hasInitialized => _hasInitialized;
   StreamSubscription<double>? _progressSubscription;
   final StreamController<String> _scanLogController = StreamController<String>.broadcast();
   String _currentScanLog = '';

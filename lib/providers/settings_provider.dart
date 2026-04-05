@@ -337,6 +337,11 @@ class SettingsProvider with ChangeNotifier {
     _loadSettings();
   }
 
+  bool _hasLoadedSettings = false;
+
+  /// 是否已加载设置
+  bool get hasLoadedSettings => _hasLoadedSettings;
+
   /// 从SharedPreferences加载设置
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -453,6 +458,7 @@ class SettingsProvider with ChangeNotifier {
     _coverSize = (prefs.getDouble('cover_size') ?? 300.0).toDouble();
     _coverBorderRadius = (prefs.getDouble('cover_border_radius') ?? 16.0).toDouble();
 
+    _hasLoadedSettings = true;
     notifyListeners();
   }
 
@@ -802,6 +808,20 @@ class SettingsProvider with ChangeNotifier {
     _enableDesktopLyrics = value;
     await _saveSetting('enable_desktop_lyrics', value);
     notifyListeners();
+
+    // 处理桌面歌词窗口的显示和隐藏
+    if (value) {
+      // 如果启用桌面歌词，显示窗口
+      print('Desktop lyrics enabled, showing window');
+      // 注意：这里不直接调用 showDesktopLyrics，因为可能需要先检查播放状态
+    } else {
+      // 如果禁用桌面歌词，隐藏窗口
+      print('Desktop lyrics disabled, hiding window');
+      if (common.lyricsWindowController != null) {
+        await common.lyricsWindowController!.hide();
+        common.lyricsWindowVisible = false;
+      }
+    }
   }
 
   Future<void> setShowLockButton(bool value) async {

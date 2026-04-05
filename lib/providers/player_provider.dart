@@ -225,6 +225,12 @@ class PlayerProvider with ChangeNotifier {
           if (state.processingState == ProcessingState.ready) {
             print('Sending playing message to desktop lyrics: $_isPlaying');
             sendPlayingMessage(_isPlaying);
+
+            // 当开始播放时，自动显示桌面歌词窗口
+            if (_isPlaying && _settingsProvider?.enableDesktopLyrics == true) {
+              print('Auto showing desktop lyrics because playback started');
+              showDesktopLyrics();
+            }
           } else {
             print('Skipping playing message: processingState is ${state.processingState}');
           }
@@ -1101,6 +1107,12 @@ class PlayerProvider with ChangeNotifier {
   /// 显示桌面歌词窗口
   Future<void> showDesktopLyrics() async {
     try {
+      // 检查设置中的 enableDesktopLyrics 值
+      if (_settingsProvider?.enableDesktopLyrics != true) {
+        print('Desktop lyrics is disabled in settings, skipping show');
+        return;
+      }
+
       if (!lyricsWindowVisible && lyricsWindowController != null) {
         // 更新当前歌词
         await updateDesktopLyrics();
@@ -1133,6 +1145,12 @@ class PlayerProvider with ChangeNotifier {
   /// 更新桌面歌词
   Future<void> updateDesktopLyrics() async {
     try {
+      print('updateDesktopLyrics: enableDesktopLyrics=${_settingsProvider?.enableDesktopLyrics}');
+      if (!(_settingsProvider?.enableDesktopLyrics ?? false)) {
+        print('updateDesktopLyrics: Desktop lyrics is disabled, skipping update');
+        return;
+      }
+
       // 解析当前歌词
       Lyrics? lyrics;
       if (_currentLyricsRaw != null && _currentLyricsRaw!.isNotEmpty) {
@@ -1141,6 +1159,7 @@ class PlayerProvider with ChangeNotifier {
 
       if (lyrics == null || !lyrics.hasLyrics) {
         // 没有歌词时清除桌面歌词
+        print('updateDesktopLyrics: No lyrics available, clearing desktop lyrics');
         sendDesktopLyricMessage(_position, null, false);
         return;
       }
@@ -1150,6 +1169,7 @@ class PlayerProvider with ChangeNotifier {
 
       // 如果没有找到当前歌词行，清除桌面歌词
       if (lyricLine == null) {
+        print('updateDesktopLyrics: No current lyric line found, clearing desktop lyrics');
         sendDesktopLyricMessage(_position, null, false);
         return;
       }
@@ -1158,6 +1178,7 @@ class PlayerProvider with ChangeNotifier {
       final isKaraoke = _settingsProvider?.enableKaraokeEffect ?? false;
 
       // 更新桌面歌词
+      print('updateDesktopLyrics: Sending lyric line to desktop lyrics: ${lyricLine.text}');
       sendDesktopLyricMessage(_position, lyricLine, isKaraoke);
     } catch (e) {
       debugPrint('更新桌面歌词失败: $e');

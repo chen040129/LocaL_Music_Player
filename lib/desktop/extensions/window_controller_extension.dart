@@ -7,10 +7,15 @@ import '../../providers/player_provider.dart';
 
 // 桌面歌词窗口通信方法
 void sendDesktopLyricMessage(Duration position, LyricLine? lyricLine, bool isKaraoke) async {
-  if (lyricsWindowController == null) return;
+  if (lyricsWindowController == null) {
+    print('sendDesktopLyricMessage: lyricsWindowController is null');
+    return;
+  }
 
   try {
+    print('sendDesktopLyricMessage: sending lyric to desktop lyrics, position=$position, lyricLine=$lyricLine');
     await lyricsWindowController!.updateLyric(position, lyricLine, isKaraoke);
+    print('sendDesktopLyricMessage: lyric message sent successfully');
   } catch (e) {
     print('Error sending lyric message to desktop lyrics: $e');
   }

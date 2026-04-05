@@ -19,6 +19,7 @@ import 'services/global_hotkey_service.dart';
 import 'services/system_tray_service.dart';
 import 'desktop/desktop_lyrics.dart';
 import 'desktop/extensions/window_controller_extension.dart';
+import 'widgets/desktop_lyrics_window.dart';
 import 'common.dart';
 import 'package:flutter/services.dart';
 
@@ -58,25 +59,20 @@ void main() async {
 
       print('Window options: ${windowOptions.toString()}');
 
-      print('Running DesktopLyrics app...');
-      runApp(DesktopLyrics());
-
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         print('Setting up frameless window...');
         await windowManager.setAsFrameless();
         print('Setting minimum and maximum size...');
         await windowManager.setMinimumSize(const Size(300, 120));
         await windowManager.setMaximumSize(const Size(1920, 300));
-        print('Showing window...');
-        await windowManager.show();
+        print('Desktop lyrics window setup complete, but not showing yet');
+        // 不在这里显示窗口，等待主窗口发送显示命令
       });
 
-      return;
+      print('Running DesktopLyrics app...');
+      runApp(DesktopLyrics());
+      return; // 桌面歌词窗口直接返回，不执行后面的代码
     }
-
-    // 初始化桌面歌词窗口控制器
-    print('Initializing desktop lyrics window controller...');
-    await initDesktopLyrics();
 
     const windowOptions = WindowOptions(
       size: Size(1200, 800),
@@ -95,6 +91,11 @@ void main() async {
   }
 
   runApp(const MyApp());
+
+  // 初始化桌面歌词窗口（在主窗口中）
+  if (!isMobile) {
+    await initDesktopLyrics();
+  }
 }
 
 class MyApp extends StatefulWidget {

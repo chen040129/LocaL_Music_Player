@@ -12,6 +12,12 @@ import 'package:smooth_corner/smooth_corner.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> initDesktopLyrics() async {
+  // 检查是否已经创建过桌面歌词窗口
+  if (lyricsWindowController != null) {
+    print('Desktop lyrics window already exists, skipping initialization');
+    return;
+  }
+
   print('Creating desktop lyrics window controller...');
   lyricsWindowController = await WindowController.create(
     WindowConfiguration(hiddenAtLaunch: true, arguments: 'desktop_lyrics'),
@@ -34,6 +40,7 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   bool _isHoveringPlay = false;
   bool _isHoveringClose = false;
   bool _isLocked = false;
+  int _retryCount = 0;
 
   @override
   void initState() {
@@ -44,12 +51,28 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   }
 
   Future<void> _requestPlayingState() async {
-    final controllers = await WindowController.getAll();
-    for (final controller in controllers) {
-      if (controller.arguments.isEmpty) {
-        print('Requesting playing state from main window');
-        await controller.invokeMethod('get_playing_state');
-        break;
+    if (_retryCount >= 5) {
+      print('Max retry count reached, giving up requesting playing state');
+      return;
+    }
+
+    try {
+      final controllers = await WindowController.getAll();
+      for (final controller in controllers) {
+        if (controller.arguments.isEmpty) {
+          print('Requesting playing state from main window (attempt ${_retryCount + 1})');
+          await controller.invokeMethod('get_playing_state');
+          _retryCount = 0; // 重置重试计数
+          break;
+        }
+      }
+    } catch (e) {
+      print('Error requesting playing state: $e');
+      _retryCount++;
+      // 如果请求失败，延迟后重试
+      if (_retryCount < 5) {
+        await Future.delayed(const Duration(seconds: 1));
+        _requestPlayingState();
       }
     }
   }
@@ -96,7 +119,6 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // 锁定状态下的解锁按钮区域
                       if (_isLocked)

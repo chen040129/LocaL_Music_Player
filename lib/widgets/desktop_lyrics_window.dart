@@ -5,6 +5,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import '../desktop/extensions/window_controller_extension.dart';
 import '../providers/settings_provider.dart';
 import '../providers/player_provider.dart';
+import '../providers/music_provider.dart';
 
 class DesktopLyricsWindow extends StatefulWidget {
   const DesktopLyricsWindow({Key? key}) : super(key: key);
@@ -19,7 +20,10 @@ class _DesktopLyricsWindowState extends State<DesktopLyricsWindow> {
   @override
   void initState() {
     super.initState();
-    _checkAndCreateLyricsWindow();
+    // 延迟检查，确保 Provider 已经初始化
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndCreateLyricsWindow();
+    });
   }
 
   @override
@@ -32,8 +36,13 @@ class _DesktopLyricsWindowState extends State<DesktopLyricsWindow> {
     if (!mounted) return;
 
     final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
 
-    if (settings.enableDesktopLyrics && _lyricsWindowController == null) {
+    // 只在设置已加载、音乐列表已初始化且启用桌面歌词时创建窗口
+    if (settings.hasLoadedSettings && 
+        settings.enableDesktopLyrics && 
+        _lyricsWindowController == null && 
+        musicProvider.hasInitialized) {
       await _createLyricsWindow();
     } else if (!settings.enableDesktopLyrics && _lyricsWindowController != null) {
       await _closeLyricsWindow();
@@ -75,9 +84,9 @@ class _DesktopLyricsWindowState extends State<DesktopLyricsWindow> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settings, child) {
-        // 监听设置变化
+    return Consumer2<SettingsProvider, MusicProvider>(
+      builder: (context, settings, musicProvider, child) {
+        // 监听设置和音乐列表变化
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _checkAndCreateLyricsWindow();
         });
