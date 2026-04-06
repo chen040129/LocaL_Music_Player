@@ -89,8 +89,12 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
 
-      // 初始化托盘
-      await _setupTray();
+      // 初始化主窗口控制器
+      mainWindowController = await WindowController.fromCurrentEngine();
+      print('主窗口控制器初始化完成');
+
+      // 初始化托盘图标（但不设置菜单）
+      await _setupTrayIcon();
     });
 
     // 添加窗口监听器
@@ -105,9 +109,9 @@ void main() async {
   }
 }
 
-/// 初始化托盘
-Future<void> _setupTray() async {
-  print('开始初始化托盘...');
+/// 初始化托盘图标
+Future<void> _setupTrayIcon() async {
+  print('开始初始化托盘图标...');
   try {
     await trayManager.setIcon(
       Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
@@ -129,6 +133,22 @@ Future<void> _setupTray() async {
       print('托盘监听器已存在，跳过添加');
     }
 
+    print('托盘图标初始化完成');
+  } catch (e) {
+    print('托盘图标初始化失败: $e');
+  }
+}
+
+/// 初始化托盘菜单
+Future<void> _setupTrayMenu() async {
+  // 防止重复初始化托盘菜单
+  if (_isTrayMenuInitialized) {
+    print('托盘菜单已初始化，跳过重复初始化');
+    return;
+  }
+  
+  print('开始初始化托盘菜单...');
+  try {
     await trayManager.setContextMenu(
       Menu(
         items: [
@@ -138,21 +158,22 @@ Future<void> _setupTray() async {
           MenuItem(key: 'togglePlay', label: '播放/暂停'),
           MenuItem(key: 'skipToNext', label: '下一首'),
           MenuItem.separator(),
-          MenuItem(key: 'unlock', label: '解锁桌面歌词'),
-          MenuItem.separator(),
           MenuItem(key: 'exit', label: '退出'),
         ],
       ),
     );
+    _isTrayMenuInitialized = true;
     print('托盘菜单设置成功');
-    print('托盘初始化完成');
   } catch (e) {
-    print('托盘初始化失败: $e');
+    print('托盘菜单设置失败: $e');
   }
 }
 
 // 全局托盘监听器实例
 MyTrayListener? _trayListener;
+
+// 托盘菜单初始化标志
+bool _isTrayMenuInitialized = false;
 
 /// 窗口监听器
 class _MyWindowListener extends WindowListener {
@@ -253,10 +274,13 @@ class _MyAppState extends State<MyApp>
                   playerProvider: playerProvider!,
                   settingsProvider: settingsProvider,
                 );
+                // 初始化托盘菜单（在PlayerProvider初始化之后）
+                _setupTrayMenu();
               }
             });
-            // 只在首次初始化且音乐列表已加载时恢复播放进度
+            // 只在首次初始化且音乐列表已加载完成时恢复播放进度
             if (!_hasRestoredPlayProgress &&
+                musicProvider.hasInitialized &&
                 musicProvider.musicList.isNotEmpty) {
               _hasRestoredPlayProgress = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {

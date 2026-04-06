@@ -4,6 +4,7 @@ import 'package:flutter_music_player/common.dart';
 import 'package:flutter_music_player/desktop/extensions/window_controller_extension.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 
 class MyTrayListener extends TrayListener {
   void _restoreWindow() {
@@ -61,16 +62,57 @@ class MyTrayListener extends TrayListener {
       }
     } else if (menuItem.key == 'skipToPrevious') {
       print('托盘菜单: 上一首');
-      globalPlayerProvider?.playPrevious();
+      _controlPlayer('skipToPrevious');
     } else if (menuItem.key == 'togglePlay') {
       print('托盘菜单: 播放/暂停');
-      globalPlayerProvider?.togglePlay();
+      _controlPlayer('togglePlay');
     } else if (menuItem.key == 'skipToNext') {
       print('托盘菜单: 下一首');
-      globalPlayerProvider?.playNext();
-    } else if (menuItem.key == 'unlock') {
-      print('托盘菜单: 解锁桌面歌词');
-      lyricsWindowController?.unlock();
+      _controlPlayer('skipToNext');
+    }
+  }
+
+  /// 通过窗口间通信控制播放器
+  void _controlPlayer(String action) async {
+    try {
+      // 尝试使用全局主窗口控制器
+      WindowController? controller = mainWindowController;
+      
+      // 如果全局主窗口控制器为null，尝试通过desktop_multi_window获取
+      if (controller == null) {
+        print('全局mainWindowController为null，尝试通过desktop_multi_window获取主窗口控制器');
+        final controllers = await WindowController.getAll();
+        print('获取到${controllers.length}个窗口控制器');
+        
+        // 主窗口通常是第一个窗口
+        if (controllers.isNotEmpty) {
+          controller = controllers.first;
+          print('使用第一个窗口控制器作为主窗口控制器');
+        }
+      }
+
+      if (controller == null) {
+        print('错误: 无法获取主窗口控制器');
+        return;
+      }
+
+      print('准备向主窗口发送$action指令');
+      
+      switch (action) {
+        case 'skipToPrevious':
+          await controller.skipToPrevious();
+          break;
+        case 'togglePlay':
+          await controller.togglePlay();
+          break;
+        case 'skipToNext':
+          await controller.skipToNext();
+          break;
+      }
+      
+      print('向主窗口发送$action指令成功');
+    } catch (e) {
+      print('控制播放器失败: $e');
     }
   }
 }

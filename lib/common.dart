@@ -18,6 +18,7 @@ const AssetImage nextButtonImage = AssetImage('assets/images/next_button.png');
 
 // ===================================== DesktopLyrics =====================================
 
+WindowController? mainWindowController;
 WindowController? lyricsWindowController;
 bool lyricsWindowVisible = false;
 
