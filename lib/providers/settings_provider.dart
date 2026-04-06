@@ -813,7 +813,11 @@ class SettingsProvider with ChangeNotifier {
     if (value) {
       // 如果启用桌面歌词，显示窗口
       print('Desktop lyrics enabled, showing window');
-      // 注意：这里不直接调用 showDesktopLyrics，因为可能需要先检查播放状态
+      // 显示桌面歌词窗口
+      if (common.lyricsWindowController != null && !common.lyricsWindowVisible) {
+        await common.lyricsWindowController!.show();
+        common.lyricsWindowVisible = true;
+      }
     } else {
       // 如果禁用桌面歌词，隐藏窗口
       print('Desktop lyrics disabled, hiding window');

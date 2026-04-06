@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_music_player/screens/home_screen.dart';
 import 'package:window_manager/window_manager.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, exit;
 import 'package:provider/provider.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -16,12 +16,13 @@ import 'package:flutter_music_player/pages/albums_page.dart';
 import 'providers/navigation_provider.dart';
 import 'widgets/animated_theme.dart';
 import 'services/global_hotkey_service.dart';
-import 'services/system_tray_service.dart';
 import 'desktop/desktop_lyrics.dart';
 import 'desktop/extensions/window_controller_extension.dart';
 import 'widgets/desktop_lyrics_window.dart';
+import 'desktop/my_tray_listener.dart';
 import 'common.dart';
 import 'package:flutter/services.dart';
+import 'package:tray_manager/tray_manager.dart';
 
 // 全局变量保存Provider引用
 MusicProvider? globalMusicProvider;
@@ -29,7 +30,6 @@ PlayerProvider? globalPlayerProvider;
 bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
 final globalLiquidGlassViewController = LiquidGlassViewController();
 final globalHotkeyService = GlobalHotkeyService();
-final globalSystemTrayService = SystemTrayService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,16 +85,81 @@ void main() async {
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setPreventClose(true);
       await windowManager.show();
       await windowManager.focus();
-    });
-  }
 
-  runApp(const MyApp());
+      // 初始化托盘
+      await _setupTray();
+    });
+
+    // 添加窗口监听器
+    windowManager.addListener(_MyWindowListener());
+
+    runApp(const MyApp());
+  }
 
   // 初始化桌面歌词窗口（在主窗口中）
   if (!isMobile) {
     await initDesktopLyrics();
+  }
+}
+
+/// 初始化托盘
+Future<void> _setupTray() async {
+  print('开始初始化托盘...');
+  try {
+    await trayManager.setIcon(
+      Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
+      isTemplate: true,
+    );
+    print('托盘图标设置成功');
+
+    if (!Platform.isLinux) {
+      await trayManager.setToolTip('Music Player');
+      print('托盘提示设置成功');
+    }
+
+    // 使用单例模式，确保只添加一个监听器
+    if (_trayListener == null) {
+      _trayListener = MyTrayListener();
+      trayManager.addListener(_trayListener!);
+      print('托盘监听器添加成功');
+    } else {
+      print('托盘监听器已存在，跳过添加');
+    }
+
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(key: 'show', label: '显示窗口'),
+          MenuItem.separator(),
+          MenuItem(key: 'skipToPrevious', label: '上一首'),
+          MenuItem(key: 'togglePlay', label: '播放/暂停'),
+          MenuItem(key: 'skipToNext', label: '下一首'),
+          MenuItem.separator(),
+          MenuItem(key: 'unlock', label: '解锁桌面歌词'),
+          MenuItem.separator(),
+          MenuItem(key: 'exit', label: '退出'),
+        ],
+      ),
+    );
+    print('托盘菜单设置成功');
+    print('托盘初始化完成');
+  } catch (e) {
+    print('托盘初始化失败: $e');
+  }
+}
+
+// 全局托盘监听器实例
+MyTrayListener? _trayListener;
+
+/// 窗口监听器
+class _MyWindowListener extends WindowListener {
+  @override
+  void onWindowClose() {
+    // 关闭窗口时隐藏到托盘
+    windowManager.hide();
   }
 }
 
@@ -105,7 +170,8 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListener {
+class _MyAppState extends State<MyApp>
+    with WidgetsBindingObserver, WindowListener {
   static bool _isWindowMethodsInitialized = false;
   static bool _isInitializing = false;
 
@@ -115,12 +181,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
     WidgetsBinding.instance.addObserver(this);
     // 监听窗口关闭事件
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      windowManager.setPreventClose(true);
       windowManager.addListener(this);
+      // 初始化主窗口自定义方法
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final windowController = await WindowController.fromCurrentEngine();
+        if (globalPlayerProvider != null) {
+          await windowController.mainCustomInitialize(globalPlayerProvider!);
+        }
+      });
     }
     // 窗口透明度现在由背景层控制，不需要单独初始化
   }
-
 
   @override
   void dispose() {
@@ -144,10 +215,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
 
   @override
   void onWindowClose() async {
-    // 先隐藏窗口，让用户感觉立即关闭
+    print('onWindowClose called');
+    // 隐藏窗口到托盘
     await windowManager.hide();
-    // 最小化到托盘而不是关闭
-    await globalSystemTrayService.minimizeToTray();
   }
 
   @override
@@ -163,7 +233,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
-        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider, PlayerProvider>(
+        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider,
+            PlayerProvider>(
           create: (context) {
             final provider = PlayerProvider();
             globalPlayerProvider = provider;
@@ -185,7 +256,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
               }
             });
             // 只在首次初始化且音乐列表已加载时恢复播放进度
-            if (!_hasRestoredPlayProgress && musicProvider.musicList.isNotEmpty) {
+            if (!_hasRestoredPlayProgress &&
+                musicProvider.musicList.isNotEmpty) {
               _hasRestoredPlayProgress = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 playerProvider?.restorePlayProgress();
@@ -201,12 +273,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
           if (!_isWindowMethodsInitialized && !_isInitializing) {
             _isInitializing = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final windowController = await WindowController.fromCurrentEngine();
+              final windowController =
+                  await WindowController.fromCurrentEngine();
               print('Initializing main window custom methods...');
               print('playerProvider is null: ${playerProvider == null}');
 
               if (playerProvider != null) {
-                print('playerProvider is initialized, setting up method handler...');
+                print(
+                    'playerProvider is initialized, setting up method handler...');
                 await windowController.mainCustomInitialize(playerProvider);
                 _isWindowMethodsInitialized = true;
                 _isInitializing = false;
@@ -232,11 +306,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                       // 背景层 - 根据背景类型应用透明度
                       Positioned.fill(
                         child: Container(
-                          color: settings.uiBackgroundType == UIBackgroundType.normal
+                          color: settings.uiBackgroundType ==
+                                  UIBackgroundType.normal
                               ? (settings.windowOpacity < 0.01
                                   ? Colors.transparent
-                                  : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity))
-                              : Theme.of(context).colorScheme.surface.withOpacity(1.0),
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surface
+                                      .withOpacity(settings.windowOpacity))
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(1.0),
                         ),
                       ),
                       // 液态玻璃背景捕获层
@@ -246,7 +327,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
                             controller: globalLiquidGlassViewController,
                             pixelRatio: 1.0,
                             realTimeCapture: true,
-                            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
+                            refreshRate:
+                                LiquidGlassRefreshRate.deviceRefreshRate,
                             useSync: true,
                             backgroundWidget: const SizedBox.expand(),
                             children: const [],
@@ -261,11 +343,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, WindowListen
             ),
             routes: {
               '/artists': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-                return ArtistsPage(navigateToArtist: args?['artist'] as String?);
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
+                return ArtistsPage(
+                    navigateToArtist: args?['artist'] as String?);
               },
               '/albums': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
                 return AlbumsPage(navigateToAlbum: args?['album'] as String?);
               },
             },

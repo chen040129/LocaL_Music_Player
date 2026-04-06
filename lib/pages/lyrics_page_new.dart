@@ -15,7 +15,7 @@ import '../constants/app_icons.dart';
 import '../widgets/enhanced_lyrics_widget.dart';
 import '../widgets/album_cover_widget.dart';
 import '../widgets/custom_title_bar.dart';
-import '../services/system_tray_service.dart';
+
 
 // 自定义SliderTrackShape，用于控制进度条的宽度
 class CustomSliderTrackShape extends SliderTrackShape {
@@ -130,8 +130,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   bool _isHoveringPlayPause = false;
   bool _isHoveringNext = false;
 
-  // 系统托盘服务
-  final SystemTrayService _systemTrayService = SystemTrayService();
+
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -162,8 +161,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         await windowManager.setSize(size);
       });
 
-      // 初始化系统托盘
-      _systemTrayService.initialize(context);
+
     }
 
     _fadeController = AnimationController(
@@ -185,8 +183,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   void dispose() {
     _fadeController.dispose();
     _pageSwitchController.dispose();
-    // 销毁系统托盘
-    _systemTrayService.destroy();
+
     // 恢复窗口透明度
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.setOpacity(1.0);
@@ -1462,9 +1459,6 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                               });
                             },
                             isAlwaysOnTop: _isAlwaysOnTop,
-                            onMinimizeToTray: () async {
-                              await _systemTrayService.minimizeToTray();
-                            },
                           ),
                         ),
                       ),

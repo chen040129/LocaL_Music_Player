@@ -23,7 +23,7 @@ bool FlutterWindow::OnCreate() {
 
   // Remove the standard title bar and make window borderless
   LONG style = GetWindowLong(GetHandle(), GWL_STYLE);
-  style &= ~(WS_CAPTION | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+  style &= ~(WS_CAPTION | WS_MINIMIZE | WS_MAXIMIZE);
   SetWindowLong(GetHandle(), GWL_STYLE, style);
 
   // Remove the extended window styles
@@ -145,10 +145,16 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
       // Define title bar area height
       const int captionHeight = 32;
+      // Define close button area width
+      const int closeButtonWidth = 46;
 
-      // If mouse is in title bar area, return HTCAPTION to make window draggable
+      // If mouse is in title bar area
       if (pt.y < captionHeight) {
-        return HTCAPTION;
+        // Check if mouse is in close button area (right side of title bar)
+        if (pt.x > clientRect.right - closeButtonWidth) {
+          return HTCLOSE;  // Allow close button to work
+        }
+        return HTCAPTION;  // Make window draggable
       }
 
       // Handle window edge resizing - only outer border

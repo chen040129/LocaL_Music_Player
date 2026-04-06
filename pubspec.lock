@@ -977,10 +977,42 @@ packages:
     dependency: transitive
     description:
       name: screen_retriever
-      sha256: "6ee02c8a1158e6dae7ca430da79436e3b1c9563c8cf02f524af997c201ac2b90"
+      sha256: "570dbc8e4f70bac451e0efc9c9bb19fa2d6799a11e6ef04f946d7886d2e23d0c"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.1.9"
+    version: "0.2.0"
+  screen_retriever_linux:
+    dependency: transitive
+    description:
+      name: screen_retriever_linux
+      sha256: f7f8120c92ef0784e58491ab664d01efda79a922b025ff286e29aa123ea3dd18
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_macos:
+    dependency: transitive
+    description:
+      name: screen_retriever_macos
+      sha256: "71f956e65c97315dd661d71f828708bd97b6d358e776f1a30d5aa7d22d78a149"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_platform_interface:
+    dependency: transitive
+    description:
+      name: screen_retriever_platform_interface
+      sha256: ee197f4581ff0d5608587819af40490748e1e39e648d7680ecf95c05197240c0
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_windows:
+    dependency: transitive
+    description:
+      name: screen_retriever_windows
+      sha256: "449ee257f03ca98a57288ee526a301a430a344a161f9202b4fcc38576716fe13"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0"
   scroll_to_index:
     dependency: transitive
     description:
@@ -1245,11 +1277,12 @@ packages:
   tray_manager:
     dependency: "direct main"
     description:
-      name: tray_manager
-      sha256: bdc3ac6c36f3d12d871459e4a9822705ce5a1165a17fa837103bc842719bf3f7
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.2.4"
+      path: "packages/tray_manager"
+      ref: main
+      resolved-ref: "9a46de815da48759c01d8427f28d3fc024af05d0"
+      url: "https://github.com/AfalpHy/tray_manager.git"
+    source: git
+    version: "0.5.2"
   typed_data:
     dependency: transitive
     description:
@@ -1387,7 +1420,7 @@ packages:
     source: hosted
     version: "3.0.3"
   win32:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: win32
       sha256: d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e
@@ -1405,11 +1438,12 @@ packages:
   window_manager:
     dependency: "direct main"
     description:
-      name: window_manager
-      sha256: "8699323b30da4cdbe2aa2e7c9de567a6abd8a97d9a5c850a3c86dcd0b34bbfbf"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.3.9"
+      path: "packages/window_manager"
+      ref: main
+      resolved-ref: d18a15c8e92b2c21ff04580c7990bce32941db64
+      url: "https://github.com/AfalpHy/window_manager.git"
+    source: git
+    version: "0.5.1"
   xdg_directories:
     dependency: transitive
     description:

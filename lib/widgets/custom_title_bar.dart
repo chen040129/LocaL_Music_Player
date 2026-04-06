@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, exit;
 import '../constants/app_icons.dart';
 import '../providers/settings_provider.dart';
 import 'package:provider/provider.dart';
@@ -257,7 +257,16 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
-              onTap: widget.onClose,
+              onTap: () async {
+                print('Close button tapped, closing window');
+                // 参考 ParticleMusic 的实现方式
+                if (Platform.isWindows) {
+                  await windowManager.setPreventClose(false);
+                  windowManager.close();
+                } else {
+                  exit(0);
+                }
+              },
               borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,

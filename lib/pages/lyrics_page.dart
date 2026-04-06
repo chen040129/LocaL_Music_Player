@@ -8,7 +8,7 @@ import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
 import '../constants/app_icons.dart';
 import '../widgets/custom_title_bar.dart';
-import '../services/system_tray_service.dart';
+
 
 class LyricsPage extends StatefulWidget {
   const LyricsPage({Key? key}) : super(key: key);
@@ -20,8 +20,7 @@ class LyricsPage extends StatefulWidget {
 class _LyricsPageState extends State<LyricsPage> {
   bool _isAlwaysOnTop = false;
 
-  // 系统托盘服务
-  final SystemTrayService _systemTrayService = SystemTrayService();
+
 
   static const Duration _animationDuration = Duration(milliseconds: 200);
   static const BoxConstraints _iconButtonConstraints = BoxConstraints(
@@ -38,10 +37,7 @@ class _LyricsPageState extends State<LyricsPage> {
     super.initState();
     _checkAlwaysOnTop();
 
-    // 初始化系统托盘
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      _systemTrayService.initialize(context);
-    }
+
   }
 
   Future<void> _checkAlwaysOnTop() async {
@@ -55,8 +51,6 @@ class _LyricsPageState extends State<LyricsPage> {
 
   @override
   void dispose() {
-    // 销毁系统托盘
-    _systemTrayService.destroy();
     super.dispose();
   }
 
@@ -225,9 +219,6 @@ class _LyricsPageState extends State<LyricsPage> {
                       });
                     },
                     isAlwaysOnTop: _isAlwaysOnTop,
-                    onMinimizeToTray: () async {
-                      await _systemTrayService.minimizeToTray();
-                    },
                   ),
                 ),
               ),

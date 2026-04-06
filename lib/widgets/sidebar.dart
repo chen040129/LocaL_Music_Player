@@ -214,6 +214,57 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         );
                       },
                     ),
+                    // 桌面歌词按钮
+                    Consumer<SettingsProvider>(
+                      builder: (context, settingsProvider, child) {
+                        return MouseRegion(
+                          onEnter: (_) => setState(() {
+                            _menuHoverStates['desktopLyrics'] = true;
+                          }),
+                          onExit: (_) => setState(() {
+                            _menuHoverStates['desktopLyrics'] = false;
+                          }),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              onTap: () async {
+                                // 切换桌面歌词状态
+                                await settingsProvider.setEnableDesktopLyrics(!settingsProvider.enableDesktopLyrics);
+                              },
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              child: Padding(
+                                padding: EdgeInsets.zero,
+                                child: AnimatedScale(
+                                  scale: (_menuHoverStates['desktopLyrics'] ?? false) ? _hoverScale : _normalScale,
+                                  duration: _animationDuration,
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '词',
+                                        style: TextStyle(
+                                          color: settingsProvider.enableDesktopLyrics ? Colors.blue : Theme.of(context).iconTheme.color,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     // 音质设置按钮
                     MouseRegion(
                       onEnter: (_) => setState(() {

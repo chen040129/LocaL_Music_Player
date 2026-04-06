@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
@@ -14,7 +16,7 @@ import 'dart:io' show Platform, File;
 import 'package:provider/provider.dart';
 import 'package:flutter_music_player/theme/theme_provider.dart';
 import 'package:flutter_music_player/services/music_scanner_service.dart';
-import 'package:flutter_music_player/services/system_tray_service.dart';
+
 import 'package:flutter_music_player/providers/music_provider.dart';
 import 'package:flutter_music_player/providers/player_provider.dart';
 import 'package:flutter_music_player/providers/navigation_provider.dart';
@@ -62,8 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // 窗口事件监听器
   late final _WindowEventListener _windowListener = _WindowEventListener(this);
   
-  // 系统托盘服务
-  final SystemTrayService _systemTrayService = SystemTrayService();
 
   @override
   void initState() {
@@ -94,8 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // 初始化内容区域尺寸
       _updateContentDimensions();
       
-      // 初始化系统托盘
-      _systemTrayService.initialize(context);
+
     });
 
     // 添加渲染回调，监听布局变化
@@ -123,8 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _resizeDebounceTimer?.cancel();
     // 移除窗口事件监听器
     windowManager.removeListener(_windowListener);
-    // 销毁系统托盘
-    _systemTrayService.destroy();
     super.dispose();
   }
 
@@ -194,10 +191,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _closeWindow() async {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      await windowManager.close();
-    }
+  void _closeWindow() {
+    print('_closeWindow called');
+    // 直接退出，不等待任何异步操作
+    exit(0);
   }
 
   void _toggleAlwaysOnTop() async {
@@ -223,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _minimizeToTray() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      await _systemTrayService.minimizeToTray();
+      await windowManager.hide();
     }
   }
 

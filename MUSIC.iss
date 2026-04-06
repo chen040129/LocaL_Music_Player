@@ -79,6 +79,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\audioplayers_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\desktop_multi_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\just_audio_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion

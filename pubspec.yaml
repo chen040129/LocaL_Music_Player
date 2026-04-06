@@ -10,7 +10,9 @@ flutter:
     - shaders/liquidglass.frag
     - shaders/liquid_glass_player_bar.frag
   assets:
-    - windows/runner/resources/app_icon.ico
+    - assets/
+    - assets/images/
+    - windows/runner/resources/
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -49,9 +51,18 @@ dependencies:
 
   url_launcher: ^6.2.2
 
-  window_manager: ^0.3.7
-  tray_manager: ^0.2.0
+  window_manager:
+    git:
+      url: https://github.com/AfalpHy/window_manager.git
+      ref: main
+      path: packages/window_manager
+  tray_manager:
+    git:
+      url: https://github.com/AfalpHy/tray_manager.git
+      ref: main
+      path: packages/tray_manager
   package_info_plus: ^4.2.0
+  win32: ^5.0.0
 
   # 桌面歌词依赖
   desktop_multi_window: ^0.3.0

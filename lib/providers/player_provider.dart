@@ -8,7 +8,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
 import '../services/storage_service.dart';
-import '../services/system_tray_service.dart';
+
 import 'package:path/path.dart' as path;
 import 'music_provider.dart';
 import 'settings_provider.dart';
@@ -38,7 +38,6 @@ class PlayerProvider with ChangeNotifier {
   MusicProvider? _musicProvider; // 添加MusicProvider引用
   SettingsProvider? _settingsProvider; // 添加SettingsProvider引用
   final StorageService _storageService = StorageService(); // 添加StorageService实例
-  final SystemTrayService _systemTrayService = SystemTrayService(); // 添加系统托盘服务实例
 
   // 播放状态
   bool _isPlaying = false;
@@ -712,12 +711,12 @@ class PlayerProvider with ChangeNotifier {
       _lastRecordedPosition = _position;
     }
 
-    // 更新托盘菜单
-    try {
-      await _systemTrayService.updatePlayPauseMenuItem();
-    } catch (e) {
-      // 忽略错误，可能托盘未初始化
-    }
+
+  }
+
+  /// 切换播放/暂停（托盘菜单使用）
+  Future<void> togglePlay() async {
+    await togglePlayPause();
   }
 
   /// 停止播放
