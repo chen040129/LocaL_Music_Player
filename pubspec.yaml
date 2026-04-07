@@ -32,11 +32,8 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   animations: ^2.0.11
 
-  just_audio: ^0.9.36
-  just_audio_windows: ^0.2.0
-  audio_session: ^0.1.18
-
-  audioplayers: ^5.2.1
+  audioplayers:
+    path: ../audioplayers/packages/audioplayers
   audio_metadata_reader: ^1.4.2
 
   amlv: ^1.0.2
@@ -80,7 +77,6 @@ dependencies:
   palette_generator: ^0.3.3+3
 
   upnped: ^1.1.2
-  screen_brightness: ^0.2.2+1
   lpinyin: ^2.0.3
   scrollable_positioned_list: ^0.3.8
   fl_chart: ^0.66.0
@@ -91,3 +87,7 @@ dev_dependencies:
   flutter_lints: ^3.0.1
   hive_generator: ^2.0.1
   build_runner: ^2.4.7
+
+dependency_overrides:
+  audioplayers:
+    path: ../audioplayers/packages/audioplayers

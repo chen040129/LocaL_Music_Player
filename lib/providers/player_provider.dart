@@ -1,10 +1,8 @@
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../services/music_scanner_service.dart';
 import '../services/lyrics_service.dart';
 import '../services/storage_service.dart';
@@ -15,6 +13,7 @@ import 'settings_provider.dart';
 import '../common.dart';
 import '../models/lyrics_model.dart';
 import '../desktop/extensions/window_controller_extension.dart';
+import '../desktop/desktop_lyrics.dart';
 
 /// 播放模式枚举
 enum PlayMode {
@@ -165,7 +164,7 @@ class PlayerProvider with ChangeNotifier {
     // 如果没有保存的播放列表，或者恢复失败，使用旧的逻辑
     // 在音乐列表中查找该音乐
     final allMusic = _musicProvider?.musicList ?? [];
-    MusicInfo? music;
+    late final MusicInfo music;
     
     try {
       music = allMusic.firstWhere(
@@ -183,25 +182,16 @@ class PlayerProvider with ChangeNotifier {
       }
     }
 
-    // 在当前播放列表中查找该音乐
-    if (music == null) {
-      debugPrint('未找到上次播放的音乐');
-      return;
-    }
-    
-    final index = _playlist.indexWhere((m) => m.id == music!.id);
+    final index = _playlist.indexWhere((m) => m.id == music.id);
+    final position = Duration(milliseconds: positionMs);
     if (index != -1) {
-      // 如果在播放列表中，直接恢复播放
-      final position = Duration(milliseconds: positionMs);
       await playAtIndex(index, startPosition: position, autoPlay: autoPlay);
-      debugPrint('已恢复播放进度: ${music!.title} - ${position.inSeconds}秒');
+      debugPrint('已恢复播放进度: ${music.title} - ${position.inSeconds}秒');
     } else {
-      // 如果不在播放列表中，添加到列表并恢复播放
-      _playlist.add(music!);
+      _playlist.add(music);
       _currentIndex = _playlist.length - 1;
-      final position = Duration(milliseconds: positionMs);
       await playAtIndex(_currentIndex, startPosition: position, autoPlay: autoPlay);
-      debugPrint('已恢复播放进度(新添加): ${music!.title} - ${position.inSeconds}秒');
+      debugPrint('已恢复播放进度(新添加): ${music.title} - ${position.inSeconds}秒');
     }
   }
 
@@ -212,37 +202,33 @@ class PlayerProvider with ChangeNotifier {
       await _audioPlayer.setVolume(0.7);
 
       // 监听播放状态
-      _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
-        print('Player state changed: playing=${state.playing}, processingState=${state.processingState}');
-        // 只在实际播放状态改变时更新
-        if (_isPlaying != state.playing) {
-          print('_isPlaying changed from $_isPlaying to ${state.playing}');
-          _isPlaying = state.playing;
+      _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
+        print('Player state changed: state=$state');
+        final isPlayingState = state == PlayerState.playing;
+        if (_isPlaying != isPlayingState) {
+          print('_isPlaying changed from $_isPlaying to $isPlayingState');
+          _isPlaying = isPlayingState;
           notifyListeners();
-          // 更新桌面歌词窗口的播放状态
-          // 只在播放状态稳定时发送消息（避免loading状态）
-          if (state.processingState == ProcessingState.ready) {
+
+          if (isPlayingState) {
             print('Sending playing message to desktop lyrics: $_isPlaying');
             sendPlayingMessage(_isPlaying);
 
-            // 当开始播放时，自动显示桌面歌词窗口
-            if (_isPlaying && _settingsProvider?.enableDesktopLyrics == true) {
+            if (_settingsProvider?.enableDesktopLyrics == true) {
               print('Auto showing desktop lyrics because playback started');
               showDesktopLyrics();
             }
-          } else {
-            print('Skipping playing message: processingState is ${state.processingState}');
           }
-        }
-
-        // 监听播放完成
-        if (state.processingState == ProcessingState.completed) {
-          _onPlayerComplete();
         }
       });
 
+      // 监听播放完成
+      _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+        _onPlayerComplete();
+      });
+
       // 监听播放位置
-      _positionSubscription = _audioPlayer.positionStream.listen((position) {
+      _positionSubscription = _audioPlayer.onPositionChanged.listen((position) {
         // 计算自上次记录以来的播放时长
         if (_isPlaying && _lastRecordTime != null) {
           final now = DateTime.now();
@@ -292,11 +278,9 @@ class PlayerProvider with ChangeNotifier {
       });
 
       // 监听音频时长
-      _durationSubscription = _audioPlayer.durationStream.listen((duration) {
-        if (duration != null) {
-          _duration = duration;
-          notifyListeners();
-        }
+      _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
+        _duration = duration;
+        notifyListeners();
       });
 
       _isInitialized = true;
@@ -535,7 +519,7 @@ class PlayerProvider with ChangeNotifier {
         return;
       }
 
-      final source = AudioSource.uri(Uri.file(music.filePath));
+      final source = DeviceFileSource(music.filePath);
       debugPrint('音频源类型: ${source.runtimeType}');
 
       debugPrint('发送播放命令...');
@@ -544,24 +528,23 @@ class PlayerProvider with ChangeNotifier {
       _lastRecordTime = DateTime.now();
       _lastRecordedPosition = startPosition ?? Duration.zero;
 
-      // 先设置音量
-      await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null
+      final defaultVolume = _settingsProvider?.defaultVolume != null
           ? (_settingsProvider!.defaultVolume / 100)
-          : 0.7);
-
-      // 播放音频
-      await _audioPlayer.setAudioSource(source);
+          : 0.7;
 
       if (shouldAutoPlay) {
-        // 确保播放器开始播放
-        await _audioPlayer.play();
-        // 使用延迟检查，确保播放器状态已更新
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (!_audioPlayer.playing) {
-          await _audioPlayer.play();
+        if (_settingsProvider?.enableFadeEffect ?? true) {
+          await _audioPlayer.setVolume(0);
+          await _audioPlayer.play(source, volume: 0, position: startPosition);
+          await _audioPlayer.setVolume(defaultVolume);
+        } else {
+          await _audioPlayer.play(source, volume: defaultVolume, position: startPosition);
         }
-      } else if (startPosition != null) {
-        await _audioPlayer.seek(startPosition);
+      } else {
+        await _audioPlayer.setSource(source);
+        if (startPosition != null) {
+          await _audioPlayer.seek(startPosition);
+        }
       }
 
       debugPrint('播放命令已发送');
@@ -584,79 +567,18 @@ class PlayerProvider with ChangeNotifier {
   /// 播放指定音乐（通过音乐对象）
   /// [autoPlay] 是否自动播放，默认为true
   Future<void> playMusic(MusicInfo music, {Duration? startPosition, bool autoPlay = true}) async {
-    // 在当前播放列表中查找该音乐
     final index = _playlist.indexWhere((m) => m.id == music.id);
 
     if (index != -1) {
-      // 如果在播放列表中找到，直接播放
       await playAtIndex(index, startPosition: startPosition, autoPlay: autoPlay);
-    } else {
-      // 如果不在播放列表中，添加到列表并播放
-      _playlist.add(music);
-      _currentIndex = _playlist.length - 1;
-      _currentMusic = music;
-
-      debugPrint('=== 开始播放（新添加） ===');
-      debugPrint('标题: ${music.title}');
-      debugPrint('艺术家: ${music.artist}');
-      debugPrint('专辑: ${music.album}');
-      debugPrint('文件路径: ${music.filePath}');
-      debugPrint('时长: ${music.duration.inSeconds}秒');
-      if (startPosition != null) {
-        debugPrint('起始位置: ${startPosition.inSeconds}秒');
-      }
-
-      try {
-        final source = AudioSource.uri(Uri.file(music.filePath));
-
-        // 初始化记录时间和位置（在播放前设置）
-        _lastRecordTime = DateTime.now();
-        _lastRecordedPosition = startPosition ?? Duration.zero;
-
-        // 应用淡入淡出效果
-        if (_settingsProvider?.enableFadeEffect ?? true) {
-          final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
-          await _audioPlayer.setVolume(0);
-          await _audioPlayer.setAudioSource(source);
-          // 确保播放器开始播放
-          await _audioPlayer.play();
-          // 使用延迟检查，确保播放器状态已更新
-          await Future.delayed(const Duration(milliseconds: 100));
-          if (!_audioPlayer.playing) {
-            await _audioPlayer.play();
-          }
-          await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
-              ? (_settingsProvider!.defaultVolume / 100) 
-              : 0.7);
-        } else {
-          await _audioPlayer.setAudioSource(source);
-          if (autoPlay) {
-            // 确保播放器开始播放
-            await _audioPlayer.play();
-            // 使用延迟检查，确保播放器状态已更新
-            await Future.delayed(const Duration(milliseconds: 100));
-            if (!_audioPlayer.playing) {
-              await _audioPlayer.play();
-            }
-          } else if (startPosition != null) {
-            await _audioPlayer.seek(startPosition);
-          }
-          await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
-              ? (_settingsProvider!.defaultVolume / 100) 
-              : 0.7);
-        }
-
-        // 记录播放统计
-        _musicProvider?.recordPlay(music);
-
-        // 加载歌词
-        _loadLyrics(music.filePath);
-
-        notifyListeners();
-      } catch (e) {
-        debugPrint('播放失败: $e');
-      }
+      return;
     }
+
+    _playlist.add(music);
+    _currentIndex = _playlist.length - 1;
+    _currentMusic = music;
+
+    await playAtIndex(_currentIndex, startPosition: startPosition, autoPlay: autoPlay);
   }
 
   /// 播放或暂停
@@ -676,7 +598,6 @@ class PlayerProvider with ChangeNotifier {
 
       // 应用淡出效果
       if (_settingsProvider?.enableFadeEffect ?? true) {
-        final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
         await _audioPlayer.setVolume(0);
         await _audioPlayer.pause();
         await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
@@ -691,16 +612,17 @@ class PlayerProvider with ChangeNotifier {
     } else {
       // 恢复播放时，恢复倒计时（如果有倒计时）
 
+      final defaultVolume = _settingsProvider?.defaultVolume != null
+          ? (_settingsProvider!.defaultVolume / 100)
+          : 0.7;
+
       // 应用淡入效果
       if (_settingsProvider?.enableFadeEffect ?? true) {
-        final fadeDuration = _settingsProvider?.fadeDuration ?? 2.0;
         await _audioPlayer.setVolume(0);
-        await _audioPlayer.play();
-        await _audioPlayer.setVolume(_settingsProvider?.defaultVolume != null 
-            ? (_settingsProvider!.defaultVolume / 100) 
-            : 0.7);
+        await _audioPlayer.resume();
+        await _audioPlayer.setVolume(defaultVolume);
       } else {
-        await _audioPlayer.play();
+        await _audioPlayer.resume();
       }
 
       if (_timer != null) {
@@ -800,15 +722,13 @@ class PlayerProvider with ChangeNotifier {
   Future<void> _onPlayerComplete() async {
     if (_playMode == PlayMode.loop) {
       // 单曲循环，重新播放当前歌曲
-      _audioPlayer.seek(Duration.zero);
-      _audioPlayer.play();
+      await _audioPlayer.seek(Duration.zero);
+      await _audioPlayer.resume();
     } else {
       // 检查是否启用自动播放下一首
       if (_settingsProvider?.autoPlayNext ?? true) {
-        // 其他模式，播放下一首
-        playNext();
+        await playNext();
       } else {
-        // 不自动播放下一首，停止播放
         await _audioPlayer.pause();
       }
     }
@@ -872,7 +792,7 @@ class PlayerProvider with ChangeNotifier {
         // 顺序播放模式：将当前歌曲及其之后的歌曲移到前面，形成一个环
         if (_originalPlaylist.isNotEmpty && currentMusic != null) {
           // 找到当前播放的音乐在原始列表中的位置
-          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
+          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic.id);
           if (currentMusicIndex != -1) {
             _playlist = List.from(_originalPlaylist);
             // 将当前歌曲及其之后的歌曲移到前面
@@ -889,7 +809,7 @@ class PlayerProvider with ChangeNotifier {
         // 列表循环、单曲循环模式：从原始列表重新生成，当前歌曲置顶
         if (_originalPlaylist.isNotEmpty && currentMusic != null) {
           // 找到当前播放的音乐在原始列表中的位置
-          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic!.id);
+          final currentMusicIndex = _originalPlaylist.indexWhere((m) => m.id == currentMusic.id);
           if (currentMusicIndex != -1) {
             _playlist = List.from(_originalPlaylist);
             // 将当前歌曲移到顶部
@@ -1110,6 +1030,12 @@ class PlayerProvider with ChangeNotifier {
       if (_settingsProvider?.enableDesktopLyrics != true) {
         print('Desktop lyrics is disabled in settings, skipping show');
         return;
+      }
+
+      // 按需创建桌面歌词窗口，避免在启动时初始化导致崩溃
+      if (lyricsWindowController == null) {
+        print('Desktop lyrics controller is not initialized, creating now...');
+        await initDesktopLyrics();
       }
 
       if (!lyricsWindowVisible && lyricsWindowController != null) {

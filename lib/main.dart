@@ -32,17 +32,21 @@ final globalLiquidGlassViewController = LiquidGlassViewController();
 final globalHotkeyService = GlobalHotkeyService();
 
 void main() async {
+  print('应用启动开始');
   WidgetsFlutterBinding.ensureInitialized();
+  print('WidgetsFlutterBinding初始化完成');
 
   // 初始化桌面多窗口
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    print('开始初始化windowManager');
     await windowManager.ensureInitialized();
+    print('windowManager初始化完成');
 
     // 检查是否是桌面歌词窗口
     final windowController = await WindowController.fromCurrentEngine();
     print('Window arguments: ${windowController.arguments}');
     if (windowController.arguments == 'desktop_lyrics') {
-      print('Initializing desktop lyrics window...');
+      print('初始化桌面歌词窗口');
       await windowController.desktopLyricsCustomInitialize();
 
       WindowOptions windowOptions = WindowOptions(
@@ -78,7 +82,7 @@ void main() async {
       size: Size(1200, 800),
       minimumSize: Size(1000, 700), // 增加最小尺寸，确保所有UI元素都能正常显示
       center: true,
-      backgroundColor: Colors.transparent, // 使用透明背景，避免主题切换时出现白色边框
+      backgroundColor: Colors.transparent, // 透明背景，UI层控制可见性
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
       windowButtonVisibility: false,
@@ -104,9 +108,10 @@ void main() async {
   }
 
   // 初始化桌面歌词窗口（在主窗口中）
-  if (!isMobile) {
-    await initDesktopLyrics();
-  }
+  // 桌面歌词窗口在用户实际启用时按需创建，避免启动时多窗口初始化引发崩溃。
+  // if (!isMobile) {
+  //   await initDesktopLyrics();
+  // }
 }
 
 /// 初始化托盘图标
@@ -327,17 +332,15 @@ class _MyAppState extends State<MyApp>
                 builder: (context, settings, child) {
                   return Stack(
                     children: [
-                      // 背景层 - 根据背景类型应用透明度
+                      // 背景层 - 根据背景类型应用透明度，确保至少有最小可见度
                       Positioned.fill(
                         child: Container(
                           color: settings.uiBackgroundType ==
                                   UIBackgroundType.normal
-                              ? (settings.windowOpacity < 0.01
-                                  ? Colors.transparent
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .surface
-                                      .withOpacity(settings.windowOpacity))
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(settings.windowOpacity.clamp(0.1, 1.0))
                               : Theme.of(context)
                                   .colorScheme
                                   .surface

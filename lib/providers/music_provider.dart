@@ -31,7 +31,7 @@ class MusicProvider with ChangeNotifier {
   Timer? _saveTimer; // 用于防抖保存数据的定时器
 
   MusicProvider() {
-    debugPrint('MusicProvider初始化');
+    print('MusicProvider初始化开始');
     // 监听扫描进度流
     _progressSubscription = _scannerService.progressStream.listen((progress) {
       debugPrint('MusicProvider收到进度更新: ${(progress * 100).toStringAsFixed(1)}%');
@@ -50,6 +50,7 @@ class MusicProvider with ChangeNotifier {
       final coverColor = data['coverColor'] as int?;
       updateMusicCoverColor(musicId, coverColor);
     });
+    print('MusicProvider初始化完成');
   }
 
   @override
