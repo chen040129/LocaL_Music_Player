@@ -58,9 +58,15 @@ class PlaylistsPagePlayerHelper {
 
     if (playlistSongs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('歌单中没有歌曲'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: const Text('歌单中没有歌曲'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 100,
+            left: 10,
+            right: 10,
+          ),
         ),
       );
       return;
@@ -92,6 +98,12 @@ class PlaylistsPagePlayerHelper {
       SnackBar(
         content: Text('开始播放歌单: ${playlist.name}'),
         duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height - 100,
+          left: 10,
+          right: 10,
+        ),
       ),
     );
   }

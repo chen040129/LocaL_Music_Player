@@ -30,6 +30,7 @@ class MusicInfo {
   final int? secondaryColor; // 封面次要颜色，使用 ARGB 格式存储
   final int? tertiaryColor; // 封面更次要颜色，使用 ARGB 格式存储
   int actualPlayDuration; // 实际播放时长（秒），用于统计总播放时长
+  final DateTime? fileModifiedTime; // 文件修改时间
 
   MusicInfo({
     required this.id,
@@ -49,6 +50,7 @@ class MusicInfo {
     this.tertiaryColor,
     Map<String, int>? playHistory,
     this.actualPlayDuration = 0,
+    this.fileModifiedTime,
   }) : playHistory = playHistory ?? {};
 
   Map<String, dynamic> toJson() {
@@ -70,6 +72,7 @@ class MusicInfo {
       'secondaryColor': secondaryColor,
       'tertiaryColor': tertiaryColor,
       'actualPlayDuration': actualPlayDuration,
+      'fileModifiedTime': fileModifiedTime?.toIso8601String(),
     };
   }
 
@@ -97,6 +100,9 @@ class MusicInfo {
       coverColor: json['coverColor'],
       secondaryColor: json['secondaryColor'],
       tertiaryColor: json['tertiaryColor'],
+      fileModifiedTime: json['fileModifiedTime'] != null 
+          ? DateTime.parse(json['fileModifiedTime']) 
+          : null,
       actualPlayDuration: json['actualPlayDuration'] ?? 0,
     );
   }
@@ -319,6 +325,9 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
     // 获取文件大小
     final fileSize = file.lengthSync();
 
+    // 获取文件修改时间
+    final fileModifiedTime = file.lastModifiedSync();
+
     return MusicInfo(
       id: DateTime.now().millisecondsSinceEpoch.toString() + filePath.hashCode.toString(),
       filePath: filePath,
@@ -333,6 +342,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
       fileSize: fileSize,
       playCount: 0,
       playHistory: {}, // 添加空的playHistory
+      fileModifiedTime: fileModifiedTime,
     );
   } catch (e) {
     debugPrint('处理音乐文件失败: $filePath, 错误: $e');
@@ -365,6 +375,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
             coverColor: colors['coverColor'],
             secondaryColor: colors['secondaryColor'],
             tertiaryColor: colors['tertiaryColor'],
+            fileModifiedTime: _scannedMusic[index].fileModifiedTime,
           );
           _scannedMusic[index] = updatedMusic;
           debugPrint('成功提取封面颜色: ${updatedMusic.title}');
@@ -538,6 +549,7 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
         coverColor: colors['coverColor'],
         secondaryColor: colors['secondaryColor'],
         tertiaryColor: colors['tertiaryColor'],
+        fileModifiedTime: musicInfo.fileModifiedTime,
       );
 
       _scannedMusic.add(musicInfoWithColor);

@@ -46,13 +46,31 @@ class MyTrayListener extends TrayListener {
   }
 
   @override
-  void onTrayMenuItemClick(MenuItem menuItem) {
+  void onTrayMenuItemClick(MenuItem menuItem) async {
     print('托盘事件: 菜单项点击 - ${menuItem.key}');
     if (menuItem.key == 'show') {
       print('托盘菜单: 显示窗口');
       windowManager.show();
     } else if (menuItem.key == 'exit') {
       print('托盘菜单: 退出应用');
+      // 保存播放进度
+      if (globalPlayerProvider != null) {
+        try {
+          await globalPlayerProvider!.savePlayProgress();
+          print('已保存播放进度');
+        } catch (e) {
+          print('保存播放进度失败: $e');
+        }
+      }
+      // 先关闭桌面歌词窗口
+      if (lyricsWindowController != null) {
+        try {
+          await lyricsWindowController!.close();
+          print('已关闭桌面歌词窗口');
+        } catch (e) {
+          print('关闭桌面歌词窗口失败: $e');
+        }
+      }
       // 退出应用
       if (Platform.isWindows) {
         windowManager.setPreventClose(false);
@@ -77,13 +95,13 @@ class MyTrayListener extends TrayListener {
     try {
       // 尝试使用全局主窗口控制器
       WindowController? controller = mainWindowController;
-      
+
       // 如果全局主窗口控制器为null，尝试通过desktop_multi_window获取
       if (controller == null) {
         print('全局mainWindowController为null，尝试通过desktop_multi_window获取主窗口控制器');
         final controllers = await WindowController.getAll();
         print('获取到${controllers.length}个窗口控制器');
-        
+
         // 主窗口通常是第一个窗口
         if (controllers.isNotEmpty) {
           controller = controllers.first;
@@ -97,7 +115,7 @@ class MyTrayListener extends TrayListener {
       }
 
       print('准备向主窗口发送$action指令');
-      
+
       switch (action) {
         case 'skipToPrevious':
           await controller.skipToPrevious();
@@ -109,7 +127,7 @@ class MyTrayListener extends TrayListener {
           await controller.skipToNext();
           break;
       }
-      
+
       print('向主窗口发送$action指令成功');
     } catch (e) {
       print('控制播放器失败: $e');

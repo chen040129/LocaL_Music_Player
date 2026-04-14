@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
+import '../providers/player_provider.dart';
 
 class SystemSettingsPage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -327,6 +328,55 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                                 // 重新尝试导入
                                 // 这里可以添加重新尝试的逻辑
                               },
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+                const Divider(height: 1),
+                // 清除播放进度
+                ListTile(
+                  leading: const Icon(CupertinoIcons.delete),
+                  title: const Text('清除播放进度'),
+                  subtitle: const Text('清除上次播放的歌曲和位置'),
+                  onTap: () async {
+                    // 显示确认对话框
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('确认清除'),
+                        content: const Text('确定要清除播放进度吗？下次启动时将不会自动恢复上次播放的歌曲。'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('取消'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('清除'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed == true) {
+                      // 清除播放进度
+                      final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                      await playerProvider.clearPlayProgress();
+
+                      // 显示成功消息
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('播放进度已清除'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            margin: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).size.height - 100,
+                              left: 10,
+                              right: 10,
                             ),
                           ),
                         );

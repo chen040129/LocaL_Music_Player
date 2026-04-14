@@ -14,15 +14,12 @@ import 'package:window_manager/window_manager.dart';
 Future<void> initDesktopLyrics() async {
   // 检查是否已经创建过桌面歌词窗口
   if (lyricsWindowController != null) {
-    print('Desktop lyrics window already exists, skipping initialization');
     return;
   }
 
-  print('Creating desktop lyrics window controller...');
   lyricsWindowController = await WindowController.create(
     WindowConfiguration(hiddenAtLaunch: true, arguments: 'desktop_lyrics'),
   );
-  print('Desktop lyrics window controller created: ${lyricsWindowController?.windowId}');
 }
 
 class DesktopLyrics extends StatefulWidget {
@@ -41,33 +38,41 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   bool _isHoveringClose = false;
   bool _isLocked = false;
   int _retryCount = 0;
+  bool _isDisposed = false; // 添加标志来跟踪是否已销毁
 
   @override
   void initState() {
     super.initState();
-    print('DesktopLyrics created');
     // 请求主窗口同步播放状态
     _requestPlayingState();
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true; // 设置标志，取消所有异步操作
+    _isTransparentNotifier.dispose();
+    super.dispose();
+  }
+
   Future<void> _requestPlayingState() async {
+    if (_isDisposed) return; // 如果已销毁，不再执行
     if (_retryCount >= 5) {
-      print('Max retry count reached, giving up requesting playing state');
       return;
     }
 
     try {
       final controllers = await WindowController.getAll();
+      if (_isDisposed) return; // 检查是否已销毁
       for (final controller in controllers) {
         if (controller.arguments.isEmpty) {
-          print('Requesting playing state from main window (attempt ${_retryCount + 1})');
           await controller.invokeMethod('get_playing_state');
+          if (_isDisposed) return; // 检查是否已销毁
           _retryCount = 0; // 重置重试计数
           break;
         }
       }
     } catch (e) {
-      print('Error requesting playing state: $e');
+      if (_isDisposed) return; // 检查是否已销毁
       _retryCount++;
       // 如果请求失败，延迟后重试
       if (_retryCount < 5) {
@@ -79,13 +84,10 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
 
   @override
   Widget build(BuildContext context) {
-    print('DesktopLyrics build called');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: Platform.isWindows
-          ? ThemeData(fontFamily: 'Microsoft YaHei')
-          : null,
-
+      theme:
+          Platform.isWindows ? ThemeData(fontFamily: 'Microsoft YaHei') : null,
       home: ValueListenableBuilder(
         valueListenable: _isTransparentNotifier,
         builder: (context, isTransparent, child) {
@@ -95,91 +97,98 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
               // 主内容区域
               GestureDetector(
                 behavior: HitTestBehavior.translucent,
-                onPanStart: _isLocked ? null : (details) async {
-                  isDragging = true;
-                  await windowManager.startDragging();
-                  isDragging = false;
-                },
+                onPanStart: _isLocked
+                    ? null
+                    : (details) async {
+                        isDragging = true;
+                        await windowManager.startDragging();
+                        isDragging = false;
+                      },
                 child: MouseRegion(
-              onEnter: (_) {
-                _isTransparentNotifier.value = false;
-              },
-              onExit: (_) {
-                if (isDragging) {
-                  return;
-                }
-                _isTransparentNotifier.value = true;
-              },
-              child: Material(
-                color: (isTransparent || _isLocked) ? Colors.transparent : Colors.black45,
-                shape: SmoothRectangleBorder(
-                  smoothness: 1,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      // 锁定状态下的解锁按钮区域
-                      if (_isLocked)
-                        SizedBox(
-                          height: 50,
-                          child: MouseRegion(
-                            onEnter: (_) {
-                              setState(() => _isHoveringLock = true);
-                            },
-                            onExit: (_) {
-                              setState(() => _isHoveringLock = false);
-                            },
-                            child: AnimatedOpacity(
-                              opacity: _isHoveringLock ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
-                                  child: InkWell(
-                                    onTap: () async {
-                                      setState(() {
-                                        _isLocked = false;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(5),
-                                    splashColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    child: AnimatedScale(
-                                      scale: _isHoveringLock ? 1.1 : 1.0,
-                                      duration: const Duration(milliseconds: 150),
-                                      child: Icon(
-                                        Icons.lock_open_rounded,
-                                        color: Colors.grey.shade50,
-                                        size: 20,
+                  onEnter: (_) {
+                    _isTransparentNotifier.value = false;
+                  },
+                  onExit: (_) {
+                    if (isDragging) {
+                      return;
+                    }
+                    _isTransparentNotifier.value = true;
+                  },
+                  child: Material(
+                    color: (isTransparent || _isLocked)
+                        ? Colors.transparent
+                        : Colors.black45,
+                    shape: SmoothRectangleBorder(
+                      smoothness: 1,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          // 锁定状态下的解锁按钮区域
+                          if (_isLocked)
+                            SizedBox(
+                              height: 50,
+                              child: MouseRegion(
+                                onEnter: (_) {
+                                  setState(() => _isHoveringLock = true);
+                                },
+                                onExit: (_) {
+                                  setState(() => _isHoveringLock = false);
+                                },
+                                child: AnimatedOpacity(
+                                  opacity: _isHoveringLock ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(5),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          setState(() {
+                                            _isLocked = false;
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(5),
+                                        splashColor: Colors.transparent,
+                                        highlightColor: Colors.transparent,
+                                        hoverColor: Colors.transparent,
+                                        child: AnimatedScale(
+                                          scale: _isHoveringLock ? 1.1 : 1.0,
+                                          duration:
+                                              const Duration(milliseconds: 150),
+                                          child: Icon(
+                                            Icons.lock_open_rounded,
+                                            color: Colors.grey.shade50,
+                                            size: 20,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
+                          // 非锁定状态下的控制按钮
+                          if (!_isLocked)
+                            SizedBox(
+                              height: 50,
+                              child: isTransparent
+                                  ? const SizedBox.shrink()
+                                  : controlsRow(),
+                            ),
+                          Expanded(
+                            child: Center(
+                              child: DesktopLyricsWidget(),
+                            ),
                           ),
-                        ),
-                      // 非锁定状态下的控制按钮
-                      if (!_isLocked)
-                        SizedBox(
-                          height: 50,
-                          child: isTransparent ? const SizedBox.shrink() : controlsRow(),
-                        ),
-                      Expanded(
-                        child: Center(
-                          child: DesktopLyricsWidget(),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
               ),
               // 窗口边缘的调整大小手柄
               if (!_isLocked)
@@ -225,8 +234,12 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
     final isHorizontal = edge == ResizeEdge.left || edge == ResizeEdge.right;
     return MouseRegion(
       cursor: isHorizontal
-          ? (edge == ResizeEdge.left ? SystemMouseCursors.resizeLeft : SystemMouseCursors.resizeRight)
-          : (edge == ResizeEdge.top ? SystemMouseCursors.resizeUp : SystemMouseCursors.resizeDown),
+          ? (edge == ResizeEdge.left
+              ? SystemMouseCursors.resizeLeft
+              : SystemMouseCursors.resizeRight)
+          : (edge == ResizeEdge.top
+              ? SystemMouseCursors.resizeUp
+              : SystemMouseCursors.resizeDown),
       child: GestureDetector(
         onPanStart: (_) async {
           _isTransparentNotifier.value = false;
@@ -285,13 +298,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
             child: InkWell(
               onTap: () async {
                 final controllers = await WindowController.getAll();
-                print('Found ${controllers.length} windows');
                 for (final controller in controllers) {
-                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
                   if (controller.arguments.isEmpty) {
-                    print('Calling skipToPrevious on main window (ID: ${controller.windowId})');
                     await controller.skipToPrevious();
-                    print('skipToPrevious called successfully');
                     break;
                   }
                 }
@@ -324,13 +333,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
             child: InkWell(
               onTap: () async {
                 final controllers = await WindowController.getAll();
-                print('Found ${controllers.length} windows');
                 for (final controller in controllers) {
-                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
                   if (controller.arguments.isEmpty) {
-                    print('Calling togglePlay on main window (ID: ${controller.windowId})');
                     await controller.togglePlay();
-                    print('togglePlay called successfully');
                     break;
                   }
                 }
@@ -348,7 +353,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                     valueListenable: isPlayingNotifier,
                     builder: (_, isPlaying, __) {
                       return Icon(
-                        isPlaying ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
+                        isPlaying
+                            ? CupertinoIcons.pause_fill
+                            : CupertinoIcons.play_fill,
                         color: Colors.grey.shade50,
                         size: 32,
                       );
@@ -368,13 +375,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
             child: InkWell(
               onTap: () async {
                 final controllers = await WindowController.getAll();
-                print('Found ${controllers.length} windows');
                 for (final controller in controllers) {
-                  print('Window ID: ${controller.windowId}, arguments: ${controller.arguments}');
                   if (controller.arguments.isEmpty) {
-                    print('Calling skipToNext on main window (ID: ${controller.windowId})');
                     await controller.skipToNext();
-                    print('skipToNext called successfully');
                     break;
                   }
                 }
@@ -433,7 +436,6 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
             ),
           ),
         ),
-        
         Spacer(),
       ],
     );

@@ -317,6 +317,7 @@ class MusicProvider with ChangeNotifier {
           playHistory: _musicList[index].playHistory,
           coverColor: coverColor,
           actualPlayDuration: _musicList[index].actualPlayDuration,
+          fileModifiedTime: _musicList[index].fileModifiedTime,
         );
         _musicList[index] = updatedMusic;
         notifyListeners();

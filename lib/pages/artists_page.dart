@@ -176,6 +176,11 @@ class _ArtistsPageState extends State<ArtistsPage> {
     return '$minutes:$seconds';
   }
 
+  /// 格式化日期时间
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -442,6 +447,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
               if (music.quality != null) {
                 allInfo += '音质: ${music.quality!}\n';
               }
+              if (music.fileModifiedTime != null)
+                allInfo += '修改时间: ${_formatDateTime(music.fileModifiedTime!)}\n';
               allInfo += '文件路径: ${music.filePath}';
 
               Clipboard.setData(ClipboardData(text: allInfo));
@@ -465,6 +472,8 @@ class _ArtistsPageState extends State<ArtistsPage> {
                 _buildCopyableInfoRow('时长', _formatDuration(music.duration)),
                 if (music.quality != null)
                   _buildCopyableInfoRow('音质', music.quality!),
+                if (music.fileModifiedTime != null)
+                  _buildCopyableInfoRow('修改时间', _formatDateTime(music.fileModifiedTime!)),
                 _buildCopyableInfoRow('文件路径', music.filePath),
               ],
             ),
@@ -508,6 +517,12 @@ class _ArtistsPageState extends State<ArtistsPage> {
                   SnackBar(
                     content: Text('已复制 $label'),
                     duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).size.height - 100,
+                      left: 10,
+                      right: 10,
+                    ),
                   ),
                 );
               },

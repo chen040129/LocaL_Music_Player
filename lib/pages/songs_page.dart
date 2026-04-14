@@ -27,7 +27,7 @@ class SongsPage extends StatefulWidget {
 
 class _SongsPageState extends State<SongsPage> {
   // 排序方式
-  String _sortBy = 'default'; // default, title, artist, album, duration
+  String _sortBy = 'default'; // default, title, artist, album, duration, modified
   bool _isAscending = true;
   // 标题悬停状态
   bool _isTitleHovered = false;
@@ -342,45 +342,269 @@ class _SongsPageState extends State<SongsPage> {
                               position.dx,
                               position.dy,
                             ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 8,
+                            color: Theme.of(context).colorScheme.surface,
                             items: [
-                              const PopupMenuItem<String>(
-                                value: 'default',
-                                child: Text('默认排序'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'title',
-                                child: Text('按标题排序'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'artist',
-                                child: Text('按艺术家排序'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'album',
-                                child: Text('按专辑排序'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'duration',
-                                child: Text('按时长排序'),
-                              ),
-                              const PopupMenuDivider(),
                               PopupMenuItem<String>(
-                                value: 'asc',
+                                value: 'default',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 child: Row(
                                   children: [
-                                    Icon(CupertinoIcons.arrow_up, size: 16),
-                                    const SizedBox(width: 8),
-                                    const Text('升序'),
+                                    Icon(
+                                      CupertinoIcons.list_bullet,
+                                      size: 18,
+                                      color: _sortBy == 'default' 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '默认排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'default' 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'default' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'default')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'title',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.music_note,
+                                      size: 18,
+                                      color: _sortBy == 'title' 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '按标题排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'title' 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'title' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'title')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'artist',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.person,
+                                      size: 18,
+                                      color: _sortBy == 'artist' 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '按艺术家排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'artist' 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'artist' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'artist')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'album',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.music_albums,
+                                      size: 18,
+                                      color: _sortBy == 'album' 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '按专辑排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'album' 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'album' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'album')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'duration',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.time,
+                                      size: 18,
+                                      color: _sortBy == 'duration' 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '按时长排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'duration' 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'duration' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'duration')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'modified',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.calendar,
+                                      size: 18,
+                                      color: _sortBy == 'modified'
+                                          ? Theme.of(context).colorScheme.primary
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '按修改文件顺序排序',
+                                      style: TextStyle(
+                                        color: _sortBy == 'modified'
+                                            ? Theme.of(context).colorScheme.primary
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _sortBy == 'modified' ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_sortBy == 'modified')
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuDivider(
+                                height: 1,
+                                thickness: 1,
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'asc',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.arrow_up,
+                                      size: 18,
+                                      color: _isAscending 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '升序',
+                                      style: TextStyle(
+                                        color: _isAscending 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: _isAscending ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (_isAscending)
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
                                   ],
                                 ),
                               ),
                               PopupMenuItem<String>(
                                 value: 'desc',
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 child: Row(
                                   children: [
-                                    Icon(CupertinoIcons.arrow_down, size: 16),
-                                    const SizedBox(width: 8),
-                                    const Text('降序'),
+                                    Icon(
+                                      CupertinoIcons.arrow_down,
+                                      size: 18,
+                                      color: !_isAscending 
+                                          ? Theme.of(context).colorScheme.primary 
+                                          : Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '降序',
+                                      style: TextStyle(
+                                        color: !_isAscending 
+                                            ? Theme.of(context).colorScheme.primary 
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontWeight: !_isAscending ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (!_isAscending)
+                                      Icon(
+                                        CupertinoIcons.checkmark,
+                                        size: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -812,6 +1036,11 @@ class _SongsPageState extends State<SongsPage> {
     return '$minutes:$seconds';
   }
 
+  /// 格式化日期时间
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
+  }
+
   /// 获取音质颜色
   Color _getQualityColor(String? quality) {
     switch (quality) {
@@ -1066,6 +1295,20 @@ class _SongsPageState extends State<SongsPage> {
         musicList.sort((a, b) => _isAscending
             ? a.duration.compareTo(b.duration)
             : b.duration.compareTo(a.duration));
+        break;
+      case 'modified':
+        musicList.sort((a, b) {
+          if (a.fileModifiedTime == null && b.fileModifiedTime == null) {
+            return 0;
+          } else if (a.fileModifiedTime == null) {
+            return 1;
+          } else if (b.fileModifiedTime == null) {
+            return -1;
+          }
+          return _isAscending
+              ? a.fileModifiedTime!.compareTo(b.fileModifiedTime!)
+              : b.fileModifiedTime!.compareTo(a.fileModifiedTime!);
+        });
         break;
       default:
         // 默认排序，不做处理
@@ -1352,6 +1595,9 @@ class _SongsPageState extends State<SongsPage> {
               if (music.quality != null) {
                 allInfo += '音质: ${music.quality!}\n';
               }
+              if (music.fileModifiedTime != null) {
+                allInfo += '修改时间: ${_formatDateTime(music.fileModifiedTime!)}\n';
+              }
               allInfo += '文件路径: ${music.filePath}';
 
               Clipboard.setData(ClipboardData(text: allInfo));
@@ -1375,6 +1621,8 @@ class _SongsPageState extends State<SongsPage> {
                 _buildCopyableInfoRow('时长', _formatDuration(music.duration)),
                 if (music.quality != null)
                   _buildCopyableInfoRow('音质', music.quality!),
+                if (music.fileModifiedTime != null)
+                  _buildCopyableInfoRow('修改时间', _formatDateTime(music.fileModifiedTime!)),
                 _buildCopyableInfoRow('文件路径', music.filePath),
               ],
             ),
@@ -1418,6 +1666,12 @@ class _SongsPageState extends State<SongsPage> {
                   SnackBar(
                     content: Text('已复制 $label'),
                     duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).size.height - 100,
+                      left: 10,
+                      right: 10,
+                    ),
                   ),
                 );
               },

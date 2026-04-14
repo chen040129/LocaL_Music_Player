@@ -1,4 +1,5 @@
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import '../../common.dart';
@@ -8,31 +9,25 @@ import '../../providers/player_provider.dart';
 // 桌面歌词窗口通信方法
 void sendDesktopLyricMessage(Duration position, LyricLine? lyricLine, bool isKaraoke) async {
   if (lyricsWindowController == null) {
-    print('sendDesktopLyricMessage: lyricsWindowController is null');
     return;
   }
 
   try {
-    print('sendDesktopLyricMessage: sending lyric to desktop lyrics, position=$position, lyricLine=$lyricLine');
     await lyricsWindowController!.updateLyric(position, lyricLine, isKaraoke);
-    print('sendDesktopLyricMessage: lyric message sent successfully');
   } catch (e) {
-    print('Error sending lyric message to desktop lyrics: $e');
+    // 发送歌词消息失败
   }
 }
 
 void sendPlayingMessage(bool playing) async {
   if (lyricsWindowController == null) {
-    print('sendPlayingMessage: lyricsWindowController is null');
     return;
   }
 
   try {
-    print('sendPlayingMessage: sending playing=$playing to desktop lyrics');
     await lyricsWindowController!.sendPlaying(playing);
-    print('sendPlayingMessage: message sent successfully');
   } catch (e) {
-    print('Error sending playing message to desktop lyrics: $e');
+    // 发送播放状态消息失败
   }
 }
 
@@ -57,9 +52,7 @@ void getDesktopLyricFromMap(Map? arguments) {
 
 extension WindowControllerExtension on WindowController {
   Future<void> desktopLyricsCustomInitialize() async {
-    print('Setting up desktop lyrics custom method handler...');
     return await setWindowMethodHandler((call) async {
-      print('Received method call: ${call.method}');
       switch (call.method) {
         case 'window_center':
           return await windowManager.center();
@@ -69,15 +62,12 @@ extension WindowControllerExtension on WindowController {
           getDesktopLyricFromMap(call.arguments);
           break;
         case 'set_playing':
-          print('set_playing called with value: ${call.arguments}');
           isPlayingNotifier.value = call.arguments as bool;
-          print('isPlayingNotifier.value updated to: ${isPlayingNotifier.value}');
           break;
         case 'unlock':
           await windowManager.setIgnoreMouseEvents(false);
           break;
         case 'update_desktop_lyrics_font_size':
-          print('update_desktop_lyrics_font_size called with value: ${call.arguments}');
           if (call.arguments is double) {
             desktopLyricsFontSize = call.arguments as double;
             updateDesktopLyricsNotifier.value++;
@@ -90,30 +80,29 @@ extension WindowControllerExtension on WindowController {
   }
 
   Future<void> mainCustomInitialize(PlayerProvider playerProvider) async {
-    print('Setting up main window custom method handler...');
     return await setWindowMethodHandler((call) async {
-      print('Main window received method call: ${call.method}');
-
       switch (call.method) {
         case 'hide_desktop_lyrics':
-          print('Hiding desktop lyrics');
-          // 调用PlayerProvider的hideDesktopLyrics方法来更新设置
-          await playerProvider.hideDesktopLyrics();
+          // 直接关闭桌面歌词窗口，不再调用PlayerProvider的hideDesktopLyrics方法
+          if (lyricsWindowController != null) {
+            try {
+              await lyricsWindowController!.hide();
+              lyricsWindowVisible = false;
+            } catch (e) {
+              // 关闭桌面歌词窗口失败
+            }
+          }
           break;
         case 'skip_to_previous':
-          print('Calling playPrevious');
           await playerProvider.playPrevious();
           break;
         case 'toggle_play':
-          print('Calling togglePlayPause');
           await playerProvider.togglePlayPause();
           break;
         case 'skip_to_next':
-          print('Calling playNext');
           await playerProvider.playNext();
           break;
         case 'get_playing_state':
-          print('Sending playing state to desktop lyrics: ${playerProvider.isPlaying}');
           sendPlayingMessage(playerProvider.isPlaying);
           break;
         default:
@@ -146,8 +135,16 @@ extension WindowControllerExtension on WindowController {
     return invokeMethod('set_playing', playing);
   }
 
-  Future<void> hideDesktopLyrics() {
-    return invokeMethod('hide_desktop_lyrics');
+  Future<void> hideDesktopLyrics() async {
+    // 直接关闭桌面歌词窗口控制器
+    if (lyricsWindowController != null) {
+      try {
+        await lyricsWindowController!.hide();
+        lyricsWindowVisible = false;
+      } catch (e) {
+        // 关闭桌面歌词窗口失败
+      }
+    }
   }
 
   Future<void> skipToPrevious() {

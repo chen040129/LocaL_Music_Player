@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../common.dart' as common;
 import '../desktop/extensions/window_controller_extension.dart';
+import '../desktop/desktop_lyrics.dart';
 
 /// 设置类别枚举
 enum SettingsCategory {
@@ -392,7 +393,8 @@ class SettingsProvider with ChangeNotifier {
     _scrollCurve = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
 
     // 加载桌面歌词设置
-    _enableDesktopLyrics = prefs.getBool('enable_desktop_lyrics') ?? false;
+    // 桌面歌词默认关闭，不保留上次退出的状态
+    _enableDesktopLyrics = false;
     _showLockButton = prefs.getBool('show_lock_button') ?? true;
     _showControlButtons = prefs.getBool('show_control_buttons') ?? true;
     _enableKaraokeEffect = prefs.getBool('enable_karaoke_effect') ?? false;
@@ -804,26 +806,31 @@ class SettingsProvider with ChangeNotifier {
   }
 
   // 桌面歌词设置 setters
-  Future<void> setEnableDesktopLyrics(bool value) async {
+  Future<void> setEnableDesktopLyrics(bool value, {bool skipWindowOperations = false}) async {
     _enableDesktopLyrics = value;
     await _saveSetting('enable_desktop_lyrics', value);
     notifyListeners();
 
     // 处理桌面歌词窗口的显示和隐藏
-    if (value) {
+    if (!skipWindowOperations) {
+      if (value) {
       // 如果启用桌面歌词，显示窗口
-      print('Desktop lyrics enabled, showing window');
+      // 按需创建桌面歌词窗口
+      if (common.lyricsWindowController == null) {
+        await initDesktopLyrics();
+      }
+
       // 显示桌面歌词窗口
       if (common.lyricsWindowController != null && !common.lyricsWindowVisible) {
         await common.lyricsWindowController!.show();
         common.lyricsWindowVisible = true;
       }
-    } else {
+      } else {
       // 如果禁用桌面歌词，隐藏窗口
-      print('Desktop lyrics disabled, hiding window');
       if (common.lyricsWindowController != null) {
         await common.lyricsWindowController!.hide();
         common.lyricsWindowVisible = false;
+      }
       }
     }
   }
@@ -858,7 +865,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         await common.lyricsWindowController!.updateDesktopLyricsFontSize(_desktopLyricsFontSize);
       } catch (e) {
-        print('Error updating desktop lyrics font size: $e');
+        // 更新桌面歌词字体大小失败
       }
     }
 

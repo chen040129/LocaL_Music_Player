@@ -56,6 +56,7 @@ class PlayerProvider with ChangeNotifier {
   PlayMode _playMode = PlayMode.sequence;
   PlaylistSource _playlistSource = PlaylistSource.all;
   String? _sourceIdentifier; // 专辑名或艺术家名
+  bool _isRestoringPlaylist = false; // 标记是否正在恢复播放列表
 
   // 当前播放的音乐
   MusicInfo? _currentMusic;
@@ -94,16 +95,20 @@ class PlayerProvider with ChangeNotifier {
   /// 恢复播放进度
   /// [autoPlay] 是否自动播放，默认为false（暂停状态）
   Future<void> restorePlayProgress({bool autoPlay = false}) async {
+    // 如果设置中关闭了保存播放进度，直接返回
     if (!(_settingsProvider?.savePlayProgress ?? true)) {
-      debugPrint('未启用播放进度保存功能');
       return;
     }
 
+    // 尝试加载播放进度
     final progressData = await _storageService.loadPlayProgress();
     if (progressData == null) {
-      debugPrint('未找到播放进度');
+      debugPrint('没有找到保存的播放进度');
       return;
     }
+
+    // 强制不自动播放
+    autoPlay = false;
 
     final musicId = progressData['musicId'] as String;
     final positionMs = progressData['position'] as int;
@@ -141,22 +146,43 @@ class PlayerProvider with ChangeNotifier {
           restoredPlaylist.add(music);
         } catch (e) {
           // 如果找不到某首歌曲，跳过它
-          debugPrint('未找到歌曲ID: $musicId');
         }
       }
 
       if (restoredPlaylist.isNotEmpty) {
+        // 设置恢复标志，防止被后续的setPlaylist调用覆盖
+        _isRestoringPlaylist = true;
+
         _playlist = restoredPlaylist;
         _originalPlaylist = List.from(restoredPlaylist);
 
         // 确保当前索引在有效范围内
         _currentIndex = currentIndex.clamp(0, _playlist.length - 1);
 
-        // 恢复播放位置
-        final position = Duration(milliseconds: positionMs);
-        await playAtIndex(_currentIndex, startPosition: position, autoPlay: autoPlay);
-        debugPrint('已恢复播放进度: ${_playlist[_currentIndex].title} - ${position.inSeconds}秒');
-        debugPrint('已恢复播放列表，共 ${_playlist.length} 首歌曲');
+        // 设置当前音乐但不播放
+        _currentMusic = _playlist[_currentIndex];
+
+        // 初始化播放器但不播放
+        try {
+          final music = _playlist[_currentIndex];
+          final source = DeviceFileSource(music.filePath);
+          await _audioPlayer.setSource(source);
+
+          // 恢复播放位置
+          final position = Duration(milliseconds: positionMs);
+          await _audioPlayer.seek(position);
+
+          // 加载歌词
+          _loadLyrics(music.filePath);
+        } catch (e) {
+          debugPrint('初始化播放器失败: $e');
+        }
+
+        // 恢复完成后清除标志
+        _isRestoringPlaylist = false;
+
+        // 通知UI更新
+        notifyListeners();
         return;
       }
     }
@@ -177,22 +203,45 @@ class PlayerProvider with ChangeNotifier {
           (m) => path.basename(m.filePath) == path.basename(filePath),
         );
       } catch (e) {
-        debugPrint('未找到上次播放的音乐');
+        debugPrint('无法找到保存的歌曲: $filePath, 错误: $e');
         return;
       }
     }
 
     final index = _playlist.indexWhere((m) => m.id == music.id);
-    final position = Duration(milliseconds: positionMs);
     if (index != -1) {
-      await playAtIndex(index, startPosition: position, autoPlay: autoPlay);
-      debugPrint('已恢复播放进度: ${music.title} - ${position.inSeconds}秒');
+      // 设置恢复标志，防止被后续的setPlaylist调用覆盖
+      _isRestoringPlaylist = true;
+      _currentIndex = index;
+      _currentMusic = _playlist[index];
+      _isRestoringPlaylist = false;
     } else {
+      // 设置恢复标志，防止被后续的setPlaylist调用覆盖
+      _isRestoringPlaylist = true;
       _playlist.add(music);
       _currentIndex = _playlist.length - 1;
-      await playAtIndex(_currentIndex, startPosition: position, autoPlay: autoPlay);
-      debugPrint('已恢复播放进度(新添加): ${music.title} - ${position.inSeconds}秒');
+      _currentMusic = music;
+      _isRestoringPlaylist = false;
+      debugPrint('已恢复播放进度(新添加): ${music.title}');
     }
+
+    // 初始化播放器但不播放
+    try {
+      final source = DeviceFileSource(music.filePath);
+      await _audioPlayer.setSource(source);
+
+      // 恢复播放位置
+      final position = Duration(milliseconds: positionMs);
+      await _audioPlayer.seek(position);
+
+      // 加载歌词
+      _loadLyrics(music.filePath);
+    } catch (e) {
+      debugPrint('初始化播放器失败: $e');
+    }
+
+    // 通知UI更新
+    notifyListeners();
   }
 
   /// 初始化播放器
@@ -203,19 +252,15 @@ class PlayerProvider with ChangeNotifier {
 
       // 监听播放状态
       _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
-        print('Player state changed: state=$state');
         final isPlayingState = state == PlayerState.playing;
         if (_isPlaying != isPlayingState) {
-          print('_isPlaying changed from $_isPlaying to $isPlayingState');
           _isPlaying = isPlayingState;
           notifyListeners();
 
           if (isPlayingState) {
-            print('Sending playing message to desktop lyrics: $_isPlaying');
             sendPlayingMessage(_isPlaying);
 
             if (_settingsProvider?.enableDesktopLyrics == true) {
-              print('Auto showing desktop lyrics because playback started');
               showDesktopLyrics();
             }
           }
@@ -286,7 +331,7 @@ class PlayerProvider with ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
     } catch (e) {
-      debugPrint('初始化播放器失败: $e');
+      // 初始化播放器失败
     }
   }
 
@@ -317,13 +362,24 @@ class PlayerProvider with ChangeNotifier {
           playMode: _playMode.index,
         );
       } catch (e) {
-        debugPrint('保存播放进度失败: $e');
+        // 保存播放进度失败
       }
+    }
+  }
+
+  /// 清除播放进度
+  Future<void> clearPlayProgress() async {
+    try {
+      await _storageService.clearPlayProgress();
+      debugPrint('已清除播放进度');
+    } catch (e) {
+      debugPrint('清除播放进度失败: $e');
     }
   }
 
   /// 退出时保存播放进度
   Future<void> _savePlayProgressOnExit() async {
+    // 保存播放进度
     if (_settingsProvider?.savePlayProgress ?? true && _currentMusic != null) {
       await _storageService.savePlayProgress(
         musicId: _currentMusic!.id,
@@ -376,10 +432,17 @@ class PlayerProvider with ChangeNotifier {
     String? identifier,
     int startIndex = 0,
     bool moveToTop = false, // 是否将选中的歌曲移到顶部
+    bool isRestoring = false, // 是否是恢复操作
   }) {
+    // 如果是恢复操作且播放列表不为空，则不覆盖
+    if (isRestoring && _isRestoringPlaylist && _originalPlaylist.isNotEmpty) {
+      return;
+    }
+
     _originalPlaylist = List.from(musicList); // 保存原始播放列表
     _playlistSource = source;
     _sourceIdentifier = identifier;
+    _isRestoringPlaylist = isRestoring; // 设置恢复标志
 
     // 根据播放模式生成播放列表
     _generatePlaylistByMode(startIndex: startIndex, moveToTop: moveToTop);
@@ -390,12 +453,6 @@ class PlayerProvider with ChangeNotifier {
   /// 根据播放模式生成播放列表
   void _generatePlaylistByMode({int startIndex = 0, bool moveToTop = false}) {
     if (_originalPlaylist.isEmpty) return;
-
-    debugPrint('=== _generatePlaylistByMode ===');
-    debugPrint('播放模式: $_playMode');
-    debugPrint('startIndex: $startIndex');
-    debugPrint('moveToTop: $moveToTop');
-    debugPrint('原始播放列表: ${_originalPlaylist.map((m) => m.title).toList()}');
 
     switch (_playMode) {
       case PlayMode.shuffle:
@@ -419,18 +476,11 @@ class PlayerProvider with ChangeNotifier {
         _playlist = List.from(_originalPlaylist);
         _currentIndex = startIndex.clamp(0, _playlist.length - 1);
 
-        debugPrint('当前索引: $_currentIndex');
-        debugPrint('当前歌曲: ${_playlist[_currentIndex].title}');
-
         // 将当前歌曲及其之后的歌曲移到前面
         final beforeCurrent = _playlist.sublist(0, _currentIndex);
         final fromCurrent = _playlist.sublist(_currentIndex);
         _playlist = [...fromCurrent, ...beforeCurrent];
         _currentIndex = 0;
-
-        debugPrint('beforeCurrent: ${beforeCurrent.map((m) => m.title).toList()}');
-        debugPrint('fromCurrent: ${fromCurrent.map((m) => m.title).toList()}');
-        debugPrint('最终播放列表: ${_playlist.map((m) => m.title).toList()}');
         break;
 
       case PlayMode.listLoop:
@@ -438,18 +488,11 @@ class PlayerProvider with ChangeNotifier {
         _playlist = List.from(_originalPlaylist);
         _currentIndex = startIndex.clamp(0, _playlist.length - 1);
 
-        debugPrint('列表循环模式 - 当前索引: $_currentIndex');
-        debugPrint('列表循环模式 - 当前歌曲: ${_playlist[_currentIndex].title}');
-
         // 将当前歌曲及其之后的歌曲移到前面
         final beforeCurrent = _playlist.sublist(0, _currentIndex);
         final fromCurrent = _playlist.sublist(_currentIndex);
         _playlist = [...fromCurrent, ...beforeCurrent];
         _currentIndex = 0;
-
-        debugPrint('列表循环模式 - beforeCurrent: ${beforeCurrent.map((m) => m.title).toList()}');
-        debugPrint('列表循环模式 - fromCurrent: ${fromCurrent.map((m) => m.title).toList()}');
-        debugPrint('列表循环模式 - 最终播放列表: ${_playlist.map((m) => m.title).toList()}');
         break;
 
       case PlayMode.loop:
@@ -465,9 +508,6 @@ class PlayerProvider with ChangeNotifier {
         }
         break;
     }
-
-    debugPrint('最终播放列表: ${_playlist.map((m) => m.title).toList()}');
-    debugPrint('=== _generatePlaylistByMode 结束 ===');
   }
 
   /// 播放指定索引的音乐
@@ -475,9 +515,7 @@ class PlayerProvider with ChangeNotifier {
   Future<void> playAtIndex(int index, {Duration? startPosition, bool autoPlay = true}) async {
     // 如果没有指定autoPlay，则自动播放
     final shouldAutoPlay = autoPlay;
-    debugPrint('playAtIndex: index=$index, autoPlay=$autoPlay, shouldAutoPlay=$shouldAutoPlay, _isPlaying=$_isPlaying');
     if (index < 0 || index >= _playlist.length) {
-      debugPrint('播放索引超出范围: $index, 播放列表长度: ${_playlist.length}');
       return;
     }
 
@@ -485,26 +523,10 @@ class PlayerProvider with ChangeNotifier {
     final music = _playlist[index];
     _currentMusic = music;
 
-    debugPrint('=== 开始播放 ===');
-    debugPrint('索引: $index');
-    debugPrint('标题: ${music.title}');
-    debugPrint('艺术家: ${music.artist}');
-    debugPrint('专辑: ${music.album}');
-    debugPrint('文件路径: ${music.filePath}');
-    debugPrint('时长: ${music.duration.inSeconds}秒');
-    if (startPosition != null) {
-      debugPrint('起始位置: ${startPosition.inSeconds}秒');
-    }
-
     try {
-      debugPrint('创建音频源...');
-
       // 检查文件是否存在
       final file = File(music.filePath);
       if (!await file.exists()) {
-        debugPrint('=== 播放失败 ===');
-        debugPrint('错误: 文件不存在');
-        debugPrint('文件路径: ${music.filePath}');
         return;
       }
 
@@ -512,17 +534,11 @@ class PlayerProvider with ChangeNotifier {
       try {
         await file.openRead().first;
       } catch (e) {
-        debugPrint('=== 播放失败 ===');
-        debugPrint('错误: 文件无法读取');
-        debugPrint('文件路径: ${music.filePath}');
-        debugPrint('读取错误: $e');
+        debugPrint('无法读取歌曲文件: ${music.filePath}, 错误: $e');
         return;
       }
 
       final source = DeviceFileSource(music.filePath);
-      debugPrint('音频源类型: ${source.runtimeType}');
-
-      debugPrint('发送播放命令...');
 
       // 初始化记录时间和位置（在播放前设置）
       _lastRecordTime = DateTime.now();
@@ -547,8 +563,6 @@ class PlayerProvider with ChangeNotifier {
         }
       }
 
-      debugPrint('播放命令已发送');
-
       // 记录播放统计
       _musicProvider?.recordPlay(music);
 
@@ -557,10 +571,7 @@ class PlayerProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('=== 播放失败 ===');
-      debugPrint('错误类型: ${e.runtimeType}');
-      debugPrint('错误信息: $e');
-      debugPrint('错误堆栈: ${StackTrace.current}');
+      // 播放失败
     }
   }
 
@@ -691,9 +702,6 @@ class PlayerProvider with ChangeNotifier {
     final insertIndex = _currentIndex + 1;
     _playlist.insert(insertIndex, music);
     notifyListeners();
-
-    // 显示提示
-    debugPrint('已将 "${music.title}" 添加到下一首播放');
   }
 
   /// 上一首
@@ -911,16 +919,13 @@ class PlayerProvider with ChangeNotifier {
         _currentLyricsRaw = LyricsService.lyricsToLrc(lyrics);
         _currentLyrics = _currentLyricsRaw!;
         _currentLyricsSource = lyrics.source;
-        debugPrint('歌词加载成功，共 ${lyrics.lines.length} 行，来源: ${lyrics.source}');
       } else {
         _currentLyricsRaw = LyricsService.getDefaultLyrics();
         _currentLyrics = _currentLyricsRaw!;
         _currentLyricsSource = 'default';
-        debugPrint('未找到歌词文件，使用默认歌词');
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('加载歌词失败: $e');
       _currentLyricsRaw = LyricsService.getDefaultLyrics();
       _currentLyrics = _currentLyricsRaw!;
       _currentLyricsSource = 'default';
@@ -1028,13 +1033,11 @@ class PlayerProvider with ChangeNotifier {
     try {
       // 检查设置中的 enableDesktopLyrics 值
       if (_settingsProvider?.enableDesktopLyrics != true) {
-        print('Desktop lyrics is disabled in settings, skipping show');
         return;
       }
 
       // 按需创建桌面歌词窗口，避免在启动时初始化导致崩溃
       if (lyricsWindowController == null) {
-        print('Desktop lyrics controller is not initialized, creating now...');
         await initDesktopLyrics();
       }
 
@@ -1057,22 +1060,16 @@ class PlayerProvider with ChangeNotifier {
       if (lyricsWindowController != null) {
         await lyricsWindowController!.hide();
         lyricsWindowVisible = false;
-        // 更新设置中的enableDesktopLyrics值
-        if (_settingsProvider != null) {
-          await _settingsProvider!.setEnableDesktopLyrics(false);
-        }
       }
     } catch (e) {
-      debugPrint('隐藏桌面歌词失败: $e');
+      // 隐藏桌面歌词失败
     }
   }
 
   /// 更新桌面歌词
   Future<void> updateDesktopLyrics() async {
     try {
-      print('updateDesktopLyrics: enableDesktopLyrics=${_settingsProvider?.enableDesktopLyrics}');
-      if (!(_settingsProvider?.enableDesktopLyrics ?? false)) {
-        print('updateDesktopLyrics: Desktop lyrics is disabled, skipping update');
+      if (!(_settingsProvider?.enableDesktopLyrics ?? false) || !lyricsWindowVisible) {
         return;
       }
 
@@ -1084,7 +1081,6 @@ class PlayerProvider with ChangeNotifier {
 
       if (lyrics == null || !lyrics.hasLyrics) {
         // 没有歌词时清除桌面歌词
-        print('updateDesktopLyrics: No lyrics available, clearing desktop lyrics');
         sendDesktopLyricMessage(_position, null, false);
         return;
       }
@@ -1094,7 +1090,6 @@ class PlayerProvider with ChangeNotifier {
 
       // 如果没有找到当前歌词行，清除桌面歌词
       if (lyricLine == null) {
-        print('updateDesktopLyrics: No current lyric line found, clearing desktop lyrics');
         sendDesktopLyricMessage(_position, null, false);
         return;
       }
@@ -1103,10 +1098,9 @@ class PlayerProvider with ChangeNotifier {
       final isKaraoke = _settingsProvider?.enableKaraokeEffect ?? false;
 
       // 更新桌面歌词
-      print('updateDesktopLyrics: Sending lyric line to desktop lyrics: ${lyricLine.text}');
       sendDesktopLyricMessage(_position, lyricLine, isKaraoke);
     } catch (e) {
-      debugPrint('更新桌面歌词失败: $e');
+      // 更新桌面歌词失败
     }
   }
 }

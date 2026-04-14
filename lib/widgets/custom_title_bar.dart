@@ -4,6 +4,7 @@ import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform, exit;
 import '../constants/app_icons.dart';
 import '../providers/settings_provider.dart';
+import '../providers/player_provider.dart';
 import 'package:provider/provider.dart';
 
 class CustomTitleBar extends StatefulWidget {
@@ -259,6 +260,10 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
             child: InkWell(
               onTap: () async {
                 print('Close button tapped, closing window');
+                // 保存播放进度
+                final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                await playerProvider.savePlayProgress();
+
                 // 参考 ParticleMusic 的实现方式
                 if (Platform.isWindows) {
                   await windowManager.setPreventClose(false);

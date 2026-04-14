@@ -1,158 +1,145 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_music_player/screens/home_screen.dart';
-import 'package:window_manager/window_manager.dart';
 import 'dart:io' show Platform, exit;
-import 'package:provider/provider.dart';
-import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'theme/theme_provider.dart';
-import 'theme/app_theme.dart';
-import 'providers/music_provider.dart';
-import 'providers/player_provider.dart';
-import 'providers/settings_provider.dart';
-import 'models/playlist_model.dart';
-import 'package:flutter_music_player/pages/artists_page.dart';
-import 'package:flutter_music_player/pages/albums_page.dart';
-import 'providers/navigation_provider.dart';
-import 'widgets/animated_theme.dart';
-import 'services/global_hotkey_service.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+import 'package:provider/provider.dart';
+import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
+
+import 'common.dart';
 import 'desktop/desktop_lyrics.dart';
 import 'desktop/extensions/window_controller_extension.dart';
-import 'widgets/desktop_lyrics_window.dart';
 import 'desktop/my_tray_listener.dart';
-import 'common.dart';
-import 'package:flutter/services.dart';
-import 'package:tray_manager/tray_manager.dart';
+import 'models/playlist_model.dart';
+import 'package:flutter_music_player/pages/albums_page.dart';
+import 'package:flutter_music_player/pages/artists_page.dart';
+import 'package:flutter_music_player/screens/home_screen.dart';
+import 'providers/music_provider.dart';
+import 'providers/navigation_provider.dart';
+import 'providers/player_provider.dart';
+import 'providers/settings_provider.dart';
+import 'services/global_hotkey_service.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_provider.dart';
+import 'widgets/animated_theme.dart';
 
-// 全局变量保存Provider引用
+// ==================== 全局变量 ====================
+
+// Provider 全局引用
 MusicProvider? globalMusicProvider;
 PlayerProvider? globalPlayerProvider;
-bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
+SettingsProvider? globalSettingsProvider;
+
+// 服务全局实例
 final globalLiquidGlassViewController = LiquidGlassViewController();
 final globalHotkeyService = GlobalHotkeyService();
 
+// 状态标志
+bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
+bool _isTrayMenuInitialized = false;    // 托盘菜单初始化标志
+MyTrayListener? _trayListener;          // 全局托盘监听器实例
+
+// ==================== 应用入口 ====================
+
 void main() async {
-  print('应用启动开始');
   WidgetsFlutterBinding.ensureInitialized();
-  print('WidgetsFlutterBinding初始化完成');
 
-  // 初始化桌面多窗口
+  // 只在桌面平台初始化窗口
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    print('开始初始化windowManager');
     await windowManager.ensureInitialized();
-    print('windowManager初始化完成');
 
-    // 检查是否是桌面歌词窗口
     final windowController = await WindowController.fromCurrentEngine();
-    print('Window arguments: ${windowController.arguments}');
+    
+    // 检查是否是桌面歌词窗口
     if (windowController.arguments == 'desktop_lyrics') {
-      print('初始化桌面歌词窗口');
-      await windowController.desktopLyricsCustomInitialize();
-
-      WindowOptions windowOptions = WindowOptions(
-        title: "Desktop Lyrics",
-        size: Platform.isLinux ? Size(850, 200) : Size(800, 150),
-        minimumSize: const Size(300, 80),
-        maximumSize: const Size(1920, 300),
-        center: true,
-        backgroundColor: Colors.transparent,
-        titleBarStyle: TitleBarStyle.hidden,
-        skipTaskbar: Platform.isMacOS ? false : true,
-        alwaysOnTop: true,
-      );
-
-      print('Window options: ${windowOptions.toString()}');
-
-      await windowManager.waitUntilReadyToShow(windowOptions, () async {
-        print('Setting up frameless window...');
-        await windowManager.setAsFrameless();
-        print('Setting minimum and maximum size...');
-        await windowManager.setMinimumSize(const Size(300, 120));
-        await windowManager.setMaximumSize(const Size(1920, 300));
-        print('Desktop lyrics window setup complete, but not showing yet');
-        // 不在这里显示窗口，等待主窗口发送显示命令
-      });
-
-      print('Running DesktopLyrics app...');
-      runApp(DesktopLyrics());
-      return; // 桌面歌词窗口直接返回，不执行后面的代码
+      await _initDesktopLyricsWindow(windowController);
+      return;
     }
 
-    const windowOptions = WindowOptions(
-      size: Size(1200, 800),
-      minimumSize: Size(1000, 700), // 增加最小尺寸，确保所有UI元素都能正常显示
-      center: true,
-      backgroundColor: Colors.transparent, // 透明背景，UI层控制可见性
-      skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
-      windowButtonVisibility: false,
-    );
-
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.setPreventClose(true);
-      await windowManager.show();
-      await windowManager.focus();
-
-      // 初始化主窗口控制器
-      mainWindowController = await WindowController.fromCurrentEngine();
-      print('主窗口控制器初始化完成');
-
-      // 初始化托盘图标（但不设置菜单）
-      await _setupTrayIcon();
-    });
-
-    // 添加窗口监听器
-    windowManager.addListener(_MyWindowListener());
-
+    // 初始化主窗口
+    await _initMainWindow();
     runApp(const MyApp());
   }
-
-  // 初始化桌面歌词窗口（在主窗口中）
-  // 桌面歌词窗口在用户实际启用时按需创建，避免启动时多窗口初始化引发崩溃。
-  // if (!isMobile) {
-  //   await initDesktopLyrics();
-  // }
 }
+
+/// 初始化桌面歌词窗口
+Future<void> _initDesktopLyricsWindow(WindowController windowController) async {
+  await windowController.desktopLyricsCustomInitialize();
+
+  final windowOptions = WindowOptions(
+    title: "Desktop Lyrics",
+    size: Platform.isLinux ? const Size(850, 200) : const Size(800, 150),
+    minimumSize: const Size(300, 120),
+    maximumSize: const Size(1920, 300),
+    center: true,
+    backgroundColor: Colors.transparent,
+    titleBarStyle: TitleBarStyle.hidden,
+    skipTaskbar: Platform.isMacOS ? false : true,
+    alwaysOnTop: true,
+  );
+
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setAsFrameless();
+    await windowManager.setMinimumSize(const Size(300, 120));
+    await windowManager.setMaximumSize(const Size(1920, 300));
+  });
+
+  runApp(const DesktopLyrics());
+}
+
+/// 初始化主窗口
+Future<void> _initMainWindow() async {
+  const windowOptions = WindowOptions(
+    size: Size(1200, 800),
+    minimumSize: Size(1000, 700),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+    windowButtonVisibility: false,
+  );
+
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setPreventClose(true);
+    await windowManager.show();
+    await windowManager.focus();
+    
+    // 初始化主窗口控制器和托盘
+    mainWindowController = await WindowController.fromCurrentEngine();
+    await _setupTrayIcon();
+  });
+}
+
+// ==================== 托盘管理 ====================
 
 /// 初始化托盘图标
 Future<void> _setupTrayIcon() async {
-  print('开始初始化托盘图标...');
   try {
     await trayManager.setIcon(
       Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
       isTemplate: true,
     );
-    print('托盘图标设置成功');
 
     if (!Platform.isLinux) {
       await trayManager.setToolTip('Music Player');
-      print('托盘提示设置成功');
     }
 
     // 使用单例模式，确保只添加一个监听器
     if (_trayListener == null) {
       _trayListener = MyTrayListener();
       trayManager.addListener(_trayListener!);
-      print('托盘监听器添加成功');
-    } else {
-      print('托盘监听器已存在，跳过添加');
     }
-
-    print('托盘图标初始化完成');
   } catch (e) {
-    print('托盘图标初始化失败: $e');
+    // 托盘图标初始化失败，但不影响应用运行
   }
 }
 
 /// 初始化托盘菜单
 Future<void> _setupTrayMenu() async {
-  // 防止重复初始化托盘菜单
-  if (_isTrayMenuInitialized) {
-    print('托盘菜单已初始化，跳过重复初始化');
-    return;
-  }
-  
-  print('开始初始化托盘菜单...');
+  if (_isTrayMenuInitialized) return;
+
   try {
     await trayManager.setContextMenu(
       Menu(
@@ -168,26 +155,12 @@ Future<void> _setupTrayMenu() async {
       ),
     );
     _isTrayMenuInitialized = true;
-    print('托盘菜单设置成功');
   } catch (e) {
-    print('托盘菜单设置失败: $e');
+    // 托盘菜单设置失败，但不影响应用运行
   }
 }
 
-// 全局托盘监听器实例
-MyTrayListener? _trayListener;
-
-// 托盘菜单初始化标志
-bool _isTrayMenuInitialized = false;
-
-/// 窗口监听器
-class _MyWindowListener extends WindowListener {
-  @override
-  void onWindowClose() {
-    // 关闭窗口时隐藏到托盘
-    windowManager.hide();
-  }
-}
+// ==================== 应用主类 ====================
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -205,6 +178,7 @@ class _MyAppState extends State<MyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
     // 监听窗口关闭事件
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.addListener(this);
@@ -216,7 +190,6 @@ class _MyAppState extends State<MyApp>
         }
       });
     }
-    // 窗口透明度现在由背景层控制，不需要单独初始化
   }
 
   @override
@@ -225,7 +198,6 @@ class _MyAppState extends State<MyApp>
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.removeListener(this);
     }
-    // 释放全局热键服务资源
     globalHotkeyService.dispose();
     super.dispose();
   }
@@ -241,26 +213,86 @@ class _MyAppState extends State<MyApp>
 
   @override
   void onWindowClose() async {
-    print('onWindowClose called');
-    // 隐藏窗口到托盘
-    await windowManager.hide();
+    print('[${DateTime.now().toIso8601String()}] onWindowClose started');
+    // 1. 关闭桌面歌词窗口（不等待完成）
+    if (lyricsWindowController != null) {
+      try {
+        print('[${DateTime.now().toIso8601String()}] Closing desktop lyrics window');
+        lyricsWindowController!.close().then((_) {
+          lyricsWindowVisible = false;
+          print('[${DateTime.now().toIso8601String()}] Desktop lyrics window closed');
+        });
+      } catch (e) {
+        // 关闭桌面歌词窗口失败，继续执行
+      }
+    }
+    
+    // 2. 跳过更新桌面歌词设置，因为应用即将关闭，不需要保存这个状态
+    // 直接设置标志位，避免延迟
+    lyricsWindowVisible = false;
+    print('[${DateTime.now().toIso8601String()}] Desktop lyrics settings updated');
+
+    // 3. 保存播放进度
+    print('[${DateTime.now().toIso8601String()}] About to save play progress');
+    if (globalPlayerProvider != null) {
+      try {
+        await globalPlayerProvider!.savePlayProgress();
+        print('[${DateTime.now().toIso8601String()}] Play progress saved');
+      } catch (e) {
+        // 保存播放进度失败，继续执行
+      }
+    }
+
+    // 4. 保存音乐数据
+    print('[${DateTime.now().toIso8601String()}] About to save music data');
+    if (globalMusicProvider != null) {
+      try {
+        await globalMusicProvider!.saveData();
+        print('[${DateTime.now().toIso8601String()}] Music data saved');
+      } catch (e) {
+        // 保存音乐数据失败，继续执行
+      }
+    }
+
+    // 5. 真正退出应用
+    print('[${DateTime.now().toIso8601String()}] About to destroy window');
+    if (Platform.isWindows) {
+      // 移除监听器，防止重复触发
+      print('[${DateTime.now().toIso8601String()}] Removing window listener');
+      windowManager.removeListener(this);
+      print('[${DateTime.now().toIso8601String()}] About to destroy window');
+      await windowManager.destroy();
+      print('[${DateTime.now().toIso8601String()}] Window destroyed');
+    } else {
+      print('[${DateTime.now().toIso8601String()}] Exiting application');
+      exit(0);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // 主题提供者
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        // 音乐提供者
         ChangeNotifierProvider(create: (context) {
           final provider = MusicProvider();
           globalMusicProvider = provider;
           return provider;
         }),
+        // 播放列表服务
         ChangeNotifierProvider(create: (context) => PlaylistService()),
+        // 导航提供者
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
-        ChangeNotifierProvider(create: (context) => SettingsProvider()),
-        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider,
-            PlayerProvider>(
+        // 设置提供者
+        ChangeNotifierProvider(create: (context) {
+          final provider = SettingsProvider();
+          globalSettingsProvider = provider;
+          return provider;
+        }),
+        // 播放器提供者（依赖音乐和设置提供者）
+        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider, PlayerProvider>(
           create: (context) {
             final provider = PlayerProvider();
             globalPlayerProvider = provider;
@@ -271,6 +303,7 @@ class _MyAppState extends State<MyApp>
             playerProvider.setMusicProvider(musicProvider);
             playerProvider.setSettingsProvider(settingsProvider);
             globalPlayerProvider = playerProvider;
+            
             // 初始化全局热键服务
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (playerProvider != null) {
@@ -279,11 +312,11 @@ class _MyAppState extends State<MyApp>
                   playerProvider: playerProvider!,
                   settingsProvider: settingsProvider,
                 );
-                // 初始化托盘菜单（在PlayerProvider初始化之后）
                 _setupTrayMenu();
               }
             });
-            // 只在首次初始化且音乐列表已加载完成时恢复播放进度
+            
+            // 恢复播放进度
             if (!_hasRestoredPlayProgress &&
                 musicProvider.hasInitialized &&
                 musicProvider.musicList.isNotEmpty) {
@@ -292,6 +325,7 @@ class _MyAppState extends State<MyApp>
                 playerProvider?.restorePlayProgress();
               });
             }
+            
             return playerProvider;
           },
         ),
@@ -302,21 +336,12 @@ class _MyAppState extends State<MyApp>
           if (!_isWindowMethodsInitialized && !_isInitializing) {
             _isInitializing = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final windowController =
-                  await WindowController.fromCurrentEngine();
-              print('Initializing main window custom methods...');
-              print('playerProvider is null: ${playerProvider == null}');
-
+              final windowController = await WindowController.fromCurrentEngine();
               if (playerProvider != null) {
-                print(
-                    'playerProvider is initialized, setting up method handler...');
                 await windowController.mainCustomInitialize(playerProvider);
                 _isWindowMethodsInitialized = true;
-                _isInitializing = false;
-              } else {
-                print('Error: playerProvider is null');
-                _isInitializing = false;
               }
+              _isInitializing = false;
             });
           }
 
@@ -332,19 +357,13 @@ class _MyAppState extends State<MyApp>
                 builder: (context, settings, child) {
                   return Stack(
                     children: [
-                      // 背景层 - 根据背景类型应用透明度，确保至少有最小可见度
+                      // 背景层
                       Positioned.fill(
                         child: Container(
-                          color: settings.uiBackgroundType ==
-                                  UIBackgroundType.normal
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .surface
-                                  .withOpacity(settings.windowOpacity.clamp(0.1, 1.0))
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surface
-                                  .withOpacity(1.0),
+                          color: settings.uiBackgroundType == UIBackgroundType.normal
+                              ? Theme.of(context).colorScheme.surface.withOpacity(
+                                  settings.windowOpacity.clamp(0.1, 1.0))
+                              : Theme.of(context).colorScheme.surface,
                         ),
                       ),
                       // 液态玻璃背景捕获层
@@ -354,8 +373,7 @@ class _MyAppState extends State<MyApp>
                             controller: globalLiquidGlassViewController,
                             pixelRatio: 1.0,
                             realTimeCapture: true,
-                            refreshRate:
-                                LiquidGlassRefreshRate.deviceRefreshRate,
+                            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
                             useSync: true,
                             backgroundWidget: const SizedBox.expand(),
                             children: const [],
@@ -370,14 +388,11 @@ class _MyAppState extends State<MyApp>
             ),
             routes: {
               '/artists': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as Map<String, dynamic>?;
-                return ArtistsPage(
-                    navigateToArtist: args?['artist'] as String?);
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                return ArtistsPage(navigateToArtist: args?['artist'] as String?);
               },
               '/albums': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as Map<String, dynamic>?;
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
                 return AlbumsPage(navigateToAlbum: args?['album'] as String?);
               },
             },
