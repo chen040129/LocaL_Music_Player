@@ -1030,46 +1030,60 @@ class PlayerProvider with ChangeNotifier {
 
   /// 显示桌面歌词窗口
   Future<void> showDesktopLyrics() async {
+    final now = DateTime.now().toIso8601String();
+    debugPrint('[$now] showDesktopLyrics started, enableDesktopLyrics=${_settingsProvider?.enableDesktopLyrics}, lyricsWindowVisible=$lyricsWindowVisible');
     try {
       // 检查设置中的 enableDesktopLyrics 值
       if (_settingsProvider?.enableDesktopLyrics != true) {
+        debugPrint('[$now] showDesktopLyrics aborted because setting is disabled');
         return;
       }
 
       // 按需创建桌面歌词窗口，避免在启动时初始化导致崩溃
       if (lyricsWindowController == null) {
+        debugPrint('[$now] No lyricsWindowController, calling initDesktopLyrics()');
         await initDesktopLyrics();
       }
 
       if (!lyricsWindowVisible && lyricsWindowController != null) {
         // 更新当前歌词
+        debugPrint('[$now] Updating desktop lyrics before showing');
         await updateDesktopLyrics();
 
         // 显示桌面歌词窗口
         await lyricsWindowController!.show();
         lyricsWindowVisible = true;
+        debugPrint('[$now] Desktop lyrics window shown');
+      } else {
+        debugPrint('[$now] showDesktopLyrics skipped, visible=$lyricsWindowVisible, controller=${lyricsWindowController != null}');
       }
     } catch (e) {
-      debugPrint('显示桌面歌词失败: $e');
+      debugPrint('[$now] 显示桌面歌词失败: $e');
     }
   }
 
   /// 隐藏桌面歌词窗口
   Future<void> hideDesktopLyrics() async {
+    final now = DateTime.now().toIso8601String();
+    debugPrint('[$now] hideDesktopLyrics started, controller=${lyricsWindowController != null}, visible=$lyricsWindowVisible');
     try {
       if (lyricsWindowController != null) {
         await lyricsWindowController!.hide();
         lyricsWindowVisible = false;
+        debugPrint('[$now] Desktop lyrics window hidden');
+      } else {
+        debugPrint('[$now] hideDesktopLyrics skipped because no controller');
       }
     } catch (e) {
-      // 隐藏桌面歌词失败
+      debugPrint('[$now] 隐藏桌面歌词失败: $e');
     }
   }
 
   /// 更新桌面歌词
   Future<void> updateDesktopLyrics() async {
     try {
-      if (!(_settingsProvider?.enableDesktopLyrics ?? false) || !lyricsWindowVisible) {
+      if (!(_settingsProvider?.enableDesktopLyrics ?? false) || 
+          (!lyricsWindowVisible && !lyricsWindowFlutterLyricVisible)) {
         return;
       }
 
@@ -1082,8 +1096,24 @@ class PlayerProvider with ChangeNotifier {
       if (lyrics == null || !lyrics.hasLyrics) {
         // 没有歌词时清除桌面歌词
         sendDesktopLyricMessage(_position, null, false);
+        // 也清除 flutter_lyric 的歌词
+        desktopLyricsFullLrc = null;
+        desktopLyricsLines = null;
         return;
       }
+
+      // 更新 flutter_lyric 的完整歌词数据
+      desktopLyricsFullLrc = _currentLyricsRaw;
+      desktopLyricsLines = lyrics.lines.map((line) => LyricLine(
+        Duration(milliseconds: line.time),
+        line.text,
+        [LyricToken(Duration(milliseconds: line.time), line.text)],
+      )).toList();
+
+      // 通知桌面歌词窗口更新
+      updateDesktopLyricsNotifier.value++;
+
+      print('[PlayerProvider] Updated desktop lyrics - Full LRC length: ${desktopLyricsFullLrc?.length ?? 0}, Lines count: ${desktopLyricsLines?.length ?? 0}');
 
       // 转换为LyricLine格式
       final lyricLine = convertToLyricLine(lyrics, _position.inMilliseconds);

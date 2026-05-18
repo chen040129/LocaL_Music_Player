@@ -10,6 +10,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'common.dart';
 import 'desktop/desktop_lyrics.dart';
+import 'desktop/desktop_lyrics_flutter_lyric_fixed.dart';
 import 'desktop/extensions/window_controller_extension.dart';
 import 'desktop/my_tray_listener.dart';
 import 'models/playlist_model.dart';
@@ -58,6 +59,12 @@ void main() async {
       return;
     }
 
+    // 检查是否是flutter_lyric桌面歌词窗口
+    if (windowController.arguments == 'desktop_lyrics_flutter_lyric') {
+      await _initDesktopLyricsFlutterLyricWindow(windowController);
+      return;
+    }
+
     // 初始化主窗口
     await _initMainWindow();
     runApp(const MyApp());
@@ -87,6 +94,31 @@ Future<void> _initDesktopLyricsWindow(WindowController windowController) async {
   });
 
   runApp(const DesktopLyrics());
+}
+
+/// 初始化flutter_lyric桌面歌词窗口
+Future<void> _initDesktopLyricsFlutterLyricWindow(WindowController windowController) async {
+  await windowController.desktopLyricsCustomInitialize();
+
+  final windowOptions = WindowOptions(
+    title: "Desktop Lyrics (Flutter Lyric)",
+    size: Platform.isLinux ? const Size(850, 200) : const Size(800, 150),
+    minimumSize: const Size(300, 120),
+    maximumSize: const Size(1920, 300),
+    center: true,
+    backgroundColor: Colors.transparent,
+    titleBarStyle: TitleBarStyle.hidden,
+    skipTaskbar: Platform.isMacOS ? false : true,
+    alwaysOnTop: true,
+  );
+
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setAsFrameless();
+    await windowManager.setMinimumSize(const Size(300, 120));
+    await windowManager.setMaximumSize(const Size(1920, 300));
+  });
+
+  runApp(const DesktopLyricsFlutterLyric());
 }
 
 /// 初始化主窗口
@@ -214,59 +246,26 @@ class _MyAppState extends State<MyApp>
   @override
   void onWindowClose() async {
     print('[${DateTime.now().toIso8601String()}] onWindowClose started');
-    // 1. 关闭桌面歌词窗口（不等待完成）
+    // 立即隐藏桌面歌词窗口
     if (lyricsWindowController != null) {
       try {
-        print('[${DateTime.now().toIso8601String()}] Closing desktop lyrics window');
-        lyricsWindowController!.close().then((_) {
-          lyricsWindowVisible = false;
-          print('[${DateTime.now().toIso8601String()}] Desktop lyrics window closed');
-        });
+        lyricsWindowController!.hide();
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window hidden');
       } catch (e) {
-        // 关闭桌面歌词窗口失败，继续执行
+        print('[${DateTime.now().toIso8601String()}] Hide desktop lyrics error: $e');
       }
     }
-    
-    // 2. 跳过更新桌面歌词设置，因为应用即将关闭，不需要保存这个状态
-    // 直接设置标志位，避免延迟
-    lyricsWindowVisible = false;
-    print('[${DateTime.now().toIso8601String()}] Desktop lyrics settings updated');
-
-    // 3. 保存播放进度
-    print('[${DateTime.now().toIso8601String()}] About to save play progress');
-    if (globalPlayerProvider != null) {
+    // 隐藏flutter_lyric桌面歌词窗口
+    if (lyricsWindowControllerFlutterLyric != null) {
       try {
-        await globalPlayerProvider!.savePlayProgress();
-        print('[${DateTime.now().toIso8601String()}] Play progress saved');
+        lyricsWindowControllerFlutterLyric!.hide();
+        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
       } catch (e) {
-        // 保存播放进度失败，继续执行
+        print('[${DateTime.now().toIso8601String()}] Hide Flutter Lyric desktop lyrics error: $e');
       }
     }
-
-    // 4. 保存音乐数据
-    print('[${DateTime.now().toIso8601String()}] About to save music data');
-    if (globalMusicProvider != null) {
-      try {
-        await globalMusicProvider!.saveData();
-        print('[${DateTime.now().toIso8601String()}] Music data saved');
-      } catch (e) {
-        // 保存音乐数据失败，继续执行
-      }
-    }
-
-    // 5. 真正退出应用
-    print('[${DateTime.now().toIso8601String()}] About to destroy window');
-    if (Platform.isWindows) {
-      // 移除监听器，防止重复触发
-      print('[${DateTime.now().toIso8601String()}] Removing window listener');
-      windowManager.removeListener(this);
-      print('[${DateTime.now().toIso8601String()}] About to destroy window');
-      await windowManager.destroy();
-      print('[${DateTime.now().toIso8601String()}] Window destroyed');
-    } else {
-      print('[${DateTime.now().toIso8601String()}] Exiting application');
-      exit(0);
-    }
+    print('[${DateTime.now().toIso8601String()}] Exiting application immediately');
+    exit(0);
   }
 
   @override

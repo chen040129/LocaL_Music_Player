@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../common.dart' as common;
 import '../desktop/extensions/window_controller_extension.dart';
 import '../desktop/desktop_lyrics.dart';
+import '../desktop/desktop_lyrics_flutter_lyric_fixed.dart';
 
 /// 设置类别枚举
 enum SettingsCategory {
@@ -807,6 +808,7 @@ class SettingsProvider with ChangeNotifier {
 
   // 桌面歌词设置 setters
   Future<void> setEnableDesktopLyrics(bool value, {bool skipWindowOperations = false}) async {
+    print('[${DateTime.now().toIso8601String()}] setEnableDesktopLyrics(value=$value, skipWindowOperations=$skipWindowOperations)');
     _enableDesktopLyrics = value;
     await _saveSetting('enable_desktop_lyrics', value);
     notifyListeners();
@@ -814,22 +816,41 @@ class SettingsProvider with ChangeNotifier {
     // 处理桌面歌词窗口的显示和隐藏
     if (!skipWindowOperations) {
       if (value) {
+      print('[${DateTime.now().toIso8601String()}] Desktop lyrics enabling');
       // 如果启用桌面歌词，显示窗口
       // 按需创建桌面歌词窗口
       if (common.lyricsWindowController == null) {
+        print('[${DateTime.now().toIso8601String()}] initDesktopLyrics() because controller is null');
         await initDesktopLyrics();
       }
 
       // 显示桌面歌词窗口
       if (common.lyricsWindowController != null && !common.lyricsWindowVisible) {
+        print('[${DateTime.now().toIso8601String()}] Showing desktop lyrics window');
         await common.lyricsWindowController!.show();
         common.lyricsWindowVisible = true;
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window shown');
+      } else {
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window already visible or controller missing, visible=${common.lyricsWindowVisible}, controller=${common.lyricsWindowController != null}');
       }
       } else {
+      print('[${DateTime.now().toIso8601String()}] Desktop lyrics disabling');
       // 如果禁用桌面歌词，隐藏窗口
       if (common.lyricsWindowController != null) {
+        print('[${DateTime.now().toIso8601String()}] Hiding desktop lyrics window');
         await common.lyricsWindowController!.hide();
         common.lyricsWindowVisible = false;
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window hidden');
+      } else {
+        print('[${DateTime.now().toIso8601String()}] No desktop lyrics controller to hide');
+      }
+
+      // 也隐藏 flutter_lyric 桌面歌词窗口
+      if (common.lyricsWindowControllerFlutterLyric != null) {
+        print('[${DateTime.now().toIso8601String()}] Hiding Flutter Lyric desktop lyrics window');
+        await common.lyricsWindowControllerFlutterLyric!.hide();
+        common.lyricsWindowFlutterLyricVisible = false;
+        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
       }
       }
     }
@@ -870,6 +891,24 @@ class SettingsProvider with ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> showFlutterLyricDesktopLyrics() async {
+    try {
+      // 按需创建flutter_lyric桌面歌词窗口
+      if (common.lyricsWindowControllerFlutterLyric == null) {
+        await initDesktopLyricsFlutterLyric();
+      }
+
+      // 显示flutter_lyric桌面歌词窗口
+      if (common.lyricsWindowControllerFlutterLyric != null) {
+        await common.lyricsWindowControllerFlutterLyric!.show();
+        common.lyricsWindowFlutterLyricVisible = true;
+        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window shown');
+      }
+    } catch (e) {
+      print('[${DateTime.now().toIso8601String()}] Show Flutter Lyric desktop lyrics error: $e');
+    }
   }
 
   Future<void> setShowBackgroundOnHover(bool value) async {

@@ -20,7 +20,9 @@ const AssetImage nextButtonImage = AssetImage('assets/images/next_button.png');
 
 WindowController? mainWindowController;
 WindowController? lyricsWindowController;
+WindowController? lyricsWindowControllerFlutterLyric;
 bool lyricsWindowVisible = false;
+bool lyricsWindowFlutterLyricVisible = false;
 
 // ===================================== Global Providers =====================================
 
@@ -82,6 +84,10 @@ LyricLine? desktopLyricLine;
 Duration desktopLyricsCurrentPosition = Duration.zero;
 bool desktopLyricsIsKaraoke = false;
 double desktopLyricsFontSize = 30.0;
+
+// Flutter Lyric 桌面歌词相关
+String? desktopLyricsFullLrc; // 完整的 LRC 歌词字符串
+List<LyricLine>? desktopLyricsLines; // 完整的歌词行列表
 
 final updateDesktopLyricsNotifier = ValueNotifier(0);
 

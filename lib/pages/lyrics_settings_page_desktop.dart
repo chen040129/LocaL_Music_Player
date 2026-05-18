@@ -57,6 +57,18 @@ class DesktopLyricsSettingsBuilder {
                   label: '${settings.desktopLyricsFontSize.toInt()}',
                   onChanged: (value) => settings.setDesktopLyricsFontSize(value),
                 ),
+                const Divider(height: 32),
+
+                // 调试按钮：Flutter Lyric桌面歌词
+                _buildDebugButton(
+                  context: context,
+                  title: 'Flutter Lyric桌面歌词',
+                  subtitle: '使用flutter_lyric库的桌面歌词实现',
+                  icon: CupertinoIcons.lab_flask_solid,
+                  onPressed: () async {
+                    await settings.showFlutterLyricDesktopLyrics();
+                  },
+                ),
               ],
             ),
           ),
@@ -180,6 +192,65 @@ class DesktopLyricsSettingsBuilder {
           divisions: divisions,
           onChanged: onChanged,
           activeColor: Theme.of(context).colorScheme.primary,
+        ),
+      ],
+    );
+  }
+
+  /// 构建设置项（调试按钮）
+  static Widget _buildDebugButton({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Function() onPressed,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.secondary,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+          child: const Text('测试'),
         ),
       ],
     );

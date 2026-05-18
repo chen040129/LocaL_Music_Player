@@ -52,24 +52,27 @@ class MyTrayListener extends TrayListener {
       print('托盘菜单: 显示窗口');
       windowManager.show();
     } else if (menuItem.key == 'exit') {
-      print('托盘菜单: 退出应用');
+      print('[${DateTime.now().toIso8601String()}] 托盘菜单: 退出应用');
       // 保存播放进度
       if (globalPlayerProvider != null) {
         try {
           await globalPlayerProvider!.savePlayProgress();
-          print('已保存播放进度');
+          print('[${DateTime.now().toIso8601String()}] 已保存播放进度');
         } catch (e) {
-          print('保存播放进度失败: $e');
+          print('[${DateTime.now().toIso8601String()}] 保存播放进度失败: $e');
         }
       }
       // 先关闭桌面歌词窗口
       if (lyricsWindowController != null) {
         try {
+          print('[${DateTime.now().toIso8601String()}] 托盘退出: 关闭桌面歌词窗口');
           await lyricsWindowController!.close();
-          print('已关闭桌面歌词窗口');
+          print('[${DateTime.now().toIso8601String()}] 托盘退出: 已关闭桌面歌词窗口');
         } catch (e) {
-          print('关闭桌面歌词窗口失败: $e');
+          print('[${DateTime.now().toIso8601String()}] 托盘退出: 关闭桌面歌词窗口失败: $e');
         }
+      } else {
+        print('[${DateTime.now().toIso8601String()}] 托盘退出: 没有桌面歌词控制器');
       }
       // 退出应用
       if (Platform.isWindows) {

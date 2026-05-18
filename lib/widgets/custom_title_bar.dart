@@ -259,7 +259,7 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
             borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
               onTap: () async {
-                print('Close button tapped, closing window');
+                print('[${DateTime.now().toIso8601String()}] Close button tapped, closing window');
                 // 保存播放进度
                 final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
                 await playerProvider.savePlayProgress();
