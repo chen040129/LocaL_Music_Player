@@ -62,12 +62,15 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
     updateDesktopLyricsNotifier.addListener(_onLyricsUpdate);
     // 监听播放状态变化
     isPlayingNotifier.addListener(_onPlayingStateChange);
+    // 监听来自主窗口的锁定/解锁消息
+    desktopLyricsLockNotifier.addListener(_onLockStateChanged);
   }
 
   @override
   void dispose() {
     updateDesktopLyricsNotifier.removeListener(_onLyricsUpdate);
     isPlayingNotifier.removeListener(_onPlayingStateChange);
+    desktopLyricsLockNotifier.removeListener(_onLockStateChanged);
     _isDisposed = true;
     _isTransparentNotifier.dispose();
     _lyricController.dispose();
@@ -169,6 +172,21 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
     setState(() {}); // 触发UI更新
   }
 
+  void _onLockStateChanged() {
+    if (_isDisposed) return;
+    final isLocked = desktopLyricsLockNotifier.value;
+    print('[Flutter Lyric] Lock state changed from main window: $isLocked');
+    if (_isLocked != isLocked) {
+      setState(() {
+        _isLocked = isLocked;
+      });
+      // 解锁时恢复窗口可见状态
+      if (!isLocked) {
+        _isTransparentNotifier.value = false;
+      }
+    }
+  }
+
   Future<void> _initWindowManager() async {
     try {
       await windowManager.setAsFrameless();
@@ -248,51 +266,9 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          // 锁定状态下的解锁按钮区域
+                          // 锁定状态下不显示解锁按钮，通过主窗口侧边栏解锁
                           if (_isLocked)
-                            SizedBox(
-                              height: 50,
-                              child: MouseRegion(
-                                onEnter: (_) {
-                                  setState(() => _isHoveringLock = true);
-                                },
-                                onExit: (_) {
-                                  setState(() => _isHoveringLock = false);
-                                },
-                                child: AnimatedOpacity(
-                                  opacity: _isHoveringLock ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      borderRadius: BorderRadius.circular(5),
-                                      child: InkWell(
-                                        onTap: () async {
-                                          setState(() {
-                                            _isLocked = false;
-                                          });
-                                        },
-                                        borderRadius: BorderRadius.circular(5),
-                                        splashColor: Colors.transparent,
-                                        highlightColor: Colors.transparent,
-                                        hoverColor: Colors.transparent,
-                                        child: AnimatedScale(
-                                          scale: _isHoveringLock ? 1.1 : 1.0,
-                                          duration:
-                                              const Duration(milliseconds: 150),
-                                          child: Icon(
-                                            Icons.lock_open_rounded,
-                                            color: Colors.grey.shade50,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            SizedBox(height: 8),
                           // 非锁定状态下的控制按钮
                           if (!_isLocked)
                             SizedBox(
@@ -557,6 +533,18 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
                   setState(() {
                     _isLocked = true;
                   });
+                  // 先通知主窗口更新锁定状态（在设置鼠标穿透之前，确保IPC通信正常）
+                  try {
+                    final controllers = await WindowController.getAll();
+                    for (final controller in controllers) {
+                      if (controller.arguments.isEmpty) {
+                        await controller.invokeMethod('lock_desktop_lyrics');
+                        break;
+                      }
+                    }
+                  } catch (e) {}
+                  // 锁定时设置鼠标穿透，forward: true 允许悬停事件穿透以便显示解锁按钮
+                  await windowManager.setIgnoreMouseEvents(true, forward: true);
                 },
                 borderRadius: BorderRadius.circular(5),
                 splashColor: Colors.transparent,

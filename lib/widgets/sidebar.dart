@@ -5,8 +5,10 @@ import '../theme/theme_provider.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_pages.dart';
 import '../services/music_scanner_service.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/settings_provider.dart';
+import '../common.dart' as common;
 
 class Sidebar extends StatefulWidget {
   final bool isExpanded;
@@ -232,47 +234,102 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                         );
                       },
                     ),
-                    // 桌面歌词按钮
+                    // 桌面歌词按钮 - 三态切换：关闭→解锁→上锁
                     Consumer<SettingsProvider>(
                       builder: (context, settingsProvider, child) {
-                        return MouseRegion(
-                          onEnter: (_) => setState(() {
-                            _menuHoverStates['desktopLyrics'] = true;
-                          }),
-                          onExit: (_) => setState(() {
-                            _menuHoverStates['desktopLyrics'] = false;
-                          }),
-                          child: Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
-                            child: InkWell(
-                              onTap: () async {
-                                // 切换桌面歌词状态
-                                await settingsProvider.setEnableDesktopLyrics(!settingsProvider.enableDesktopLyrics);
-                              },
-                              splashColor: Colors.transparent,
-                              highlightColor: Colors.transparent,
-                              hoverColor: Colors.transparent,
-                              child: Padding(
-                                padding: EdgeInsets.zero,
-                                child: AnimatedScale(
-                                  scale: (_menuHoverStates['desktopLyrics'] ?? false) ? _hoverScale : _normalScale,
-                                  duration: _animationDuration,
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: Colors.transparent,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '词',
-                                        style: TextStyle(
-                                          color: settingsProvider.enableDesktopLyrics ? Colors.blue : Theme.of(context).iconTheme.color,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                        // 确定当前状态：0=关闭, 1=解锁, 2=上锁
+                        int lyricsState = 0;
+                        if (settingsProvider.enableDesktopLyrics) {
+                          lyricsState = settingsProvider.desktopLyricsLocked ? 2 : 1;
+                        }
+
+                        // 根据状态选择图标和颜色
+                        IconData stateIcon;
+                        Color stateColor;
+                        String tooltip;
+                        switch (lyricsState) {
+                          case 0: // 关闭
+                            stateIcon = Icons.lyrics_outlined;
+                            stateColor = Theme.of(context).iconTheme.color ?? Colors.grey;
+                            tooltip = '歌词已关闭（点击开启）';
+                            break;
+                          case 1: // 解锁
+                            stateIcon = Icons.lock_open_rounded;
+                            stateColor = Colors.blue;
+                            tooltip = '歌词已解锁（点击锁定）';
+                            break;
+                          case 2: // 上锁
+                            stateIcon = Icons.lock_rounded;
+                            stateColor = Colors.orange;
+                            tooltip = '歌词已锁定（点击解锁）';
+                            break;
+                          default:
+                            stateIcon = Icons.lyrics_outlined;
+                            stateColor = Theme.of(context).iconTheme.color ?? Colors.grey;
+                            tooltip = '';
+                        }
+
+                        return Tooltip(
+                          message: tooltip,
+                          child: MouseRegion(
+                            onEnter: (_) => setState(() {
+                              _menuHoverStates['desktopLyrics'] = true;
+                            }),
+                            onExit: (_) => setState(() {
+                              _menuHoverStates['desktopLyrics'] = false;
+                            }),
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              child: InkWell(
+                                onTap: () async {
+                                  switch (lyricsState) {
+                                    case 0: // 关闭 → 解锁（开启歌词）
+                                      await settingsProvider.setEnableDesktopLyrics(true);
+                                      await settingsProvider.setDesktopLyricsLocked(false);
+                                      break;
+                                    case 1: // 解锁 → 上锁
+                                      await settingsProvider.setDesktopLyricsLocked(true);
+                                      // 通知歌词窗口锁定（优先flutter_lyric，其次旧版）
+                                      try {
+                                        if (common.lyricsWindowControllerFlutterLyric != null) {
+                                          await common.lyricsWindowControllerFlutterLyric!.invokeMethod('lock_lyrics');
+                                        } else if (common.lyricsWindowController != null) {
+                                          await common.lyricsWindowController!.invokeMethod('lock_lyrics');
+                                        }
+                                      } catch (e) {}
+                                      break;
+                                    case 2: // 上锁 → 解锁（不关闭歌词，先解锁）
+                                      // 通知歌词窗口解锁（优先flutter_lyric，其次旧版）
+                                      try {
+                                        if (common.lyricsWindowControllerFlutterLyric != null) {
+                                          await common.lyricsWindowControllerFlutterLyric!.invokeMethod('unlock');
+                                        } else if (common.lyricsWindowController != null) {
+                                          await common.lyricsWindowController!.invokeMethod('unlock');
+                                        }
+                                      } catch (e) {}
+                                      await settingsProvider.setDesktopLyricsLocked(false);
+                                      break;
+                                  }
+                                },
+                                splashColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                hoverColor: Colors.transparent,
+                                child: Padding(
+                                  padding: EdgeInsets.zero,
+                                  child: AnimatedScale(
+                                    scale: (_menuHoverStates['desktopLyrics'] ?? false) ? _hoverScale : _normalScale,
+                                    duration: _animationDuration,
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 300),
+                                      transitionBuilder: (child, animation) {
+                                        return ScaleTransition(scale: animation, child: child);
+                                      },
+                                      child: Icon(
+                                        stateIcon,
+                                        key: ValueKey(lyricsState),
+                                        color: stateColor,
+                                        size: 24,
                                       ),
                                     ),
                                   ),

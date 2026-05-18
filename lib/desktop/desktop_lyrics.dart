@@ -54,6 +54,8 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
     _requestPlayingState();
     // 监听字体变化
     updateDesktopLyricsNotifier.addListener(_onFontChanged);
+    // 监听来自主窗口的锁定/解锁消息
+    desktopLyricsLockNotifier.addListener(_onLockStateChanged);
   }
 
   @override
@@ -61,6 +63,7 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
     _isDisposed = true; // 设置标志，取消所有异步操作
     _isTransparentNotifier.dispose();
     updateDesktopLyricsNotifier.removeListener(_onFontChanged);
+    desktopLyricsLockNotifier.removeListener(_onLockStateChanged);
     super.dispose();
   }
 
@@ -79,6 +82,20 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
       setState(() {
         _fontFamily = null;
       });
+    }
+  }
+
+  void _onLockStateChanged() {
+    if (_isDisposed) return;
+    final isLocked = desktopLyricsLockNotifier.value;
+    if (_isLocked != isLocked) {
+      setState(() {
+        _isLocked = isLocked;
+      });
+      // 解锁时恢复窗口可见状态
+      if (!isLocked) {
+        _isTransparentNotifier.value = false;
+      }
     }
   }
 
@@ -346,6 +363,33 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                 setState(() {
                   _isLocked = !_isLocked;
                 });
+                if (_isLocked) {
+                  // 先通知主窗口更新锁定状态（在设置鼠标穿透之前）
+                  try {
+                    final controllers = await WindowController.getAll();
+                    for (final controller in controllers) {
+                      if (controller.arguments.isEmpty) {
+                        await controller.invokeMethod('lock_desktop_lyrics');
+                        break;
+                      }
+                    }
+                  } catch (e) {}
+                  // 锁定时设置鼠标穿透
+                  await windowManager.setIgnoreMouseEvents(true, forward: true);
+                } else {
+                  // 解锁时恢复鼠标事件
+                  await windowManager.setIgnoreMouseEvents(false);
+                  // 通知主窗口更新解锁状态
+                  try {
+                    final controllers = await WindowController.getAll();
+                    for (final controller in controllers) {
+                      if (controller.arguments.isEmpty) {
+                        await controller.invokeMethod('unlock_desktop_lyrics');
+                        break;
+                      }
+                    }
+                  } catch (e) {}
+                }
               },
               borderRadius: BorderRadius.circular(5),
               splashColor: Colors.transparent,

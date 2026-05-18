@@ -98,6 +98,9 @@ final updateDesktopLyricsNotifier = ValueNotifier(0);
 
 final isPlayingNotifier = ValueNotifier(false);
 
+// 桌面歌词锁定状态通知器（用于跨进程通信）
+final desktopLyricsLockNotifier = ValueNotifier<bool>(false);
+
 /// 将 LocaL_Music_Player 的 Lyrics 模型转换为 ParticleMusic 的 LyricLine 格式
 LyricLine? convertToLyricLine(Lyrics? lyrics, int currentTimeMs) {
   if (lyrics == null || !lyrics.hasLyrics) return null;

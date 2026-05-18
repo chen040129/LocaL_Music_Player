@@ -138,6 +138,7 @@ class SettingsProvider with ChangeNotifier {
 
   // 桌面歌词设置
   bool _enableDesktopLyrics = false;  // 是否启用桌面歌词
+  bool _desktopLyricsLocked = false;  // 桌面歌词是否锁定
   bool _showLockButton = true;        // 是否显示锁定按钮
   bool _showControlButtons = true;    // 是否显示控制按钮
   bool _enableKaraokeEffect = false;  // 是否启用卡拉OK效果
@@ -163,6 +164,10 @@ class SettingsProvider with ChangeNotifier {
   double _liquidGlassSaturation = 1.0;             // 饱和度
   double _liquidGlassBlurSigma = 0.5;              // 模糊强度
   double _liquidGlassMagnification = 1.0;           // 放大倍数
+
+  // 歌曲列表排序设置
+  String _songsSortBy = 'default';       // 排序方式: default, title, artist, album, duration, modified
+  bool _songsSortAscending = true;       // 是否升序
 
   // 歌曲页面设置
   SongPageBackgroundType _songPageBackgroundType = SongPageBackgroundType.fluid;  // 歌曲页面背景类型
@@ -317,6 +322,7 @@ class SettingsProvider with ChangeNotifier {
 
   // 桌面歌词设置 getters
   bool get enableDesktopLyrics => _enableDesktopLyrics;
+  bool get desktopLyricsLocked => _desktopLyricsLocked;
   bool get showLockButton => _showLockButton;
   bool get showControlButtons => _showControlButtons;
   bool get enableKaraokeEffect => _enableKaraokeEffect;
@@ -324,6 +330,10 @@ class SettingsProvider with ChangeNotifier {
   bool get showBackgroundOnHover => _showBackgroundOnHover;
   bool get alwaysOnTop => _alwaysOnTop;
   String get scrollCurve => _scrollCurve;
+
+  // 歌曲列表排序 getters
+  String get songsSortBy => _songsSortBy;
+  bool get songsSortAscending => _songsSortAscending;
 
   // 歌曲页面设置 getters
   SongPageBackgroundType get songPageBackgroundType => _songPageBackgroundType;
@@ -435,6 +445,7 @@ class SettingsProvider with ChangeNotifier {
     // 加载桌面歌词设置
     // 桌面歌词默认关闭，不保留上次退出的状态
     _enableDesktopLyrics = false;
+    _desktopLyricsLocked = false;
     _showLockButton = prefs.getBool('show_lock_button') ?? true;
     _showControlButtons = prefs.getBool('show_control_buttons') ?? true;
     _enableKaraokeEffect = prefs.getBool('enable_karaoke_effect') ?? false;
@@ -471,6 +482,10 @@ class SettingsProvider with ChangeNotifier {
     if (_liquidGlassBlurSigma > 3.0) _liquidGlassBlurSigma = 3.0;
 
     _liquidGlassMagnification = (prefs.getDouble('liquid_glass_magnification') ?? 1.0).toDouble();
+
+    // 加载歌曲列表排序设置
+    _songsSortBy = prefs.getString('songs_sort_by') ?? 'default';
+    _songsSortAscending = prefs.getBool('songs_sort_ascending') ?? true;
 
     // 加载歌曲页面设置
     final backgroundTypeIndex = prefs.getInt('song_page_background_type') ?? 0;
@@ -942,6 +957,16 @@ class SettingsProvider with ChangeNotifier {
       }
       } else {
       print('[${DateTime.now().toIso8601String()}] Desktop lyrics disabling');
+      // 先解锁歌词窗口，避免下次显示时仍处于锁定状态
+      if (common.lyricsWindowControllerFlutterLyric != null) {
+        try {
+          await common.lyricsWindowControllerFlutterLyric!.invokeMethod('unlock');
+        } catch (e) {}
+      } else if (common.lyricsWindowController != null) {
+        try {
+          await common.lyricsWindowController!.invokeMethod('unlock');
+        } catch (e) {}
+      }
       // 如果禁用桌面歌词，隐藏窗口
       if (common.lyricsWindowController != null) {
         print('[${DateTime.now().toIso8601String()}] Hiding desktop lyrics window');
@@ -959,8 +984,16 @@ class SettingsProvider with ChangeNotifier {
         common.lyricsWindowFlutterLyricVisible = false;
         print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
       }
+      // 重置锁定状态
+      _desktopLyricsLocked = false;
       }
     }
+  }
+
+  Future<void> setDesktopLyricsLocked(bool value) async {
+    _desktopLyricsLocked = value;
+    await _saveSetting('desktop_lyrics_locked', value);
+    notifyListeners();
   }
 
   Future<void> setShowLockButton(bool value) async {
@@ -1064,6 +1097,19 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setLiquidGlassMagnification(double value) async {
     _liquidGlassMagnification = value;
     await _saveSetting('liquid_glass_magnification', value);
+    notifyListeners();
+  }
+
+  // 歌曲列表排序 setters
+  Future<void> setSongsSortBy(String value) async {
+    _songsSortBy = value;
+    await _saveSetting('songs_sort_by', value);
+    notifyListeners();
+  }
+
+  Future<void> setSongsSortAscending(bool value) async {
+    _songsSortAscending = value;
+    await _saveSetting('songs_sort_ascending', value);
     notifyListeners();
   }
 

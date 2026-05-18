@@ -65,8 +65,13 @@ extension WindowControllerExtension on WindowController {
         case 'set_playing':
           isPlayingNotifier.value = call.arguments as bool;
           break;
+        case 'lock_lyrics':
+          await windowManager.setIgnoreMouseEvents(true, forward: true);
+          desktopLyricsLockNotifier.value = true;
+          break;
         case 'unlock':
           await windowManager.setIgnoreMouseEvents(false);
+          desktopLyricsLockNotifier.value = false;
           break;
         case 'update_desktop_lyrics_font_size':
           if (call.arguments is double) {
@@ -105,6 +110,7 @@ extension WindowControllerExtension on WindowController {
           // 桌面歌词窗口关闭时，更新主窗口的enableDesktopLyrics状态
           if (settingsProvider != null) {
             await settingsProvider.setEnableDesktopLyrics(false, skipWindowOperations: true);
+            await settingsProvider.setDesktopLyricsLocked(false);
           }
           // 隐藏桌面歌词窗口
           if (lyricsWindowController != null) {
@@ -122,6 +128,28 @@ extension WindowControllerExtension on WindowController {
             } catch (e) {
               // 关闭flutter_lyric桌面歌词窗口失败
             }
+          }
+          break;
+        case 'lock_desktop_lyrics':
+          // 锁定歌词窗口
+          if (lyricsWindowControllerFlutterLyric != null) {
+            try {
+              await lyricsWindowControllerFlutterLyric!.invokeMethod('lock_lyrics');
+            } catch (e) {}
+          }
+          if (settingsProvider != null) {
+            await settingsProvider.setDesktopLyricsLocked(true);
+          }
+          break;
+        case 'unlock_desktop_lyrics':
+          // 解锁歌词窗口
+          if (lyricsWindowControllerFlutterLyric != null) {
+            try {
+              await lyricsWindowControllerFlutterLyric!.invokeMethod('unlock');
+            } catch (e) {}
+          }
+          if (settingsProvider != null) {
+            await settingsProvider.setDesktopLyricsLocked(false);
           }
           break;
         case 'skip_to_previous':

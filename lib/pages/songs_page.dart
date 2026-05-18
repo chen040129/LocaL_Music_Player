@@ -26,9 +26,7 @@ class SongsPage extends StatefulWidget {
 }
 
 class _SongsPageState extends State<SongsPage> {
-  // 排序方式
-  String _sortBy = 'default'; // default, title, artist, album, duration, modified
-  bool _isAscending = true;
+  // 排序方式（从SettingsProvider读取，不再使用局部变量）
   // 标题悬停状态
   bool _isTitleHovered = false;
   // 按钮悬停状态
@@ -356,7 +354,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.list_bullet,
                                       size: 18,
-                                      color: _sortBy == 'default' 
+                                      color: settings.songsSortBy == 'default' 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -364,14 +362,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '默认排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'default' 
+                                        color: settings.songsSortBy == 'default' 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'default' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'default' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'default')
+                                    if (settings.songsSortBy == 'default')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -388,7 +386,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.music_note,
                                       size: 18,
-                                      color: _sortBy == 'title' 
+                                      color: settings.songsSortBy == 'title' 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -396,14 +394,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '按标题排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'title' 
+                                        color: settings.songsSortBy == 'title' 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'title' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'title' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'title')
+                                    if (settings.songsSortBy == 'title')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -420,7 +418,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.person,
                                       size: 18,
-                                      color: _sortBy == 'artist' 
+                                      color: settings.songsSortBy == 'artist' 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -428,14 +426,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '按艺术家排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'artist' 
+                                        color: settings.songsSortBy == 'artist' 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'artist' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'artist' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'artist')
+                                    if (settings.songsSortBy == 'artist')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -452,7 +450,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.music_albums,
                                       size: 18,
-                                      color: _sortBy == 'album' 
+                                      color: settings.songsSortBy == 'album' 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -460,14 +458,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '按专辑排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'album' 
+                                        color: settings.songsSortBy == 'album' 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'album' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'album' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'album')
+                                    if (settings.songsSortBy == 'album')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -484,7 +482,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.time,
                                       size: 18,
-                                      color: _sortBy == 'duration' 
+                                      color: settings.songsSortBy == 'duration' 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -492,14 +490,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '按时长排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'duration' 
+                                        color: settings.songsSortBy == 'duration' 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'duration' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'duration' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'duration')
+                                    if (settings.songsSortBy == 'duration')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -516,7 +514,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.calendar,
                                       size: 18,
-                                      color: _sortBy == 'modified'
+                                      color: settings.songsSortBy == 'modified'
                                           ? Theme.of(context).colorScheme.primary
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -524,14 +522,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '按修改文件顺序排序',
                                       style: TextStyle(
-                                        color: _sortBy == 'modified'
+                                        color: settings.songsSortBy == 'modified'
                                             ? Theme.of(context).colorScheme.primary
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _sortBy == 'modified' ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortBy == 'modified' ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_sortBy == 'modified')
+                                    if (settings.songsSortBy == 'modified')
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -552,7 +550,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.arrow_up,
                                       size: 18,
-                                      color: _isAscending 
+                                      color: settings.songsSortAscending 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -560,14 +558,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '升序',
                                       style: TextStyle(
-                                        color: _isAscending 
+                                        color: settings.songsSortAscending 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: _isAscending ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: settings.songsSortAscending ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (_isAscending)
+                                    if (settings.songsSortAscending)
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -584,7 +582,7 @@ class _SongsPageState extends State<SongsPage> {
                                     Icon(
                                       CupertinoIcons.arrow_down,
                                       size: 18,
-                                      color: !_isAscending 
+                                      color: !settings.songsSortAscending 
                                           ? Theme.of(context).colorScheme.primary 
                                           : Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                     ),
@@ -592,14 +590,14 @@ class _SongsPageState extends State<SongsPage> {
                                     Text(
                                       '降序',
                                       style: TextStyle(
-                                        color: !_isAscending 
+                                        color: !settings.songsSortAscending 
                                             ? Theme.of(context).colorScheme.primary 
                                             : Theme.of(context).textTheme.bodyMedium?.color,
-                                        fontWeight: !_isAscending ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: !settings.songsSortAscending ? FontWeight.w600 : FontWeight.normal,
                                       ),
                                     ),
                                     const Spacer(),
-                                    if (!_isAscending)
+                                    if (!settings.songsSortAscending)
                                       Icon(
                                         CupertinoIcons.checkmark,
                                         size: 16,
@@ -611,13 +609,12 @@ class _SongsPageState extends State<SongsPage> {
                             ],
                           ).then((value) {
                             if (value != null) {
-                              setState(() {
-                                if (value == 'asc' || value == 'desc') {
-                                  _isAscending = value == 'asc';
-                                } else {
-                                  _sortBy = value;
-                                }
-                              });
+                              final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                              if (value == 'asc' || value == 'desc') {
+                                settingsProvider.setSongsSortAscending(value == 'asc');
+                              } else {
+                                settingsProvider.setSongsSortBy(value);
+                              }
                             }
                           });
                         },
@@ -652,6 +649,7 @@ class _SongsPageState extends State<SongsPage> {
           Expanded(
             child: Consumer<MusicProvider>(
               builder: (context, musicProvider, child) {
+                final settings = Provider.of<SettingsProvider>(context);
                 // 如果正在加载，显示加载提示
                 if (musicProvider.isLoading) {
                   return const Center(
@@ -914,7 +912,7 @@ class _SongsPageState extends State<SongsPage> {
                       },
                     ),
                     // 字母索引栏（只在按标题或艺术家排序时显示）
-                    if (_sortBy == 'title' || _sortBy == 'artist')
+                    if (settings.songsSortBy == 'title' || settings.songsSortBy == 'artist')
                       Positioned(
                         right: 10,
                         top: 0,
@@ -926,13 +924,13 @@ class _SongsPageState extends State<SongsPage> {
                             itemCount: _alphabet.length,
                             itemBuilder: (context, index) {
                               // 根据排序方式调整字母顺序
-                              final alphabet = _isAscending
+                              final alphabet = settings.songsSortAscending
                                   ? _alphabet
                                   : _alphabet.reversed.toList();
                               final letter = alphabet[index];
                               // 检查是否有以该字母开头的歌曲
                               final hasSongs = musicList.any((music) {
-                                final text = _sortBy == 'title'
+                                final text = settings.songsSortBy == 'title'
                                     ? music.title
                                     : music.artist;
                                 final pinyin = PinyinHelper.getPinyinE(text,
@@ -952,7 +950,7 @@ class _SongsPageState extends State<SongsPage> {
                                   // 滚动到对应字母的位置
                                   final targetIndex =
                                       musicList.indexWhere((music) {
-                                    final text = _sortBy == 'title'
+                                    final text = settings.songsSortBy == 'title'
                                         ? music.title
                                         : music.artist;
                                     final pinyin = PinyinHelper.getPinyinE(text,
@@ -1237,11 +1235,12 @@ class _SongsPageState extends State<SongsPage> {
 
   /// 获取排序和过滤后的歌曲列表（带缓存）
   List<MusicInfo> _getSortedSongs(MusicProvider musicProvider) {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
     // 检查缓存是否有效
     // 添加对musicList长度的检查，确保数据源没有变化
     if (_cachedSortedSongs != null &&
-        _cachedSortBy == _sortBy &&
-        _cachedIsAscending == _isAscending &&
+        _cachedSortBy == settings.songsSortBy &&
+        _cachedIsAscending == settings.songsSortAscending &&
         _cachedSearchQuery == _searchQuery &&
         _cachedSortedSongs!.length == musicProvider.musicList.length) {
       return _cachedSortedSongs!;
@@ -1251,7 +1250,7 @@ class _SongsPageState extends State<SongsPage> {
     List<MusicInfo> musicList = List.from(musicProvider.musicList);
 
     // 根据排序方式对音乐列表进行排序
-    switch (_sortBy) {
+    switch (settings.songsSortBy) {
       case 'title':
         musicList.sort((a, b) {
           final aPinyin = PinyinHelper.getPinyinE(a.title,
@@ -1260,7 +1259,7 @@ class _SongsPageState extends State<SongsPage> {
           final bPinyin = PinyinHelper.getPinyinE(b.title,
                   format: PinyinFormat.WITHOUT_TONE)
               .toUpperCase();
-          return _isAscending
+          return settings.songsSortAscending
               ? aPinyin.compareTo(bPinyin)
               : bPinyin.compareTo(aPinyin);
         });
@@ -1273,7 +1272,7 @@ class _SongsPageState extends State<SongsPage> {
           final bPinyin = PinyinHelper.getPinyinE(b.artist,
                   format: PinyinFormat.WITHOUT_TONE)
               .toUpperCase();
-          return _isAscending
+          return settings.songsSortAscending
               ? aPinyin.compareTo(bPinyin)
               : bPinyin.compareTo(aPinyin);
         });
@@ -1286,13 +1285,13 @@ class _SongsPageState extends State<SongsPage> {
           final bPinyin = PinyinHelper.getPinyinE(b.album,
                   format: PinyinFormat.WITHOUT_TONE)
               .toUpperCase();
-          return _isAscending
+          return settings.songsSortAscending
               ? aPinyin.compareTo(bPinyin)
               : bPinyin.compareTo(aPinyin);
         });
         break;
       case 'duration':
-        musicList.sort((a, b) => _isAscending
+        musicList.sort((a, b) => settings.songsSortAscending
             ? a.duration.compareTo(b.duration)
             : b.duration.compareTo(a.duration));
         break;
@@ -1305,7 +1304,7 @@ class _SongsPageState extends State<SongsPage> {
           } else if (b.fileModifiedTime == null) {
             return -1;
           }
-          return _isAscending
+          return settings.songsSortAscending
               ? a.fileModifiedTime!.compareTo(b.fileModifiedTime!)
               : b.fileModifiedTime!.compareTo(a.fileModifiedTime!);
         });
@@ -1327,8 +1326,8 @@ class _SongsPageState extends State<SongsPage> {
 
     // 更新缓存
     _cachedSortedSongs = musicList;
-    _cachedSortBy = _sortBy;
-    _cachedIsAscending = _isAscending;
+    _cachedSortBy = settings.songsSortBy;
+    _cachedIsAscending = settings.songsSortAscending;
     _cachedSearchQuery = _searchQuery;
 
     return musicList;

@@ -241,6 +241,8 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
                                           setState(() {
                                             _isLocked = false;
                                           });
+                                          // 解锁时恢复鼠标事件
+                                          await windowManager.setIgnoreMouseEvents(false);
                                         },
                                         borderRadius: BorderRadius.circular(5),
                                         splashColor: Colors.transparent,
@@ -519,6 +521,8 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
                   setState(() {
                     _isLocked = true;
                   });
+                  // 锁定时设置鼠标穿透，forward: true 允许悬停事件穿透以便显示解锁按钮
+                  await windowManager.setIgnoreMouseEvents(true, forward: true);
                 },
                 borderRadius: BorderRadius.circular(5),
                 splashColor: Colors.transparent,
