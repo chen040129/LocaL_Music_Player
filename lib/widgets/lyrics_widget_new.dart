@@ -203,9 +203,11 @@ class _LyricsWidgetState extends State<LyricsWidget> {
       valueListenable: _styleNotifier,
       builder: (context, style, child) {
         // 根据主题和设置调整歌词样式，增强动态效果
+        final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
         final adjustedStyle = LyricStyle(
           // 非激活歌词样式
           textStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(0.4 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(0.4 * settings.lyricsOpacity),
@@ -214,6 +216,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           ),
           // 激活歌词样式（当前演唱的歌词）
           activeStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(1.0 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(1.0 * settings.lyricsOpacity),
@@ -223,6 +226,7 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           ),
           // 翻译歌词样式
           translationStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(0.35 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(0.35 * settings.lyricsOpacity),

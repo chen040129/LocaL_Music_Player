@@ -257,9 +257,10 @@ class PlayerProvider with ChangeNotifier {
           _isPlaying = isPlayingState;
           notifyListeners();
 
-          if (isPlayingState) {
-            sendPlayingMessage(_isPlaying);
+          // 无论播放还是暂停，都通知桌面歌词窗口更新状态
+          sendPlayingMessage(_isPlaying);
 
+          if (isPlayingState) {
             if (_settingsProvider?.enableDesktopLyrics == true) {
               showDesktopLyrics();
             }

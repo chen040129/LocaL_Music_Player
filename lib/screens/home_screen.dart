@@ -434,18 +434,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    return Opacity(
-      opacity: settings.windowOpacity,
-      child: settings.smoothColorTransition
-          ? AnimatedContainer(
-              duration: const Duration(seconds: 3),
-              curve: Curves.easeInOut,
-              decoration: gradientDecoration,
-            )
-          : Container(
-              decoration: gradientDecoration,
-            ),
-    );
+    return settings.smoothColorTransition
+        ? AnimatedContainer(
+            duration: const Duration(seconds: 3),
+            curve: Curves.easeInOut,
+            decoration: gradientDecoration,
+          )
+        : Container(
+            decoration: gradientDecoration,
+          );
   }
 
   /// 根据当前页面返回不同的页面组件

@@ -10,10 +10,12 @@ class DesktopLyricsWidget extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: updateDesktopLyricsNotifier,
       builder: (context, value, child) {
+        final fontFamily = desktopLyricsFontName.isNotEmpty ? desktopLyricsFontName : null;
         if (desktopLyricLine == null) {
           return Text(
             'Music Player',
             style: TextStyle(
+              fontFamily: fontFamily,
               fontSize: isMobile ? 20 : desktopLyricsFontSize,
               color: Colors.white,
               shadows: [
@@ -33,6 +35,7 @@ class DesktopLyricsWidget extends StatelessWidget {
             line: desktopLyricLine!,
             position: desktopLyricsCurrentPosition,
             fontSize: isMobile ? 20 : desktopLyricsFontSize,
+            fontFamily: fontFamily,
             expanded: false,
             isDesktopLyrics: true,
           );
@@ -40,6 +43,7 @@ class DesktopLyricsWidget extends StatelessWidget {
           return Text(
             desktopLyricLine!.text,
             style: TextStyle(
+              fontFamily: fontFamily,
               fontSize: isMobile ? 20 : desktopLyricsFontSize,
               color: Colors.white,
               shadows: [

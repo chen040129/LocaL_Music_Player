@@ -118,6 +118,107 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 自定义字体
+                ListTile(
+                  leading: const Icon(CupertinoIcons.textformat),
+                  title: const Text('自定义字体'),
+                  subtitle: Text(settings.fontName.isNotEmpty ? settings.fontName : '默认字体'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (settings.fontName.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.xmark_circle, size: 20),
+                          tooltip: '恢复默认字体',
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('恢复默认字体'),
+                                content: const Text('确定要恢复默认字体吗？'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('取消'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text('确定'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true) {
+                              await settings.clearFontPath();
+                            }
+                          },
+                        ),
+                      TextButton(
+                        onPressed: () async {
+                          try {
+                            FilePickerResult? result = await FilePicker.platform.pickFiles(
+                              dialogTitle: '选择字体文件',
+                              type: FileType.custom,
+                              allowedExtensions: ['ttf', 'otf', 'ttc'],
+                            );
+                            if (result != null && result.files.single.path != null) {
+                              final fontPath = result.files.single.path!;
+                              await settings.setFontPath(fontPath);
+                              if (context.mounted) {
+                                _showTopNotification(context, '字体已加载: ${settings.fontName}', isSuccess: true);
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              _showTopNotification(context, '字体加载失败: $e', isSuccess: false);
+                            }
+                          }
+                        },
+                        child: const Text('导入字体'),
+                      ),
+                    ],
+                  ),
+                ),
+                // 字体预览
+                if (settings.fontName.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '字体预览',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '你好世界 Hello World 0123456789',
+                          style: TextStyle(
+                            fontFamily: settings.fontName,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                          style: TextStyle(
+                            fontFamily: settings.fontName,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          'abcdefghijklmnopqrstuvwxyz',
+                          style: TextStyle(
+                            fontFamily: settings.fontName,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Divider(height: 1),
                 // 导出设置配置文件
                 ListTile(
                   leading: const Icon(CupertinoIcons.arrow_up_doc),
@@ -390,5 +491,72 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
         );
       },
     );
+  }
+
+  /// 显示顶部弹窗通知
+  void _showTopNotification(BuildContext context, String message, {bool isSuccess = true}) {
+    OverlayEntry? overlayEntry;
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.inverseSurface,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSuccess ? CupertinoIcons.checkmark_circle : CupertinoIcons.exclamationmark_triangle,
+                  color: isSuccess ? Colors.green : Colors.orange,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onInverseSurface,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.clear,
+                    color: Theme.of(context).colorScheme.onInverseSurface,
+                    size: 16,
+                  ),
+                  onPressed: () {
+                    overlayEntry?.remove();
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry!);
+
+    // 3秒后自动移除
+    Future.delayed(const Duration(seconds: 3), () {
+      overlayEntry?.remove();
+    });
   }
 }

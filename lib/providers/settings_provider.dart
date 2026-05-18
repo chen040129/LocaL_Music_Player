@@ -1,5 +1,8 @@
 
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../common.dart' as common;
@@ -107,6 +110,10 @@ class SettingsProvider with ChangeNotifier {
   GradientType _uiGradientType = GradientType.static;  // 用户界面渐变类型
   double _uiGradientSongColorRatio = 0.7;  // 用户界面渐变中歌曲主题色占比（0.0-1.0）
   bool _smoothColorTransition = true;  // 切换歌曲时背景颜色是否平滑过渡
+
+  // 字体设置
+  String _fontPath = '';                // 自定义字体文件路径
+  String _fontName = '';                // 自定义字体名称
 
   // 歌词设置
   LyricsAlignment _lyricsAlignment = LyricsAlignment.center;  // 歌词对齐方式
@@ -222,6 +229,10 @@ class SettingsProvider with ChangeNotifier {
   GradientType get uiGradientType => _uiGradientType;
   double get uiGradientSongColorRatio => _uiGradientSongColorRatio;
   bool get smoothColorTransition => _smoothColorTransition;
+
+  // 字体设置 getters
+  String get fontPath => _fontPath;
+  String get fontName => _fontName;
 
   // 歌词设置 getters
   LyricsAlignment get lyricsAlignment => _lyricsAlignment;
@@ -372,6 +383,31 @@ class SettingsProvider with ChangeNotifier {
     _uiGradientType = GradientType.values[uiGradientTypeIndex];
     _uiGradientSongColorRatio = (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
     _smoothColorTransition = prefs.getBool('smooth_color_transition') ?? true;
+
+    // 加载字体设置
+    _fontPath = prefs.getString('font_path') ?? '';
+    _fontName = prefs.getString('font_name') ?? '';
+    // 启动时恢复自定义字体
+    if (_fontPath.isNotEmpty && _fontName.isNotEmpty) {
+      try {
+        final fontFile = File(_fontPath);
+        if (await fontFile.exists()) {
+          final fontLoader = FontLoader(_fontName);
+          final fontData = await fontFile.readAsBytes();
+          fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+          await fontLoader.load();
+          debugPrint('启动时加载字体成功: $_fontName');
+        } else {
+          debugPrint('字体文件不存在: $_fontPath');
+          _fontPath = '';
+          _fontName = '';
+        }
+      } catch (e) {
+        debugPrint('启动时加载字体失败: $e');
+        _fontPath = '';
+        _fontName = '';
+      }
+    }
 
     // 加载歌词设置
     final alignmentIndex = prefs.getInt('lyrics_alignment') ?? 1;
@@ -556,14 +592,16 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setUIBackgroundType(UIBackgroundType value) async {
-    // 当从默认背景切换到流体背景时，保存当前透明度并设置为0
-    if (_uiBackgroundType == UIBackgroundType.normal && value == UIBackgroundType.fluid) {
+    // 当从默认背景切换到流体/渐变背景时，保存当前透明度并设置为0
+    if (_uiBackgroundType == UIBackgroundType.normal &&
+        (value == UIBackgroundType.fluid || value == UIBackgroundType.gradient)) {
       _savedNormalWindowOpacity = _windowOpacity;
       _windowOpacity = 0.0;
       await _saveSetting('window_opacity', _windowOpacity);
     }
-    // 当从流体背景切换回默认背景时，恢复之前保存的透明度
-    else if (_uiBackgroundType == UIBackgroundType.fluid && value == UIBackgroundType.normal) {
+    // 当从流体/渐变背景切换回默认背景时，恢复之前保存的透明度
+    else if ((_uiBackgroundType == UIBackgroundType.fluid || _uiBackgroundType == UIBackgroundType.gradient) &&
+        value == UIBackgroundType.normal) {
       _windowOpacity = _savedNormalWindowOpacity;
       await _saveSetting('window_opacity', _windowOpacity);
     }
@@ -635,6 +673,66 @@ class SettingsProvider with ChangeNotifier {
     _smoothColorTransition = value;
     await _saveSetting('smooth_color_transition', value);
     notifyListeners();
+  }
+
+  Future<void> setFontPath(String path) async {
+    _fontPath = path;
+    await _saveSetting('font_path', _fontPath);
+    // 从路径中提取字体名称
+    if (path.isNotEmpty) {
+      final fileName = path.split(Platform.pathSeparator).last;
+      _fontName = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+      await _saveSetting('font_name', _fontName);
+      // 动态加载字体
+      try {
+        final fontLoader = FontLoader(_fontName);
+        final fontData = await File(path).readAsBytes();
+        fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+        await fontLoader.load();
+        debugPrint('字体加载成功: $_fontName');
+      } catch (e) {
+        debugPrint('字体加载失败: $e');
+      }
+    } else {
+      _fontName = '';
+      await _saveSetting('font_name', _fontName);
+    }
+    // 通知桌面歌词窗口更新字体
+    _notifyDesktopLyricsFontChange();
+    notifyListeners();
+  }
+
+  Future<void> clearFontPath() async {
+    _fontPath = '';
+    _fontName = '';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('font_path');
+    await prefs.remove('font_name');
+    // 通知桌面歌词窗口更新字体
+    _notifyDesktopLyricsFontChange();
+    notifyListeners();
+  }
+
+  void _notifyDesktopLyricsFontChange() {
+    // 更新全局变量
+    common.desktopLyricsFontPath = _fontPath;
+    common.desktopLyricsFontName = _fontName;
+    // 通知flutter_lyric版桌面歌词窗口更新字体
+    if (common.lyricsWindowControllerFlutterLyric != null) {
+      try {
+        common.lyricsWindowControllerFlutterLyric!.updateFont(_fontPath, _fontName);
+      } catch (e) {
+        debugPrint('通知flutter_lyric桌面歌词更新字体失败: $e');
+      }
+    }
+    // 通知旧版桌面歌词窗口更新字体
+    if (common.lyricsWindowController != null) {
+      try {
+        common.lyricsWindowController!.updateFont(_fontPath, _fontName);
+      } catch (e) {
+        debugPrint('通知旧版桌面歌词更新字体失败: $e');
+      }
+    }
   }
 
   // 歌词设置 setters
@@ -1231,6 +1329,35 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['fluid_offset_amount'] = prefs.getDouble('fluid_offset_amount') ?? 20.0;
     settingsMap['fluid_layer_opacity'] = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
 
+    // 颜色平滑过渡
+    settingsMap['smooth_color_transition'] = prefs.getBool('smooth_color_transition') ?? true;
+
+    // 字体设置
+    settingsMap['font_path'] = prefs.getString('font_path') ?? '';
+    settingsMap['font_name'] = prefs.getString('font_name') ?? '';
+
+    // 歌词特效设置
+    settingsMap['fade_range_top'] = prefs.getDouble('fade_range_top') ?? 200.0;
+    settingsMap['fade_range_bottom'] = prefs.getDouble('fade_range_bottom') ?? 200.0;
+    settingsMap['fade_direction'] = prefs.getInt('fade_direction') ?? 0;
+    settingsMap['fade_opacity'] = prefs.getDouble('fade_opacity') ?? 0.8;
+    settingsMap['blend_mode_index'] = prefs.getInt('blend_mode_index') ?? 0;
+    settingsMap['use_custom_blur'] = prefs.getBool('use_custom_blur') ?? true;
+    settingsMap['enable_lyrics_selection_effects'] = prefs.getBool('enable_lyrics_selection_effects') ?? true;
+    settingsMap['lyrics_effect_type'] = prefs.getInt('lyrics_effect_type') ?? 0;
+    settingsMap['enable_karaoke_effect'] = prefs.getBool('enable_karaoke_effect') ?? false;
+
+    // 桌面歌词设置
+    settingsMap['enable_desktop_lyrics'] = prefs.getBool('enable_desktop_lyrics') ?? false;
+    settingsMap['desktop_lyrics_font_size'] = prefs.getDouble('desktop_lyrics_font_size') ?? 30.0;
+    settingsMap['show_background_on_hover'] = prefs.getBool('show_background_on_hover') ?? true;
+    settingsMap['always_on_top'] = prefs.getBool('always_on_top') ?? true;
+
+    // 歌曲页面控件设置
+    settingsMap['show_lock_button'] = prefs.getBool('show_lock_button') ?? true;
+    settingsMap['show_control_buttons'] = prefs.getBool('show_control_buttons') ?? true;
+    settingsMap['cover_size'] = prefs.getDouble('cover_size') ?? 300.0;
+
     return jsonEncode(settingsMap);
   }
 
@@ -1437,6 +1564,73 @@ class SettingsProvider with ChangeNotifier {
     }
     if (settingsMap.containsKey('fluid_layer_opacity')) {
       await prefs.setDouble('fluid_layer_opacity', settingsMap['fluid_layer_opacity']);
+    }
+
+    // 颜色平滑过渡
+    if (settingsMap.containsKey('smooth_color_transition')) {
+      await prefs.setBool('smooth_color_transition', settingsMap['smooth_color_transition']);
+    }
+
+    // 字体设置
+    if (settingsMap.containsKey('font_path')) {
+      await prefs.setString('font_path', settingsMap['font_path']);
+    }
+    if (settingsMap.containsKey('font_name')) {
+      await prefs.setString('font_name', settingsMap['font_name']);
+    }
+
+    // 歌词特效设置
+    if (settingsMap.containsKey('fade_range_top')) {
+      await prefs.setDouble('fade_range_top', settingsMap['fade_range_top']);
+    }
+    if (settingsMap.containsKey('fade_range_bottom')) {
+      await prefs.setDouble('fade_range_bottom', settingsMap['fade_range_bottom']);
+    }
+    if (settingsMap.containsKey('fade_direction')) {
+      await prefs.setInt('fade_direction', settingsMap['fade_direction']);
+    }
+    if (settingsMap.containsKey('fade_opacity')) {
+      await prefs.setDouble('fade_opacity', settingsMap['fade_opacity']);
+    }
+    if (settingsMap.containsKey('blend_mode_index')) {
+      await prefs.setInt('blend_mode_index', settingsMap['blend_mode_index']);
+    }
+    if (settingsMap.containsKey('use_custom_blur')) {
+      await prefs.setBool('use_custom_blur', settingsMap['use_custom_blur']);
+    }
+    if (settingsMap.containsKey('enable_lyrics_selection_effects')) {
+      await prefs.setBool('enable_lyrics_selection_effects', settingsMap['enable_lyrics_selection_effects']);
+    }
+    if (settingsMap.containsKey('lyrics_effect_type')) {
+      await prefs.setInt('lyrics_effect_type', settingsMap['lyrics_effect_type']);
+    }
+    if (settingsMap.containsKey('enable_karaoke_effect')) {
+      await prefs.setBool('enable_karaoke_effect', settingsMap['enable_karaoke_effect']);
+    }
+
+    // 桌面歌词设置
+    if (settingsMap.containsKey('enable_desktop_lyrics')) {
+      await prefs.setBool('enable_desktop_lyrics', settingsMap['enable_desktop_lyrics']);
+    }
+    if (settingsMap.containsKey('desktop_lyrics_font_size')) {
+      await prefs.setDouble('desktop_lyrics_font_size', settingsMap['desktop_lyrics_font_size']);
+    }
+    if (settingsMap.containsKey('show_background_on_hover')) {
+      await prefs.setBool('show_background_on_hover', settingsMap['show_background_on_hover']);
+    }
+    if (settingsMap.containsKey('always_on_top')) {
+      await prefs.setBool('always_on_top', settingsMap['always_on_top']);
+    }
+
+    // 歌曲页面控件设置
+    if (settingsMap.containsKey('show_lock_button')) {
+      await prefs.setBool('show_lock_button', settingsMap['show_lock_button']);
+    }
+    if (settingsMap.containsKey('show_control_buttons')) {
+      await prefs.setBool('show_control_buttons', settingsMap['show_control_buttons']);
+    }
+    if (settingsMap.containsKey('cover_size')) {
+      await prefs.setDouble('cover_size', settingsMap['cover_size']);
     }
 
     // 重新加载设置

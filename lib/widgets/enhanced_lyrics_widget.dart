@@ -190,8 +190,10 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
       valueListenable: _styleNotifier,
       builder: (context, style, child) {
         // 使用增强的歌词样式，添加更多视觉效果
+        final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
         final adjustedStyle = LyricStyle(
           textStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(0.4 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(0.4 * settings.lyricsOpacity),
@@ -199,6 +201,7 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
             height: 1.8,
           ),
           activeStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(1.0 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(1.0 * settings.lyricsOpacity),
@@ -232,6 +235,7 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                   ],
           ),
           translationStyle: TextStyle(
+            fontFamily: fontFamily,
             color: isDark
                 ? Colors.white.withOpacity(0.35 * settings.lyricsOpacity)
                 : Colors.black.withOpacity(0.35 * settings.lyricsOpacity),

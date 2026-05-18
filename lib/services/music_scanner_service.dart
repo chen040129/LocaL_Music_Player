@@ -146,136 +146,151 @@ class MusicScannerService {
   /// 异步提取封面颜色
   Future<Map<String, int?>> _extractCoverColor(Uint8List coverArt) async {
     try {
-      // 解码图片并缩小尺寸以提高性能，但保留足够的细节以准确提取颜色
       final codec = await ui.instantiateImageCodec(
         coverArt,
-        targetWidth: 150, // 增加到150px宽度以提高准确性
-        targetHeight: 150, // 增加到150px高度以提高准确性
+        targetWidth: 100,
+        targetHeight: 100,
       );
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
-      // 将图像转换为字节数组
       final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      if (byteData == null) return {
-        'coverColor': null,
-        'secondaryColor': null,
-        'tertiaryColor': null,
-      };
+      if (byteData == null) return _emptyColors();
 
       final pixels = byteData.buffer.asUint8List();
       final width = image.width;
       final height = image.height;
 
-      // 采样图片多个区域的颜色
-      final colorCounts = <int, int>{};
-      
-      // 定义采样点：中心、四角、四边中点
-      final samplePoints = [
-        // 中心点 - 权重更高
-        (width ~/ 2, height ~/ 2),
-        // 四个角
-        (width ~/ 4, height ~/ 4),
-        (width * 3 ~/ 4, height ~/ 4),
-        (width ~/ 4, height * 3 ~/ 4),
-        (width * 3 ~/ 4, height * 3 ~/ 4),
-        // 四边中点
-        (width ~/ 2, height ~/ 4),
-        (width ~/ 2, height * 3 ~/ 4),
-        (width ~/ 4, height ~/ 2),
-        (width * 3 ~/ 4, height ~/ 2),
-        // 增加更多采样点以提高准确性
-        (width ~/ 3, height ~/ 3),
-        (width * 2 ~/ 3, height ~/ 3),
-        (width ~/ 3, height * 2 ~/ 3),
-        (width * 2 ~/ 3, height * 2 ~/ 3),
-      ];
-      
-      // 在每个采样点周围采样，中心区域采样更多
-      const sampleRadius = 8; // 减小采样半径，但增加采样点
-      for (final (centerX, centerY) in samplePoints) {
-        for (int y = centerY - sampleRadius; y <= centerY + sampleRadius; y++) {
-          for (int x = centerX - sampleRadius; x <= centerX + sampleRadius; x++) {
-            if (x >= 0 && x < width && y >= 0 && y < height) {
-              final index = (y * width + x) * 4;
-              final r = pixels[index];
-              final g = pixels[index + 1];
-              final b = pixels[index + 2];
-              final a = pixels[index + 3];
+      // ===== 第1步：全图采样 + 颜色量化 =====
+      const quantizeLevel = 8;
+      final colorBuckets = <int, _ColorBucket>{};
 
-              // 只采样不透明的像素
-              if (a > 128) {
-                // 将颜色转换为 ARGB 格式的整数
-                final argb = (a << 24) | (r << 16) | (g << 8) | b;
-                colorCounts[argb] = (colorCounts[argb] ?? 0) + 1;
-              }
-            }
-          }
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final index = (y * width + x) * 4;
+          final r = pixels[index];
+          final g = pixels[index + 1];
+          final b = pixels[index + 2];
+          final a = pixels[index + 3];
+
+          if (a < 128) continue;
+
+          final qr = (r ~/ quantizeLevel) * quantizeLevel;
+          final qg = (g ~/ quantizeLevel) * quantizeLevel;
+          final qb = (b ~/ quantizeLevel) * quantizeLevel;
+          final key = (qr << 16) | (qg << 8) | qb;
+
+          final cx = (x - width / 2).abs() / (width / 2);
+          final cy = (y - height / 2).abs() / (height / 2);
+          final weight = 1.0 + (1.0 - (cx + cy) / 2) * 0.5;
+
+          final bucket = colorBuckets.putIfAbsent(key, () => _ColorBucket(qr, qg, qb));
+          bucket.addPixel(r, g, b, weight);
         }
       }
 
-      // 找出出现次数最多的三个颜色
-      if (colorCounts.isNotEmpty) {
-        final sortedColors = colorCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
+      if (colorBuckets.isEmpty) return _emptyColors();
 
-        // 提取三个不同的颜色，确保颜色之间有足够的差异
-        final List<int> distinctColors = [];
-        final minColorDistance = 25; // 降低颜色差异阈值，提高颜色区分度
+      // ===== 第2步：HSL空间加权评分 =====
+      final scoredBuckets = <_ColorBucket, double>{};
+      for (final bucket in colorBuckets.values) {
+        final hsl = _rgbToHsl(bucket.avgR, bucket.avgG, bucket.avgB);
+        final saturation = hsl[1];
+        final lightness = hsl[2];
 
-        for (final entry in sortedColors) {
-          if (distinctColors.length >= 3) break;
+        final satWeight = 0.3 + saturation * 0.7;
 
-          final color = entry.key;
-          final r = (color >> 16) & 0xFF;
-          final g = (color >> 8) & 0xFF;
-          final b = color & 0xFF;
+        double lightWeight;
+        if (lightness < 0.1) {
+          lightWeight = 0.1;
+        } else if (lightness < 0.2) {
+          lightWeight = 0.3 + (lightness - 0.1) * 7;
+        } else if (lightness <= 0.7) {
+          lightWeight = 1.0;
+        } else if (lightness <= 0.85) {
+          lightWeight = 1.0 - (lightness - 0.7) * 4;
+        } else {
+          lightWeight = 0.1;
+        }
 
-          // 检查颜色是否与已有颜色有足够差异
-          bool isDistinct = true;
-          for (final existingColor in distinctColors) {
-            final er = (existingColor >> 16) & 0xFF;
-            final eg = (existingColor >> 8) & 0xFF;
-            final eb = existingColor & 0xFF;
+        scoredBuckets[bucket] = bucket.weightedCount * satWeight * lightWeight;
+      }
 
-            final distance = ((r - er).abs() + (g - eg).abs() + (b - eb).abs()) / 3;
-            if (distance < minColorDistance) {
-              isDistinct = false;
-              break;
-            }
-          }
+      final sortedBuckets = scoredBuckets.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
 
-          if (isDistinct) {
-            distinctColors.add(color);
+      // ===== 第3步：HSL空间去重选色 =====
+      final List<int> distinctColors = [];
+      const minColorDistance = 50.0;
+
+      for (final entry in sortedBuckets) {
+        if (distinctColors.length >= 3) break;
+
+        final bucket = entry.key;
+        final hsl = _rgbToHsl(bucket.avgR, bucket.avgG, bucket.avgB);
+
+        bool isDistinct = true;
+        for (final existingColor in distinctColors) {
+          final er = (existingColor >> 16) & 0xFF;
+          final eg = (existingColor >> 8) & 0xFF;
+          final eb = existingColor & 0xFF;
+          final existingHsl = _rgbToHsl(er, eg, eb);
+
+          if (_hslDistance(hsl, existingHsl) < minColorDistance) {
+            isDistinct = false;
+            break;
           }
         }
 
-        final coverColor = distinctColors.isNotEmpty ? distinctColors[0] : null;
-        final secondaryColor = distinctColors.length > 1 ? distinctColors[1] : null;
-        final tertiaryColor = distinctColors.length > 2 ? distinctColors[2] : null;
-
-        return {
-          'coverColor': coverColor,
-          'secondaryColor': secondaryColor,
-          'tertiaryColor': tertiaryColor,
-        };
+        if (isDistinct) {
+          final avgColor = (0xFF << 24) | (bucket.avgR << 16) | (bucket.avgG << 8) | bucket.avgB;
+          distinctColors.add(avgColor);
+        }
       }
 
       return {
-        'coverColor': null,
-        'secondaryColor': null,
-        'tertiaryColor': null,
+        'coverColor': distinctColors.isNotEmpty ? distinctColors[0] : null,
+        'secondaryColor': distinctColors.length > 1 ? distinctColors[1] : null,
+        'tertiaryColor': distinctColors.length > 2 ? distinctColors[2] : null,
       };
     } catch (e) {
       debugPrint('提取封面颜色失败: $e');
-      return {
-        'coverColor': null,
-        'secondaryColor': null,
-        'tertiaryColor': null,
-      };
+      return _emptyColors();
     }
   }
 
+  Map<String, int?> _emptyColors() => {
+    'coverColor': null,
+    'secondaryColor': null,
+    'tertiaryColor': null,
+  };
+
+  static List<double> _rgbToHsl(int r, int g, int b) {
+    final rn = r / 255.0;
+    final gn = g / 255.0;
+    final bn = b / 255.0;
+    final max = [rn, gn, bn].reduce((a, b) => a > b ? a : b);
+    final min = [rn, gn, bn].reduce((a, b) => a < b ? a : b);
+    final l = (max + min) / 2;
+    if (max == min) return [0.0, 0.0, l];
+    final d = max - min;
+    final s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    double h;
+    if (max == rn) {
+      h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+    } else if (max == gn) {
+      h = ((bn - rn) / d + 2) / 6;
+    } else {
+      h = ((rn - gn) / d + 4) / 6;
+    }
+    return [h, s, l];
+  }
+
+  static double _hslDistance(List<double> hsl1, List<double> hsl2) {
+    double hueDiff = (hsl1[0] - hsl2[0]).abs();
+    if (hueDiff > 0.5) hueDiff = 1.0 - hueDiff;
+    return hueDiff * 200 + (hsl1[1] - hsl2[1]).abs() * 100 + (hsl1[2] - hsl2[2]).abs() * 80;
+  }
 
 
 /// 判断音乐音质
@@ -581,6 +596,29 @@ Future<MusicInfo> _processMusicFileAsync(String filePath) async {
     } catch (e) {
       debugPrint('统计音乐文件失败: ${dir.path}, 错误: $e');
     }
+  }
+}
+
+/// 颜色桶，用于颜色量化时聚合相似颜色
+class _ColorBucket {
+  int avgR = 0;
+  int avgG = 0;
+  int avgB = 0;
+  double weightedCount = 0;
+  double _sumR = 0;
+  double _sumG = 0;
+  double _sumB = 0;
+
+  _ColorBucket(int qr, int qg, int qb);
+
+  void addPixel(int r, int g, int b, double weight) {
+    _sumR += r * weight;
+    _sumG += g * weight;
+    _sumB += b * weight;
+    weightedCount += weight;
+    avgR = (_sumR / weightedCount).round();
+    avgG = (_sumG / weightedCount).round();
+    avgB = (_sumB / weightedCount).round();
   }
 }
 

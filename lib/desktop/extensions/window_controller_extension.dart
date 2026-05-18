@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../common.dart';
 import '../../models/lyrics_model.dart';
 import '../../providers/player_provider.dart';
+import '../../providers/settings_provider.dart';
 
 // 桌面歌词窗口通信方法
 void sendDesktopLyricMessage(Duration position, LyricLine? lyricLine, bool isKaraoke) async {
@@ -73,13 +74,20 @@ extension WindowControllerExtension on WindowController {
             updateDesktopLyricsNotifier.value++;
           }
           break;
+        case 'update_font':
+          if (call.arguments is Map) {
+            desktopLyricsFontPath = call.arguments['font_path'] as String? ?? '';
+            desktopLyricsFontName = call.arguments['font_name'] as String? ?? '';
+            updateDesktopLyricsNotifier.value++;
+          }
+          break;
         default:
           throw MissingPluginException('Not implemented: ${call.method}');
       }
     });
   }
 
-  Future<void> mainCustomInitialize(PlayerProvider playerProvider) async {
+  Future<void> mainCustomInitialize(PlayerProvider playerProvider, {SettingsProvider? settingsProvider}) async {
     return await setWindowMethodHandler((call) async {
       switch (call.method) {
         case 'hide_desktop_lyrics':
@@ -90,6 +98,29 @@ extension WindowControllerExtension on WindowController {
               lyricsWindowVisible = false;
             } catch (e) {
               // 关闭桌面歌词窗口失败
+            }
+          }
+          break;
+        case 'close_desktop_lyrics':
+          // 桌面歌词窗口关闭时，更新主窗口的enableDesktopLyrics状态
+          if (settingsProvider != null) {
+            await settingsProvider.setEnableDesktopLyrics(false, skipWindowOperations: true);
+          }
+          // 隐藏桌面歌词窗口
+          if (lyricsWindowController != null) {
+            try {
+              await lyricsWindowController!.hide();
+              lyricsWindowVisible = false;
+            } catch (e) {
+              // 关闭桌面歌词窗口失败
+            }
+          }
+          if (lyricsWindowControllerFlutterLyric != null) {
+            try {
+              await lyricsWindowControllerFlutterLyric!.hide();
+              lyricsWindowFlutterLyricVisible = false;
+            } catch (e) {
+              // 关闭flutter_lyric桌面歌词窗口失败
             }
           }
           break;
@@ -161,6 +192,13 @@ extension WindowControllerExtension on WindowController {
 
   Future<void> updateDesktopLyricsFontSize(double fontSize) {
     return invokeMethod('update_desktop_lyrics_font_size', fontSize);
+  }
+
+  Future<void> updateFont(String fontPath, String fontName) {
+    return invokeMethod('update_font', {
+      'font_path': fontPath,
+      'font_name': fontName,
+    });
   }
 
   Future<void> unlock() {

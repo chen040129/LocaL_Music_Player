@@ -8,6 +8,7 @@ class KaraokeText extends StatefulWidget {
   final LyricLine line;
   final Duration position;
   final double fontSize;
+  final String? fontFamily;
   final bool expanded;
   final bool isDesktopLyrics;
 
@@ -16,6 +17,7 @@ class KaraokeText extends StatefulWidget {
     required this.line,
     required this.position,
     required this.fontSize,
+    this.fontFamily,
     required this.expanded,
     this.isDesktopLyrics = false,
   });
@@ -99,6 +101,7 @@ class KaraokeTextState extends State<KaraokeText>
     }
 
     final style = TextStyle(
+      fontFamily: widget.fontFamily,
       fontSize: widget.fontSize,
       fontWeight: isMobile ? FontWeight.bold : null,
       color: Colors.white,
@@ -112,6 +115,7 @@ class KaraokeTextState extends State<KaraokeText>
           Text(
             token.text,
             style: TextStyle(
+              fontFamily: widget.fontFamily,
               fontSize: widget.fontSize,
               color: Colors.transparent,
               shadows: widget.isDesktopLyrics

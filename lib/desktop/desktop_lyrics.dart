@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_music_player/common.dart';
 import 'package:flutter_music_player/common_widgets/desktop_lyrics_widget.dart';
@@ -39,19 +42,92 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   bool _isLocked = false;
   int _retryCount = 0;
   bool _isDisposed = false; // 添加标志来跟踪是否已销毁
+  String? _fontFamily;
+  String _fontPath = '';
+  String _fontName = '';
 
   @override
   void initState() {
     super.initState();
+    _loadCustomFont();
     // 请求主窗口同步播放状态
     _requestPlayingState();
+    // 监听字体变化
+    updateDesktopLyricsNotifier.addListener(_onFontChanged);
   }
 
   @override
   void dispose() {
     _isDisposed = true; // 设置标志，取消所有异步操作
     _isTransparentNotifier.dispose();
+    updateDesktopLyricsNotifier.removeListener(_onFontChanged);
     super.dispose();
+  }
+
+  void _onFontChanged() {
+    if (_isDisposed) return;
+    // 检测字体变化（通过全局变量，由update_font消息设置）
+    if (desktopLyricsFontPath.isNotEmpty && desktopLyricsFontName.isNotEmpty
+        && desktopLyricsFontPath != _fontPath) {
+      _fontPath = desktopLyricsFontPath;
+      _fontName = desktopLyricsFontName;
+      _reloadFont(desktopLyricsFontPath, desktopLyricsFontName);
+    } else if (desktopLyricsFontName.isEmpty && _fontFamily != null && _fontPath.isNotEmpty) {
+      // 字体被清除（收到空字体消息），恢复默认
+      _fontPath = '';
+      _fontName = '';
+      setState(() {
+        _fontFamily = null;
+      });
+    }
+  }
+
+  Future<void> _reloadFont(String fontPath, String fontName) async {
+    try {
+      final fontFile = File(fontPath);
+      if (await fontFile.exists()) {
+        final fontLoader = FontLoader(fontName);
+        final fontData = await fontFile.readAsBytes();
+        fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+        await fontLoader.load();
+        if (mounted) {
+          setState(() {
+            _fontFamily = fontName;
+          });
+        }
+      }
+    } catch (e) {
+      print('桌面歌词重新加载字体失败: $e');
+    }
+  }
+
+  Future<void> _loadCustomFont() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fontPath = prefs.getString('font_path') ?? '';
+      final fontName = prefs.getString('font_name') ?? '';
+      if (fontPath.isNotEmpty && fontName.isNotEmpty) {
+        _fontPath = fontPath;
+        _fontName = fontName;
+        // 同步设置全局变量，供DesktopLyricsWidget使用
+        desktopLyricsFontPath = fontPath;
+        desktopLyricsFontName = fontName;
+        final fontFile = File(fontPath);
+        if (await fontFile.exists()) {
+          final fontLoader = FontLoader(fontName);
+          final fontData = await fontFile.readAsBytes();
+          fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+          await fontLoader.load();
+          if (mounted) {
+            setState(() {
+              _fontFamily = fontName;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('桌面歌词加载自定义字体失败: $e');
+    }
   }
 
   Future<void> _requestPlayingState() async {
@@ -86,8 +162,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme:
-          Platform.isWindows ? ThemeData(fontFamily: 'Microsoft YaHei') : null,
+      theme: ThemeData(
+        fontFamily: _fontFamily ?? (Platform.isWindows ? 'Microsoft YaHei' : null),
+      ),
       home: ValueListenableBuilder(
         valueListenable: _isTransparentNotifier,
         builder: (context, isTransparent, child) {
@@ -409,11 +486,17 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
             borderRadius: BorderRadius.circular(5),
             child: InkWell(
               onTap: () async {
-                final controllers = await WindowController.getAll();
-                for (final controller in controllers) {
-                  if (controller.arguments.isEmpty) {
-                    controller.hideDesktopLyrics();
+                // 通知主窗口关闭桌面歌词并更新状态
+                try {
+                  final controllers = await WindowController.getAll();
+                  for (final controller in controllers) {
+                    if (controller.arguments.isEmpty) {
+                      await controller.invokeMethod('close_desktop_lyrics');
+                      break;
+                    }
                   }
+                } catch (e) {
+                  print('Failed to notify main window: $e');
                 }
                 windowManager.hide();
               },

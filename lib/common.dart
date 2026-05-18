@@ -87,6 +87,8 @@ LyricLine? desktopLyricLine;
 Duration desktopLyricsCurrentPosition = Duration.zero;
 bool desktopLyricsIsKaraoke = false;
 double desktopLyricsFontSize = 30.0;
+String desktopLyricsFontPath = '';
+String desktopLyricsFontName = '';
 
 // Flutter Lyric 桌面歌词相关
 String? desktopLyricsFullLrc; // 完整的 LRC 歌词字符串

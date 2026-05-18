@@ -222,6 +222,24 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                     settings.setUIBackgroundType(newSelection.first);
                   },
                 ),
+                // 通用设置：颜色平滑过渡
+                if (settings.uiBackgroundType != UIBackgroundType.customImage &&
+                    settings.uiBackgroundType != UIBackgroundType.normal)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
+                      ],
+                    ),
+                  ),
                 // 流体背景设置
                 if (settings.uiBackgroundType == UIBackgroundType.fluid)
                   Padding(
@@ -239,12 +257,52 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           onChanged: (value) => settings.setIsFluidDynamic(value),
                         ),
                         const Divider(height: 32),
-                        _buildSwitchTile(
-                          title: '颜色平滑过渡',
-                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                          icon: CupertinoIcons.paintbrush,
-                          value: settings.smoothColorTransition,
-                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        _buildSliderTile(
+                          title: '流体球大小',
+                          subtitle: '调整流体背景中球的大小',
+                          icon: CupertinoIcons.circle,
+                          value: settings.fluidBubblesSize,
+                          min: 100.0,
+                          max: 1000.0,
+                          divisions: 90,
+                          label: '${settings.fluidBubblesSize.toInt()}',
+                          onChanged: (value) => settings.setFluidBubblesSize(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体偏移量',
+                          subtitle: '调整流体效果的偏移程度',
+                          icon: CupertinoIcons.move,
+                          value: settings.fluidOffsetAmount,
+                          min: 0.0,
+                          max: 100.0,
+                          divisions: 100,
+                          label: '${settings.fluidOffsetAmount.toInt()}',
+                          onChanged: (value) => settings.setFluidOffsetAmount(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体层透明度',
+                          subtitle: '调整流体层的透明度',
+                          icon: CupertinoIcons.eye_slash,
+                          value: settings.fluidLayerOpacity,
+                          min: 0.1,
+                          max: 1.0,
+                          divisions: 90,
+                          label: '${(settings.fluidLayerOpacity * 100).toInt()}%',
+                          onChanged: (value) => settings.setFluidLayerOpacity(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体动画时长',
+                          subtitle: '调整流体动画的持续时间',
+                          icon: CupertinoIcons.time,
+                          value: settings.fluidAnimationDuration.toDouble(),
+                          min: 500,
+                          max: 10000,
+                          divisions: 95,
+                          label: '${settings.fluidAnimationDuration}ms',
+                          onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
                         ),
                       ],
                     ),
@@ -289,15 +347,6 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       children: [
                         _buildSectionSubHeader('渐变背景设置'),
                         const SizedBox(height: 8),
-                        // 颜色平滑过渡
-                        _buildSwitchTile(
-                          title: '颜色平滑过渡',
-                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                          icon: CupertinoIcons.paintbrush,
-                          value: settings.smoothColorTransition,
-                          onChanged: (value) => settings.setSmoothColorTransition(value),
-                        ),
-                        const Divider(height: 32),
                         // 同步渐变设置选项
                         SwitchListTile(
                           title: const Text('同步渐变设置'),
@@ -305,33 +354,9 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           value: settings.syncGradientSettings,
                           onChanged: (value) {
                             settings.setSyncGradientSettings(value);
-                            // 如果启用同步，立即同步当前设置
                             if (value) {
-                              settings.setUIGradientType(settings.uiGradientType);
                               settings.setUIGradientSongColorRatio(settings.uiGradientSongColorRatio);
                             }
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // 渐变类型选择
-                        const Text('渐变类型'),
-                        const SizedBox(height: 8),
-                        SegmentedButton<GradientType>(
-                          segments: const [
-                            ButtonSegment(
-                              value: GradientType.static,
-                              label: Text('静态'),
-                              icon: Icon(CupertinoIcons.pause),
-                            ),
-                            ButtonSegment(
-                              value: GradientType.dynamic,
-                              label: Text('动态'),
-                              icon: Icon(CupertinoIcons.play),
-                            ),
-                          ],
-                          selected: {settings.uiGradientType},
-                          onSelectionChanged: (Set<GradientType> newSelection) {
-                            settings.setUIGradientType(newSelection.first);
                           },
                         ),
                         const SizedBox(height: 16),
@@ -781,6 +806,24 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                     settings.setUIBackgroundType(newSelection.first);
                   },
                 ),
+                // 通用设置：颜色平滑过渡
+                if (settings.uiBackgroundType != UIBackgroundType.customImage &&
+                    settings.uiBackgroundType != UIBackgroundType.normal)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
+                      ],
+                    ),
+                  ),
                 // 流体背景设置
                 if (settings.uiBackgroundType == UIBackgroundType.fluid)
                   Padding(
@@ -796,12 +839,52 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           onChanged: (value) => settings.setIsFluidDynamic(value),
                         ),
                         const Divider(height: 32),
-                        _buildSwitchTile(
-                          title: '颜色平滑过渡',
-                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                          icon: CupertinoIcons.paintbrush,
-                          value: settings.smoothColorTransition,
-                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        _buildSliderTile(
+                          title: '流体球大小',
+                          subtitle: '调整流体背景中球的大小',
+                          icon: CupertinoIcons.circle,
+                          value: settings.fluidBubblesSize,
+                          min: 100.0,
+                          max: 1000.0,
+                          divisions: 90,
+                          label: '${settings.fluidBubblesSize.toInt()}',
+                          onChanged: (value) => settings.setFluidBubblesSize(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体偏移量',
+                          subtitle: '调整流体效果的偏移程度',
+                          icon: CupertinoIcons.move,
+                          value: settings.fluidOffsetAmount,
+                          min: 0.0,
+                          max: 100.0,
+                          divisions: 100,
+                          label: '${settings.fluidOffsetAmount.toInt()}',
+                          onChanged: (value) => settings.setFluidOffsetAmount(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体层透明度',
+                          subtitle: '调整流体层的透明度',
+                          icon: CupertinoIcons.eye_slash,
+                          value: settings.fluidLayerOpacity,
+                          min: 0.1,
+                          max: 1.0,
+                          divisions: 90,
+                          label: '${(settings.fluidLayerOpacity * 100).toInt()}%',
+                          onChanged: (value) => settings.setFluidLayerOpacity(value),
+                        ),
+                        const Divider(height: 32),
+                        _buildSliderTile(
+                          title: '流体动画时长',
+                          subtitle: '调整流体动画的持续时间',
+                          icon: CupertinoIcons.time,
+                          value: settings.fluidAnimationDuration.toDouble(),
+                          min: 500,
+                          max: 10000,
+                          divisions: 95,
+                          label: '${settings.fluidAnimationDuration}ms',
+                          onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
                         ),
                       ],
                     ),
@@ -842,15 +925,6 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 颜色平滑过渡
-                        _buildSwitchTile(
-                          title: '颜色平滑过渡',
-                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                          icon: CupertinoIcons.paintbrush,
-                          value: settings.smoothColorTransition,
-                          onChanged: (value) => settings.setSmoothColorTransition(value),
-                        ),
-                        const Divider(height: 32),
                         // 同步渐变设置选项
                         SwitchListTile(
                           title: const Text('同步渐变设置'),
@@ -858,33 +932,9 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           value: settings.syncGradientSettings,
                           onChanged: (value) {
                             settings.setSyncGradientSettings(value);
-                            // 如果启用同步，立即同步当前设置
                             if (value) {
-                              settings.setUIGradientType(settings.uiGradientType);
                               settings.setUIGradientSongColorRatio(settings.uiGradientSongColorRatio);
                             }
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // 渐变类型选择
-                        const Text('渐变类型'),
-                        const SizedBox(height: 8),
-                        SegmentedButton<GradientType>(
-                          segments: const [
-                            ButtonSegment(
-                              value: GradientType.static,
-                              label: Text('静态'),
-                              icon: Icon(CupertinoIcons.pause),
-                            ),
-                            ButtonSegment(
-                              value: GradientType.dynamic,
-                              label: Text('动态'),
-                              icon: Icon(CupertinoIcons.play),
-                            ),
-                          ],
-                          selected: {settings.uiGradientType},
-                          onSelectionChanged: (Set<GradientType> newSelection) {
-                            settings.setUIGradientType(newSelection.first);
                           },
                         ),
                         const SizedBox(height: 16),

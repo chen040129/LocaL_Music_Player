@@ -216,7 +216,7 @@ class _MyAppState extends State<MyApp>
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final windowController = await WindowController.fromCurrentEngine();
         if (globalPlayerProvider != null) {
-          await windowController.mainCustomInitialize(globalPlayerProvider!);
+          await windowController.mainCustomInitialize(globalPlayerProvider!, settingsProvider: globalSettingsProvider);
         }
       });
     }
@@ -308,26 +308,29 @@ class _MyAppState extends State<MyApp>
           },
         ),
       ],
-      child: Consumer2<ThemeProvider, PlayerProvider>(
-        builder: (context, themeProvider, playerProvider, child) {
+      child: Consumer3<ThemeProvider, PlayerProvider, SettingsProvider>(
+        builder: (context, themeProvider, playerProvider, settings, child) {
           // 初始化窗口方法处理器（只初始化一次）
           if (!_isWindowMethodsInitialized && !_isInitializing) {
             _isInitializing = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
               final windowController = await WindowController.fromCurrentEngine();
               if (playerProvider != null) {
-                await windowController.mainCustomInitialize(playerProvider);
+                await windowController.mainCustomInitialize(playerProvider, settingsProvider: settings);
                 _isWindowMethodsInitialized = true;
               }
               _isInitializing = false;
             });
           }
 
+          // 加载自定义字体
+          final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
+
           return MaterialApp(
             title: 'Music Player',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            theme: AppTheme.lightTheme(fontFamily: fontFamily),
+            darkTheme: AppTheme.darkTheme(fontFamily: fontFamily),
             themeMode: themeProvider.themeMode,
             home: ThemeTransition(
               themeMode: themeProvider.themeMode,

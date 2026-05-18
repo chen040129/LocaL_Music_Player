@@ -108,12 +108,13 @@ class _LyricsWindowAppState extends State<LyricsWindowApp> with WindowListener {
           },
         ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      child: Consumer2<ThemeProvider, SettingsProvider>(
+        builder: (context, themeProvider, settings, child) {
+          final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            theme: AppTheme.lightTheme(fontFamily: fontFamily),
+            darkTheme: AppTheme.darkTheme(fontFamily: fontFamily),
             themeMode: themeProvider.themeMode,
             home: const LyricsWindow(),
           );
@@ -197,10 +198,13 @@ class _LyricsWindowState extends State<LyricsWindow> {
     final parsedLyrics = player.parsedLyrics;
     final currentLyricIndex = player.currentLyricIndex;
 
+    final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
+
     if (parsedLyrics == null || parsedLyrics.lines.isEmpty) {
       return Text(
         '暂无歌词',
         style: TextStyle(
+          fontFamily: fontFamily,
           color: Colors.white.withOpacity(0.6),
           fontSize: settings.desktopLyricsFontSize,
         ),
@@ -215,6 +219,7 @@ class _LyricsWindowState extends State<LyricsWindow> {
           Text(
             parsedLyrics.lines[currentLyricIndex].text,
             style: TextStyle(
+              fontFamily: fontFamily,
               color: Colors.white,
               fontSize: settings.desktopLyricsFontSize,
               fontWeight: FontWeight.bold,
@@ -235,6 +240,7 @@ class _LyricsWindowState extends State<LyricsWindow> {
             child: Text(
               parsedLyrics.lines[currentLyricIndex + 1].text,
               style: TextStyle(
+                fontFamily: fontFamily,
                 color: Colors.white.withOpacity(0.4),
                 fontSize: settings.desktopLyricsFontSize - 4,
               ),

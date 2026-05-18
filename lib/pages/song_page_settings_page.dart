@@ -146,6 +146,18 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 _buildBackgroundTypeTile(context, settings),
                 const Divider(height: 32),
 
+                // 通用设置：颜色平滑过渡（适用于所有背景类型）
+                if (settings.songPageBackgroundType != SongPageBackgroundType.customImage) ...[
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+
                 // 根据背景类型显示不同的设置选项
                 if (settings.songPageBackgroundType == SongPageBackgroundType.fluid) ...[
                   _buildSectionSubHeader('流体效果'),
@@ -156,14 +168,6 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                     icon: CupertinoIcons.waveform_path,
                     value: settings.isFluidDynamic,
                     onChanged: (value) => settings.setIsFluidDynamic(value),
-                  ),
-                  const Divider(height: 32),
-                  _buildSwitchTile(
-                    title: '颜色平滑过渡',
-                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                    icon: CupertinoIcons.paintbrush,
-                    value: settings.smoothColorTransition,
-                    onChanged: (value) => settings.setSmoothColorTransition(value),
                   ),
                   const Divider(height: 32),
                   _buildSliderTile(
@@ -236,25 +240,13 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
                   _buildSectionSubHeader('渐变效果'),
                   const SizedBox(height: 8),
-                  _buildSwitchTile(
-                    title: '颜色平滑过渡',
-                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                    icon: CupertinoIcons.paintbrush,
-                    value: settings.smoothColorTransition,
-                    onChanged: (value) => settings.setSmoothColorTransition(value),
-                  ),
-                  const Divider(height: 32),
-                  _buildGradientTypeTile(context, settings),
-                  const Divider(height: 32),
                   SwitchListTile(
                     title: const Text('同步渐变设置'),
                     subtitle: const Text('与用户界面的渐变设置保持一致'),
                     value: settings.syncGradientSettings,
                     onChanged: (value) {
                       settings.setSyncGradientSettings(value);
-                      // 如果启用同步，立即同步当前设置
                       if (value) {
-                        settings.setGradientType(settings.gradientType);
                         settings.setGradientSongColorRatio(settings.gradientSongColorRatio);
                       }
                     },
@@ -328,6 +320,18 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 _buildBackgroundTypeTile(context, settings),
                 const Divider(height: 32),
 
+                // 通用设置：颜色平滑过渡（适用于所有背景类型）
+                if (settings.songPageBackgroundType != SongPageBackgroundType.customImage) ...[
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
+                ],
+
                 // 根据背景类型显示不同的设置选项
                 if (settings.songPageBackgroundType == SongPageBackgroundType.fluid) ...[
                   _buildSwitchTile(
@@ -336,14 +340,6 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                     icon: CupertinoIcons.waveform_path,
                     value: settings.isFluidDynamic,
                     onChanged: (value) => settings.setIsFluidDynamic(value),
-                  ),
-                  const Divider(height: 32),
-                  _buildSwitchTile(
-                    title: '颜色平滑过渡',
-                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                    icon: CupertinoIcons.paintbrush,
-                    value: settings.smoothColorTransition,
-                    onChanged: (value) => settings.setSmoothColorTransition(value),
                   ),
                   const Divider(height: 32),
                   _buildSliderTile(
@@ -412,25 +408,13 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 ],
 
                 if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
-                  _buildSwitchTile(
-                    title: '颜色平滑过渡',
-                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
-                    icon: CupertinoIcons.paintbrush,
-                    value: settings.smoothColorTransition,
-                    onChanged: (value) => settings.setSmoothColorTransition(value),
-                  ),
-                  const Divider(height: 32),
-                  _buildGradientTypeTile(context, settings),
-                  const Divider(height: 32),
                   SwitchListTile(
                     title: const Text('同步渐变设置'),
                     subtitle: const Text('与用户界面的渐变设置保持一致'),
                     value: settings.syncGradientSettings,
                     onChanged: (value) {
                       settings.setSyncGradientSettings(value);
-                      // 如果启用同步，立即同步当前设置
                       if (value) {
-                        settings.setGradientType(settings.gradientType);
                         settings.setGradientSongColorRatio(settings.gradientSongColorRatio);
                       }
                     },

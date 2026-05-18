@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_music_player/common.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -40,6 +43,9 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
   bool _isDisposed = false;
   bool _isDragging = false;
   bool _lyricsLoaded = false;
+  String? _fontFamily;
+  String _fontPath = '';
+  String _fontName = '';
 
   late LyricController _lyricController;
 
@@ -47,6 +53,7 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
   void initState() {
     super.initState();
     _lyricController = LyricController();
+    _loadCustomFont();
     // 初始化窗口管理器
     _initWindowManager();
     // 请求主窗口同步播放状态
@@ -67,8 +74,60 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
     super.dispose();
   }
 
+  Future<void> _loadCustomFont() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fontPath = prefs.getString('font_path') ?? '';
+      final fontName = prefs.getString('font_name') ?? '';
+      if (fontPath.isNotEmpty && fontName.isNotEmpty) {
+        _fontPath = fontPath;
+        _fontName = fontName;
+        // 同步设置全局变量
+        desktopLyricsFontPath = fontPath;
+        desktopLyricsFontName = fontName;
+        await _reloadFont(fontPath, fontName);
+      }
+    } catch (e) {
+      print('桌面歌词加载自定义字体失败: $e');
+    }
+  }
+
+  Future<void> _reloadFont(String fontPath, String fontName) async {
+    try {
+      final fontFile = File(fontPath);
+      if (await fontFile.exists()) {
+        final fontLoader = FontLoader(fontName);
+        final fontData = await fontFile.readAsBytes();
+        fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+        await fontLoader.load();
+        if (mounted) {
+          setState(() {
+            _fontFamily = fontName;
+          });
+        }
+      }
+    } catch (e) {
+      print('桌面歌词重新加载字体失败: $e');
+    }
+  }
+
   void _onLyricsUpdate() {
     if (_isDisposed) return;
+
+    // 检测字体变化（通过全局变量，由update_font消息设置）
+    if (desktopLyricsFontPath.isNotEmpty && desktopLyricsFontName.isNotEmpty
+        && desktopLyricsFontPath != _fontPath) {
+      _fontPath = desktopLyricsFontPath;
+      _fontName = desktopLyricsFontName;
+      _reloadFont(desktopLyricsFontPath, desktopLyricsFontName);
+    } else if (desktopLyricsFontName.isEmpty && _fontFamily != null && _fontPath.isNotEmpty) {
+      // 字体被清除（收到空字体消息），恢复默认
+      _fontPath = '';
+      _fontName = '';
+      setState(() {
+        _fontFamily = null;
+      });
+    }
 
     print('[Flutter Lyric] _onLyricsUpdate called');
     print('[Flutter Lyric] desktopLyricsFullLrc: ${desktopLyricsFullLrc != null ? "present (${desktopLyricsFullLrc!.length} chars)" : "null"}');
@@ -248,21 +307,24 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
                                       width: double.infinity,
                                       height: double.infinity,
                                       style: LyricStyles.default1.copyWith(
-                                        textStyle: const TextStyle(
+                                        textStyle: TextStyle(
+                                          fontFamily: _fontFamily,
                                           color: Colors.white,
                                           fontSize: 30,
                                           fontWeight: FontWeight.bold,
                                         ),
-                                        activeStyle: const TextStyle(
+                                        activeStyle: TextStyle(
+                                          fontFamily: _fontFamily,
                                           color: Colors.blue,
                                           fontSize: 35,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     )
-                                  : const Text(
+                                  : Text(
                                       '暂无歌词',
                                       style: TextStyle(
+                                        fontFamily: _fontFamily,
                                         color: Colors.white54,
                                         fontSize: 20,
                                       ),
@@ -526,6 +588,18 @@ class _DesktopLyricsFlutterLyricState extends State<DesktopLyricsFlutterLyric> {
               borderRadius: BorderRadius.circular(5),
               child: InkWell(
                 onTap: () async {
+                  // 通知主窗口关闭桌面歌词并更新状态
+                  try {
+                    final controllers = await WindowController.getAll();
+                    for (final controller in controllers) {
+                      if (controller.arguments.isEmpty) {
+                        await controller.invokeMethod('close_desktop_lyrics');
+                        break;
+                      }
+                    }
+                  } catch (e) {
+                    print('[Flutter Lyric] Failed to notify main window: $e');
+                  }
                   await windowManager.close();
                 },
                 borderRadius: BorderRadius.circular(5),

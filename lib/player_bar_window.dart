@@ -116,13 +116,14 @@ class _PlayerBarAppState extends State<PlayerBarApp> with WindowListener {
           },
         ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      child: Consumer2<ThemeProvider, SettingsProvider>(
+        builder: (context, themeProvider, settings, child) {
+          final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
           return MaterialApp(
             title: 'Music Player Bar',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            theme: AppTheme.lightTheme(fontFamily: fontFamily),
+            darkTheme: AppTheme.darkTheme(fontFamily: fontFamily),
             themeMode: themeProvider.themeMode,
             home: Material(
               color: Colors.transparent,

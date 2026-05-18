@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // 明亮主题
-  static ThemeData get lightTheme {
+  static ThemeData lightTheme({String? fontFamily}) {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily?.isNotEmpty == true ? fontFamily : null,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
         seedColor: Colors.blue,
@@ -40,9 +41,10 @@ class AppTheme {
   }
 
   // 暗黑主题
-  static ThemeData get darkTheme {
+  static ThemeData darkTheme({String? fontFamily}) {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily?.isNotEmpty == true ? fontFamily : null,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
         seedColor: Colors.blue,
