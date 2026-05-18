@@ -1,4 +1,4 @@
-import 'dart:io' show Platform, exit;
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,9 +28,7 @@ import 'widgets/animated_theme.dart';
 
 // ==================== 全局变量 ====================
 
-// Provider 全局引用
-MusicProvider? globalMusicProvider;
-PlayerProvider? globalPlayerProvider;
+// Provider 全局引用（globalMusicProvider 和 globalPlayerProvider 已在 common.dart 中定义）
 SettingsProvider? globalSettingsProvider;
 
 // 服务全局实例
@@ -237,35 +235,16 @@ class _MyAppState extends State<MyApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      // 应用退出时保存数据
+      // 应用退出时保存数据（fire-and-forget，不阻塞）
       final musicProvider = Provider.of<MusicProvider>(context, listen: false);
-      musicProvider.saveData();
+      musicProvider.saveData(); // 不 await
     }
   }
 
   @override
-  void onWindowClose() async {
-    print('[${DateTime.now().toIso8601String()}] onWindowClose started');
-    // 立即隐藏桌面歌词窗口
-    if (lyricsWindowController != null) {
-      try {
-        lyricsWindowController!.hide();
-        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window hidden');
-      } catch (e) {
-        print('[${DateTime.now().toIso8601String()}] Hide desktop lyrics error: $e');
-      }
-    }
-    // 隐藏flutter_lyric桌面歌词窗口
-    if (lyricsWindowControllerFlutterLyric != null) {
-      try {
-        lyricsWindowControllerFlutterLyric!.hide();
-        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
-      } catch (e) {
-        print('[${DateTime.now().toIso8601String()}] Hide Flutter Lyric desktop lyrics error: $e');
-      }
-    }
-    print('[${DateTime.now().toIso8601String()}] Exiting application immediately');
-    exit(0);
+  void onWindowClose() {
+    // 使用统一的退出流程：先关闭歌词窗口，再关闭主窗口
+    exitApp();
   }
 
   @override

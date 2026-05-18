@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'dart:io' show Platform, exit;
+import 'dart:io' show Platform;
+import '../common.dart';
 import '../constants/app_icons.dart';
 import '../providers/settings_provider.dart';
-import '../providers/player_provider.dart';
 import 'package:provider/provider.dart';
 
 class CustomTitleBar extends StatefulWidget {
@@ -258,19 +258,9 @@ class _CustomTitleBarState extends State<CustomTitleBar> {
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(settings.borderRadius),
             child: InkWell(
-              onTap: () async {
-                print('[${DateTime.now().toIso8601String()}] Close button tapped, closing window');
-                // 保存播放进度
-                final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-                await playerProvider.savePlayProgress();
-
-                // 参考 ParticleMusic 的实现方式
-                if (Platform.isWindows) {
-                  await windowManager.setPreventClose(false);
-                  windowManager.close();
-                } else {
-                  exit(0);
-                }
+              onTap: () {
+                // 使用统一的退出流程：先关闭歌词窗口，再关闭主窗口
+                exitApp();
               },
               borderRadius: BorderRadius.circular(settings.borderRadius),
               splashColor: Colors.transparent,

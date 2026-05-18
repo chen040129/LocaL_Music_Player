@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+import 'package:flutter_music_player/common.dart';
 import 'package:flutter_music_player/widgets/sidebar.dart';
 import 'package:flutter_music_player/widgets/playlist_area.dart';
 import 'package:flutter_music_player/widgets/player_control_bar.dart';
@@ -192,9 +193,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _closeWindow() {
-    print('_closeWindow called');
-    // 直接退出，不等待任何异步操作
-    exit(0);
+    // 使用统一的退出流程：先关闭歌词窗口，再关闭主窗口
+    exitApp();
   }
 
   void _toggleAlwaysOnTop() async {

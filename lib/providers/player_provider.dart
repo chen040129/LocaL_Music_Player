@@ -377,11 +377,12 @@ class PlayerProvider with ChangeNotifier {
     }
   }
 
-  /// 退出时保存播放进度
-  Future<void> _savePlayProgressOnExit() async {
+  /// 退出时保存播放进度（同步方式，不阻塞退出流程）
+  void _savePlayProgressOnExit() {
     // 保存播放进度
     if (_settingsProvider?.savePlayProgress ?? true && _currentMusic != null) {
-      await _storageService.savePlayProgress(
+      // 不 await，让保存操作在后台执行
+      _storageService.savePlayProgress(
         musicId: _currentMusic!.id,
         position: _position,
         filePath: _currentMusic!.filePath,
