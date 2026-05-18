@@ -366,7 +366,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return FluidBackground(
-      key: ValueKey('fluid_${music?.id ?? 0}'),
+      key: settings.smoothColorTransition
+          ? null
+          : ValueKey('fluid_${music?.id ?? 0}'),
       initialPositions: InitialOffsets.custom([
         const Offset(0.3, 0.5),
         const Offset(0.7, 0.3),
@@ -417,50 +419,33 @@ class _HomeScreenState extends State<HomeScreen> {
     final bottomRightColor =
         colorScheme.brightness == Brightness.dark ? Colors.black : Colors.white;
 
-    // 使用用户界面独立的渐变类型和歌曲主题色占比
-    if (settings.uiGradientType == GradientType.dynamic) {
-      // 动态渐变
-      return Opacity(
-        opacity: settings.windowOpacity,
-        child: AnimatedContainer(
-          duration: const Duration(seconds: 3),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                topLeftColor,
-                Color.lerp(topLeftColor, bottomRightColor,
-                    1 - settings.uiGradientSongColorRatio)!,
-                bottomRightColor,
-              ],
-              stops: const [0.0, 0.5, 1.0],
+    // 根据颜色过渡设置决定使用 AnimatedContainer 还是 Container
+    final gradientDecoration = BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          topLeftColor,
+          Color.lerp(topLeftColor, bottomRightColor,
+              1 - settings.uiGradientSongColorRatio)!,
+          bottomRightColor,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ),
+    );
+
+    return Opacity(
+      opacity: settings.windowOpacity,
+      child: settings.smoothColorTransition
+          ? AnimatedContainer(
+              duration: const Duration(seconds: 3),
+              curve: Curves.easeInOut,
+              decoration: gradientDecoration,
+            )
+          : Container(
+              decoration: gradientDecoration,
             ),
-          ),
-        ),
-      );
-    } else {
-      // 静态渐变
-      return Opacity(
-        opacity: settings.windowOpacity,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                topLeftColor,
-                Color.lerp(topLeftColor, bottomRightColor,
-                    1 - settings.uiGradientSongColorRatio)!,
-                bottomRightColor,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
-        ),
-      );
-    }
+    );
   }
 
   /// 根据当前页面返回不同的页面组件
@@ -633,17 +618,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: Row(
                               children: [
-                                // 左侧导航栏 - 只在展开时显示
-                                if (_isSidebarExpanded)
-                                  Sidebar(
-                                    isExpanded: _isSidebarExpanded,
-                                    onToggle: _toggleSidebar,
-                                    onMusicScanned: _onMusicScanned,
-                                    currentPage:
-                                        Provider.of<NavigationProvider>(context)
-                                            .currentPage,
-                                    onPageChanged: _changePage,
-                                  ),
+                                // 左侧导航栏 - 始终渲染，通过内部宽度动画实现展开/收起过渡
+                                Sidebar(
+                                  isExpanded: _isSidebarExpanded,
+                                  onToggle: _toggleSidebar,
+                                  onMusicScanned: _onMusicScanned,
+                                  currentPage:
+                                      Provider.of<NavigationProvider>(context)
+                                          .currentPage,
+                                  onPageChanged: _changePage,
+                                ),
                                 // 右侧内容区域
                                 Expanded(
                                   key: _contentKey,

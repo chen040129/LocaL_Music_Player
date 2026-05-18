@@ -158,6 +158,14 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                     onChanged: (value) => settings.setIsFluidDynamic(value),
                   ),
                   const Divider(height: 32),
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
                   _buildSliderTile(
                     title: '流体球大小',
                     subtitle: '调整流体背景中球的大小',
@@ -228,6 +236,14 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
                   _buildSectionSubHeader('渐变效果'),
                   const SizedBox(height: 8),
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
                   _buildGradientTypeTile(context, settings),
                   const Divider(height: 32),
                   SwitchListTile(
@@ -322,6 +338,14 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                     onChanged: (value) => settings.setIsFluidDynamic(value),
                   ),
                   const Divider(height: 32),
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
                   _buildSliderTile(
                     title: '流体球大小',
                     subtitle: '调整流体背景中球的大小',
@@ -388,6 +412,14 @@ class _SongPageSettingsPageState extends State<SongPageSettingsPage> {
                 ],
 
                 if (settings.songPageBackgroundType == SongPageBackgroundType.gradient) ...[
+                  _buildSwitchTile(
+                    title: '颜色平滑过渡',
+                    subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                    icon: CupertinoIcons.paintbrush,
+                    value: settings.smoothColorTransition,
+                    onChanged: (value) => settings.setSmoothColorTransition(value),
+                  ),
+                  const Divider(height: 32),
                   _buildGradientTypeTile(context, settings),
                   const Divider(height: 32),
                   SwitchListTile(

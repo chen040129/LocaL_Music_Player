@@ -1212,12 +1212,56 @@ class _CurvePreviewPainter extends CustomPainter {
 
     final curvePath = Path();
     final curveWidth = size.width - 30;
-    final curveHeight = size.height - 30;
+
+    // 为弹性曲线预留 y 轴正半轴和负半轴的超出空间
+    // y=0 基准线从底部上移，给负值留出显示空间
+    // y=1 基准线从顶部下移，给正值超出留出显示空间
+    final totalHeight = size.height - 30;
+    final negativeSpace = totalHeight * 0.2; // y轴负半轴预留空间
+    final positiveSpace = totalHeight * 0.2; // y轴正半轴超出预留空间
+    final curveHeight = totalHeight - negativeSpace - positiveSpace; // 曲线 0~1 区域高度
+    final yZeroY = size.height - 15 - negativeSpace; // y=0 基准线的 y 坐标
+    final yOneY = yZeroY - curveHeight; // y=1 基准线的 y 坐标
+
+    // 绘制参考线（虚线）
+    final refPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.3)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+    // y=0 参考线
+    for (double x = 15; x < size.width - 15; x += 8) {
+      canvas.drawLine(Offset(x, yZeroY), Offset(x + 4, yZeroY), refPaint);
+    }
+    // y=1 参考线
+    for (double x = 15; x < size.width - 15; x += 8) {
+      canvas.drawLine(Offset(x, yOneY), Offset(x + 4, yOneY), refPaint);
+    }
+
+    // 绘制 y=0 和 y=1 标签
+    final labelPainter = TextPainter(
+      text: TextSpan(
+        text: '0',
+        style: TextStyle(color: Colors.grey[600], fontSize: 10),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    labelPainter.layout();
+    labelPainter.paint(canvas, Offset(2, yZeroY - labelPainter.height / 2));
+
+    final labelPainter1 = TextPainter(
+      text: TextSpan(
+        text: '1',
+        style: TextStyle(color: Colors.grey[600], fontSize: 10),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    labelPainter1.layout();
+    labelPainter1.paint(canvas, Offset(2, yOneY - labelPainter1.height / 2));
 
     // 绘制曲线
     for (double t = 0; t <= 1.0; t += 0.01) {
       final x = 15 + t * curveWidth;
-      final y = size.height - 15 - curve.transform(t) * curveHeight;
+      final y = yZeroY - curve.transform(t) * curveHeight;
 
       if (t == 0) {
         curvePath.moveTo(x, y);
@@ -1234,11 +1278,11 @@ class _CurvePreviewPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // 确保动画点不会超出边界
-    final adjustedProgress = progress.clamp(0.0, 0.99);  // 使用0.99而不是1.0，防止超出边界
+    final adjustedProgress = progress.clamp(0.0, 0.99);
 
-    // 计算动画点位置，确保从左下角开始
-    final startX = 15.0;  // X轴起点
-    final startY = size.height - 15.0;  // Y轴起点
+    // 计算动画点位置
+    final startX = 15.0;
+    final startY = yZeroY; // 从 y=0 基准线开始
 
     // 计算当前点位置
     final pointX = startX + adjustedProgress * curveWidth;

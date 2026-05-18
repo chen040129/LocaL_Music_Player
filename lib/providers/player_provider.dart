@@ -731,8 +731,9 @@ class PlayerProvider with ChangeNotifier {
   Future<void> _onPlayerComplete() async {
     if (_playMode == PlayMode.loop) {
       // 单曲循环，重新播放当前歌曲
-      await _audioPlayer.seek(Duration.zero);
-      await _audioPlayer.resume();
+      // 注意：不能使用 seek+resume，因为 audioplayers 在 completed 状态下
+      // resume() 不起作用（只能从 paused 状态恢复），必须用 play 重新播放
+      await playAtIndex(_currentIndex, autoPlay: true);
     } else {
       // 检查是否启用自动播放下一首
       if (_settingsProvider?.autoPlayNext ?? true) {

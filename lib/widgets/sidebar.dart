@@ -128,6 +128,19 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(Sidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当 isExpanded 状态变化时，触发宽度动画
+    if (oldWidget.isExpanded != widget.isExpanded) {
+      if (widget.isExpanded) {
+        _widthController.reverse(); // 展开：从0回到220
+      } else {
+        _widthController.forward(); // 收起：从220到0
+      }
+    }
+  }
+
   /// 导航栏动画
   void _animateSidebar() {
     // 空实现，移除缩放动画
@@ -135,11 +148,6 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
 
   /// 切换导航栏展开/收起
   void _toggleSidebar() {
-    if (widget.isExpanded) {
-      _widthController.forward();
-    } else {
-      _widthController.reverse();
-    }
     widget.onToggle();
   }
 
@@ -148,13 +156,23 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _widthAnimation,
       builder: (context, child) {
+        final currentWidth = _widthAnimation.value;
+        // 计算透明度：宽度从220到60时，透明度从1.0到0.0
+        final opacity = ((currentWidth - 60) / (220 - 60)).clamp(0.0, 1.0);
         return Container(
-          width: _widthAnimation.value,
+          width: currentWidth,
           decoration: BoxDecoration(
             color: Colors.transparent,
           ),
-          child: Column(
-            children: [
+          child: ClipRect(
+            child: Opacity(
+              opacity: opacity,
+              child: OverflowBox(
+                maxWidth: 220,
+                minWidth: 220,
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  children: [
               // 顶部工具栏
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -475,8 +493,11 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-            ],
-          ),
+                ],
+                ),  // Column 闭合
+              ),  // OverflowBox 闭合
+            ),  // Opacity 闭合
+          ),  // ClipRect 闭合
         );
       },
     );

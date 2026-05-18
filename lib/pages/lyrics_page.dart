@@ -219,6 +219,9 @@ class _LyricsPageState extends State<LyricsPage> {
                       });
                     },
                     isAlwaysOnTop: _isAlwaysOnTop,
+                    onMinimizeToTray: () async {
+                      await windowManager.hide();
+                    },
                   ),
                 ),
               ),

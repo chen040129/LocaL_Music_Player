@@ -170,43 +170,29 @@ class _LyricsPageWithCoverState extends State<LyricsPageWithCover>
     final bottomRightColor =
         colorScheme.brightness == Brightness.dark ? Colors.black : Colors.white;
 
-    if (settings.gradientType == GradientType.dynamic) {
-      // 动态渐变
-      return AnimatedContainer(
-        duration: const Duration(seconds: 3),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              topLeftColor,
-              Color.lerp(topLeftColor, bottomRightColor,
-                  1 - settings.gradientSongColorRatio)!,
-              bottomRightColor,
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-      );
-    } else {
-      // 静态渐变
-      return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              topLeftColor,
-              Color.lerp(topLeftColor, bottomRightColor,
-                  1 - settings.gradientSongColorRatio)!,
-              bottomRightColor,
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-      );
-    }
+    final gradientDecoration = BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          topLeftColor,
+          Color.lerp(topLeftColor, bottomRightColor,
+              1 - settings.gradientSongColorRatio)!,
+          bottomRightColor,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ),
+    );
+
+    return settings.smoothColorTransition
+        ? AnimatedContainer(
+            duration: const Duration(seconds: 3),
+            curve: Curves.easeInOut,
+            decoration: gradientDecoration,
+          )
+        : Container(
+            decoration: gradientDecoration,
+          );
   }
 
   /// 构建纯色背景
@@ -279,7 +265,9 @@ class _LyricsPageWithCoverState extends State<LyricsPageWithCover>
     ];
 
     return FluidBackground(
-      key: ValueKey('fluid_${music?.id ?? 0}'),
+      key: settings.smoothColorTransition
+          ? null
+          : ValueKey('fluid_${music?.id ?? 0}'),
       initialPositions: InitialOffsets.custom([
         const Offset(0.3, 0.5),
         const Offset(0.7, 0.3),

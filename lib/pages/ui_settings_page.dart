@@ -238,6 +238,14 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           value: settings.isFluidDynamic,
                           onChanged: (value) => settings.setIsFluidDynamic(value),
                         ),
+                        const Divider(height: 32),
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
                       ],
                     ),
                   ),
@@ -281,6 +289,15 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       children: [
                         _buildSectionSubHeader('渐变背景设置'),
                         const SizedBox(height: 8),
+                        // 颜色平滑过渡
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
+                        const Divider(height: 32),
                         // 同步渐变设置选项
                         SwitchListTile(
                           title: const Text('同步渐变设置'),
@@ -778,6 +795,14 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           value: settings.isFluidDynamic,
                           onChanged: (value) => settings.setIsFluidDynamic(value),
                         ),
+                        const Divider(height: 32),
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
                       ],
                     ),
                   ),
@@ -817,6 +842,15 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 颜色平滑过渡
+                        _buildSwitchTile(
+                          title: '颜色平滑过渡',
+                          subtitle: '切换歌曲时背景颜色平滑渐变而非突变',
+                          icon: CupertinoIcons.paintbrush,
+                          value: settings.smoothColorTransition,
+                          onChanged: (value) => settings.setSmoothColorTransition(value),
+                        ),
+                        const Divider(height: 32),
                         // 同步渐变设置选项
                         SwitchListTile(
                           title: const Text('同步渐变设置'),

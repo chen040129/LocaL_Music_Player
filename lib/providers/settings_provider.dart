@@ -106,6 +106,7 @@ class SettingsProvider with ChangeNotifier {
   bool _syncGradientSettings = false;  // 是否同步用户界面和歌曲界面的渐变设置
   GradientType _uiGradientType = GradientType.static;  // 用户界面渐变类型
   double _uiGradientSongColorRatio = 0.7;  // 用户界面渐变中歌曲主题色占比（0.0-1.0）
+  bool _smoothColorTransition = true;  // 切换歌曲时背景颜色是否平滑过渡
 
   // 歌词设置
   LyricsAlignment _lyricsAlignment = LyricsAlignment.center;  // 歌词对齐方式
@@ -220,6 +221,7 @@ class SettingsProvider with ChangeNotifier {
   bool get syncGradientSettings => _syncGradientSettings;
   GradientType get uiGradientType => _uiGradientType;
   double get uiGradientSongColorRatio => _uiGradientSongColorRatio;
+  bool get smoothColorTransition => _smoothColorTransition;
 
   // 歌词设置 getters
   LyricsAlignment get lyricsAlignment => _lyricsAlignment;
@@ -369,6 +371,7 @@ class SettingsProvider with ChangeNotifier {
     final uiGradientTypeIndex = prefs.getInt('ui_gradient_type') ?? 0;
     _uiGradientType = GradientType.values[uiGradientTypeIndex];
     _uiGradientSongColorRatio = (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
+    _smoothColorTransition = prefs.getBool('smooth_color_transition') ?? true;
 
     // 加载歌词设置
     final alignmentIndex = prefs.getInt('lyrics_alignment') ?? 1;
@@ -625,6 +628,12 @@ class SettingsProvider with ChangeNotifier {
       _gradientSongColorRatio = value;
       await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
     }
+    notifyListeners();
+  }
+
+  Future<void> setSmoothColorTransition(bool value) async {
+    _smoothColorTransition = value;
+    await _saveSetting('smooth_color_transition', value);
     notifyListeners();
   }
 

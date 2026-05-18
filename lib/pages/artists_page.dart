@@ -1233,8 +1233,10 @@ class _ArtistsPageState extends State<ArtistsPage> {
                                                         identifier: artist,
                                                         startIndex: index,
                                                       );
+                                                      // setPlaylist 会根据播放模式重排列表，
+                                                      // 选中歌曲被移到索引0，所以用0播放
                                                       playerProvider
-                                                          .playAtIndex(index);
+                                                          .playAtIndex(0);
                                                     }
                                                   },
                                                   trailing: Row(
