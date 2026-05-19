@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
+import '../services/music_scanner_service.dart';
 import '../models/playlist_model.dart';
 import '../constants/app_icons.dart';
 

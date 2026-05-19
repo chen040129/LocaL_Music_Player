@@ -442,7 +442,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                       title: const Text('下一首播放'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+                        final playerProvider =
+                            Provider.of<PlayerProvider>(context, listen: false);
                         playerProvider.playNextAsNext(music);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -492,7 +493,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                 allInfo += '音质: ${music.quality!}\n';
               }
               if (music.fileModifiedTime != null)
-                allInfo += '修改时间: ${_formatDateTime(music.fileModifiedTime!)}\n';
+                allInfo +=
+                    '修改时间: ${_formatDateTime(music.fileModifiedTime!)}\n';
               allInfo += '文件路径: ${music.filePath}';
 
               Clipboard.setData(ClipboardData(text: allInfo));
@@ -517,7 +519,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                 if (music.quality != null)
                   _buildCopyableInfoRow('音质', music.quality!),
                 if (music.fileModifiedTime != null)
-                  _buildCopyableInfoRow('修改时间', _formatDateTime(music.fileModifiedTime!)),
+                  _buildCopyableInfoRow(
+                      '修改时间', _formatDateTime(music.fileModifiedTime!)),
                 _buildCopyableInfoRow('文件路径', music.filePath),
               ],
             ),
@@ -1057,7 +1060,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             ? albumMusics.first.coverArt
                             : null;
 
-                        // 使用缓存的图片数据
+                        // 使用缓存的图片数据并延迟呈现
                         Widget buildCoverImage() {
                           if (coverArt == null) {
                             return const Icon(
@@ -1066,6 +1069,22 @@ class _AlbumsPageState extends State<AlbumsPage> {
                             );
                           }
 
+                          final cacheKey = 'album_${album}_cover';
+                          if (_imageCache.containsKey(cacheKey)) {
+                            return RepaintBoundary(
+                              child: Image.memory(
+                                _imageCache[cacheKey]!,
+                                width: 56,
+                                height: 56,
+                                fit: BoxFit.cover,
+                                gaplessPlayback: true,
+                                filterQuality: FilterQuality.low,
+                              ),
+                            );
+                          }
+
+                          // 如果未缓存，使用 frameBuilder 进行渐显，同时异步缓存字节
+                          // 使用 RepaintBoundary 降低重绘范围
                           return RepaintBoundary(
                             child: Image.memory(
                               coverArt,
@@ -1074,6 +1093,15 @@ class _AlbumsPageState extends State<AlbumsPage> {
                               fit: BoxFit.cover,
                               gaplessPlayback: true,
                               filterQuality: FilterQuality.low,
+                              frameBuilder: (context, child, frame,
+                                  wasSynchronouslyLoaded) {
+                                if (wasSynchronouslyLoaded) return child;
+                                return AnimatedOpacity(
+                                  opacity: frame == null ? 0 : 1,
+                                  duration: const Duration(milliseconds: 250),
+                                  child: child,
+                                );
+                              },
                               errorBuilder: (context, error, stackTrace) {
                                 return const Icon(
                                   CupertinoIcons.music_albums,
@@ -1151,6 +1179,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                       ),
                                       onTap: () {
                                         setState(() {
+                                          final isExpanding =
+                                              !_expandedAlbums.contains(album);
                                           if (_expandedAlbums.contains(album)) {
                                             _expandedAlbums.remove(album);
                                           } else {
@@ -1160,6 +1190,16 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                               _expandedAlbums.contains(album)
                                                   ? index
                                                   : -1;
+
+                                          // 如果正在展开，预缓存专辑封面字节，减少解码时延迟
+                                          if (isExpanding && coverArt != null) {
+                                            final cacheKey =
+                                                'album_${album}_cover';
+                                            if (!_imageCache
+                                                .containsKey(cacheKey)) {
+                                              _imageCache[cacheKey] = coverArt;
+                                            }
+                                          }
                                         });
                                       },
                                     ),
@@ -1175,191 +1215,230 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                           ? Container(
                                               color: Colors.transparent,
                                               child: ListView.builder(
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              shrinkWrap: true,
-                                              padding: EdgeInsets.zero,
-                                              itemCount: albumMusics.length,
-                                              itemBuilder:
-                                                  (context, musicIndex) {
-                                                final music =
-                                                    albumMusics[musicIndex];
-                                                return ListTile(
-                                                  hoverColor: Colors.transparent,
-                                                  leading: music.coverArt !=
-                                                          null
-                                                      ? Image.memory(
-                                                          music.coverArt!,
-                                                          width: 48,
-                                                          height: 48,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (context, error,
-                                                                  stackTrace) {
-                                                            return Icon(
-                                                              CupertinoIcons
-                                                                  .music_note,
-                                                              size: 48,
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.5),
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                shrinkWrap: true,
+                                                padding: EdgeInsets.zero,
+                                                itemCount: albumMusics.length,
+                                                itemBuilder:
+                                                    (context, musicIndex) {
+                                                  final music =
+                                                      albumMusics[musicIndex];
+                                                  return ListTile(
+                                                    hoverColor:
+                                                        Colors.transparent,
+                                                    leading: music.coverArt !=
+                                                            null
+                                                        ? (() {
+                                                            final cacheKey =
+                                                                '${music.title}_${music.album}';
+                                                            if (_imageCache
+                                                                .containsKey(
+                                                                    cacheKey)) {
+                                                              return Image
+                                                                  .memory(
+                                                                _imageCache[
+                                                                    cacheKey]!,
+                                                                width: 48,
+                                                                height: 48,
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                              );
+                                                            }
+                                                            return Image.memory(
+                                                              music.coverArt!,
+                                                              width: 48,
+                                                              height: 48,
+                                                              fit: BoxFit.cover,
+                                                              frameBuilder:
+                                                                  (context,
+                                                                      child,
+                                                                      frame,
+                                                                      wasSynchronouslyLoaded) {
+                                                                if (wasSynchronouslyLoaded)
+                                                                  return child;
+                                                                return AnimatedOpacity(
+                                                                  opacity:
+                                                                      frame ==
+                                                                              null
+                                                                          ? 0
+                                                                          : 1,
+                                                                  duration: const Duration(
+                                                                      milliseconds:
+                                                                          200),
+                                                                  child: child,
+                                                                );
+                                                              },
+                                                              errorBuilder:
+                                                                  (context,
+                                                                      error,
+                                                                      stackTrace) {
+                                                                return Icon(
+                                                                  CupertinoIcons
+                                                                      .music_note,
+                                                                  size: 48,
+                                                                  color: Theme.of(
+                                                                          context)
+                                                                      .iconTheme
+                                                                      .color
+                                                                      ?.withOpacity(
+                                                                          0.5),
+                                                                );
+                                                              },
                                                             );
-                                                          },
-                                                        )
-                                                      : Icon(
-                                                          CupertinoIcons
-                                                              .music_note,
-                                                          size: 48,
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.5),
-                                                        ),
-                                                  title: Text(
-                                                    music.title,
-                                                    style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .onSurface,
-                                                    ),
-                                                  ),
-                                                  subtitle: Text(
-                                                    music.artist,
-                                                    style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .iconTheme
-                                                          .color
-                                                          ?.withOpacity(0.7),
-                                                    ),
-                                                  ),
-                                                  onTap: () {
-                                                    final playerProvider =
-                                                        Provider.of<
-                                                                PlayerProvider>(
-                                                            context,
-                                                            listen: false);
-                                                    final musicList =
-                                                        musicProvider
-                                                            .getMusicByAlbum(
-                                                                album);
-                                                    final index = musicList
-                                                        .indexWhere((m) =>
-                                                            m.id == music.id);
-                                                    if (index != -1) {
-                                                      playerProvider
-                                                          .setPlaylist(
-                                                        musicList: musicList,
-                                                        source: PlaylistSource
-                                                            .album,
-                                                        identifier: album,
-                                                        startIndex: index,
-                                                      );
-                                                      // setPlaylist 会根据播放模式重排列表，
-                                                      // 选中歌曲被移到索引0，所以用0播放
-                                                      playerProvider
-                                                          .playAtIndex(0);
-                                                    }
-                                                  },
-                                                  trailing: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        _formatDuration(
-                                                            music.duration),
-                                                        style: TextStyle(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .iconTheme
-                                                                  .color
-                                                                  ?.withOpacity(
-                                                                      0.7),
-                                                          fontSize: 12,
-                                                        ),
+                                                          })()
+                                                        : Icon(
+                                                            CupertinoIcons
+                                                                .music_note,
+                                                            size: 48,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .iconTheme
+                                                                .color
+                                                                ?.withOpacity(
+                                                                    0.5),
+                                                          ),
+                                                    title: Text(
+                                                      music.title,
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface,
                                                       ),
-                                                      const SizedBox(width: 8),
-                                                      Material(
-                                                        color:
-                                                            Colors.transparent,
-                                                        child: InkWell(
-                                                          onTap: () {
-                                                            _showMusicDetailDialog(
-                                                                music);
-                                                          },
-                                                          onHover:
-                                                              (isHovering) {
-                                                            setState(() {
-                                                              _detailHoveredIndex =
-                                                                  isHovering
-                                                                      ? index
-                                                                      : -1;
-                                                            });
-                                                          },
-                                                          splashColor: Colors
+                                                    ),
+                                                    subtitle: Text(
+                                                      music.artist,
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .iconTheme
+                                                            .color
+                                                            ?.withOpacity(0.7),
+                                                      ),
+                                                    ),
+                                                    onTap: () {
+                                                      final playerProvider =
+                                                          Provider.of<
+                                                                  PlayerProvider>(
+                                                              context,
+                                                              listen: false);
+                                                      final musicList =
+                                                          musicProvider
+                                                              .getMusicByAlbum(
+                                                                  album);
+                                                      final index = musicList
+                                                          .indexWhere((m) =>
+                                                              m.id == music.id);
+                                                      if (index != -1) {
+                                                        playerProvider
+                                                            .setPlaylist(
+                                                          musicList: musicList,
+                                                          source: PlaylistSource
+                                                              .album,
+                                                          identifier: album,
+                                                          startIndex: index,
+                                                        );
+                                                        // setPlaylist 会根据播放模式重排列表，
+                                                        // 选中歌曲被移到索引0，所以用0播放
+                                                        playerProvider
+                                                            .playAtIndex(0);
+                                                      }
+                                                    },
+                                                    trailing: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          _formatDuration(
+                                                              music.duration),
+                                                          style: TextStyle(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .iconTheme
+                                                                .color
+                                                                ?.withOpacity(
+                                                                    0.7),
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Material(
+                                                          color: Colors
                                                               .transparent,
-                                                          hoverColor: Colors
-                                                              .transparent,
-                                                          child:
-                                                              AnimatedContainer(
-                                                            duration:
-                                                                const Duration(
-                                                                    milliseconds:
-                                                                        200),
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(8),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: Colors
-                                                                  .transparent,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8),
-                                                            ),
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              _showMusicDetailDialog(
+                                                                  music);
+                                                            },
+                                                            onHover:
+                                                                (isHovering) {
+                                                              setState(() {
+                                                                _detailHoveredIndex =
+                                                                    isHovering
+                                                                        ? index
+                                                                        : -1;
+                                                              });
+                                                            },
+                                                            splashColor: Colors
+                                                                .transparent,
+                                                            hoverColor: Colors
+                                                                .transparent,
                                                             child:
-                                                                AnimatedScale(
-                                                              scale:
-                                                                  _detailHoveredIndex ==
-                                                                          index
-                                                                      ? 1.2
-                                                                      : 1.0,
+                                                                AnimatedContainer(
                                                               duration:
                                                                   const Duration(
                                                                       milliseconds:
                                                                           200),
-                                                              child: Icon(
-                                                                CupertinoIcons
-                                                                    .ellipsis,
-                                                                color: _detailHoveredIndex ==
-                                                                        index
-                                                                    ? Theme.of(
-                                                                            context)
-                                                                        .colorScheme
-                                                                        .primary
-                                                                    : Theme.of(
-                                                                            context)
-                                                                        .iconTheme
-                                                                        .color
-                                                                        ?.withOpacity(
-                                                                            0.5),
-                                                                size: 20,
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: Colors
+                                                                    .transparent,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                              child:
+                                                                  AnimatedScale(
+                                                                scale:
+                                                                    _detailHoveredIndex ==
+                                                                            index
+                                                                        ? 1.2
+                                                                        : 1.0,
+                                                                duration:
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            200),
+                                                                child: Icon(
+                                                                  CupertinoIcons
+                                                                      .ellipsis,
+                                                                  color: _detailHoveredIndex ==
+                                                                          index
+                                                                      ? Theme.of(
+                                                                              context)
+                                                                          .colorScheme
+                                                                          .primary
+                                                                      : Theme.of(
+                                                                              context)
+                                                                          .iconTheme
+                                                                          .color
+                                                                          ?.withOpacity(
+                                                                              0.5),
+                                                                  size: 20,
+                                                                ),
                                                               ),
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          )
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            )
                                           : const SizedBox.shrink(),
                                     ),
                                   ],

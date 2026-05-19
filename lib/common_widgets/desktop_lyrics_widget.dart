@@ -109,7 +109,7 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     }
 
     final holdDuration = Duration(
-        milliseconds: min(400, (duration.inMilliseconds * 0.3).round()));
+        milliseconds: min(500, (duration.inMilliseconds * 0.3).round()));
     final scrollDuration = duration - holdDuration;
     return scrollDuration > Duration.zero
         ? scrollDuration
@@ -133,7 +133,8 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     }
 
     final textWidth = _measureTextWidth(text, style);
-    _maxScrollOffset = max(0, textWidth - maxWidth);
+    const double scrollPadding = 20.0;
+    _maxScrollOffset = max(0, textWidth - maxWidth + scrollPadding);
 
     if (_maxScrollOffset <= 0 || _lineDuration <= Duration.zero) {
       _scrollOffset = 0.0;
@@ -141,7 +142,8 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     }
 
     final elapsed = _displayPosition - _lineStart;
-    final progress = (elapsed.inMilliseconds / _lineDuration.inMilliseconds).clamp(0.0, 1.0);
+    final progress =
+        (elapsed.inMilliseconds / _lineDuration.inMilliseconds).clamp(0.0, 1.0);
     final eased = Curves.easeInOut.transform(progress);
     _scrollOffset = _maxScrollOffset * eased;
   }

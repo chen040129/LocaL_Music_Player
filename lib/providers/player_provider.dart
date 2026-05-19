@@ -1116,8 +1116,6 @@ class PlayerProvider with ChangeNotifier {
       // 通知桌面歌词窗口更新
       updateDesktopLyricsNotifier.value++;
 
-      print('[PlayerProvider] Updated desktop lyrics - Full LRC length: ${desktopLyricsFullLrc?.length ?? 0}, Lines count: ${desktopLyricsLines?.length ?? 0}');
-
       // 转换为LyricLine格式
       final lyricLine = convertToLyricLine(lyrics, _position.inMilliseconds);
 

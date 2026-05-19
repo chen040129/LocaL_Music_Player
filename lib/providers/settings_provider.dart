@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -12,186 +11,189 @@ import '../desktop/desktop_lyrics_flutter_lyric_fixed.dart';
 
 /// 设置类别枚举
 enum SettingsCategory {
-  ui,           // 用户界面
-  lyrics,       // 歌词
-  player,       // 播放器
+  ui, // 用户界面
+  lyrics, // 歌词
+  player, // 播放器
 }
 
 /// 歌曲页面背景类型枚举
 enum SongPageBackgroundType {
-  transparent,  // 透明背景
-  fluid,        // 流体背景
-  blur,         // 模糊背景
-  gradient,     // 渐变背景
-  solid,        // 纯色背景
-  customImage,  // 自定义图片背景
+  transparent, // 透明背景
+  fluid, // 流体背景
+  blur, // 模糊背景
+  gradient, // 渐变背景
+  solid, // 纯色背景
+  customImage, // 自定义图片背景
 }
 
 /// 图片布局方式枚举
 enum ImageFitType {
-  fill,         // 填充（拉伸）
-  cover,        // 覆盖（保持比例）
-  contain,      // 包含（保持比例）
-  fitWidth,     // 适应宽度
-  fitHeight,    // 适应高度
-  none,         // 原始大小
+  fill, // 填充（拉伸）
+  cover, // 覆盖（保持比例）
+  contain, // 包含（保持比例）
+  fitWidth, // 适应宽度
+  fitHeight, // 适应高度
+  none, // 原始大小
 }
 
 /// 用户界面背景类型枚举
 enum UIBackgroundType {
-  normal,       // 默认背景
-  fluid,        // 流体背景（当前播放歌曲）
-  gradient,     // 渐变背景（当前播放歌曲）
-  customImage,  // 自定义图片背景
+  normal, // 默认背景
+  fluid, // 流体背景（当前播放歌曲）
+  gradient, // 渐变背景（当前播放歌曲）
+  customImage, // 自定义图片背景
 }
 
 /// 渐变类型枚举
 enum GradientType {
-  static,       // 静态渐变
-  dynamic,      // 动态渐变
+  static, // 静态渐变
+  dynamic, // 动态渐变
 }
 
 /// 播放栏样式枚举
 enum PlayerBarStyle {
-  normal,       // 默认样式
-  liquidGlass,  // 液态玻璃样式
+  normal, // 默认样式
+  liquidGlass, // 液态玻璃样式
 }
 
 /// 播放栏长度枚举
 enum PlayerBarLength {
-  fullWidth,    // 全宽（占据整个窗口底部）
+  fullWidth, // 全宽（占据整个窗口底部）
   contentWidth, // 内容宽度（不占据导航栏）
 }
 
 /// 歌词对齐方式枚举
 enum LyricsAlignment {
-  left,         // 左对齐
-  center,       // 居中对齐
-  right,        // 右对齐
+  left, // 左对齐
+  center, // 居中对齐
+  right, // 右对齐
 }
 
 /// 歌词效果类型枚举
 enum LyricsEffectType {
-  shadow,       // 阴影效果
-  glow,         // 辉光效果
+  shadow, // 阴影效果
+  glow, // 辉光效果
 }
 
 /// 封面形状枚举
 enum CoverShape {
-  square,       // 方形
-  circle,       // 圆形
+  square, // 方形
+  circle, // 圆形
 }
 
 /// 圆形封面状态枚举
 enum CircleCoverState {
-  static,       // 静态
-  rotating,     // 旋转
+  static, // 静态
+  rotating, // 旋转
 }
 
 /// 设置提供者
 class SettingsProvider with ChangeNotifier {
   // 用户界面设置
-  bool _useBlurBackground = true;      // 是否使用模糊背景
-  bool _showAlbumArt = true;           // 是否显示专辑封面
-  bool _useSidebarGlass = true;         // 是否使用侧边栏玻璃材质
-  bool _usePlayerGlass = true;         // 是否使用播放栏玻璃材质
-  double _glassOpacity = 0.2;         // 玻璃材质透明度
-  double _borderRadius = 0.0;          // 主页面边框弧度值（默认为0，无弧度）
-  double _playerBarCoverRadius = 8.0;  // 音乐栏封面圆角值
-  double _windowBorderRadius = 12.0;   // 窗口边框弧度值
-  double _windowOpacity = 0.85;        // 窗口背景透明度
-  double _cardOpacity = 0.85;           // 音乐卡片透明度
-  UIBackgroundType _uiBackgroundType = UIBackgroundType.normal;  // 用户界面背景类型
-  double _savedNormalWindowOpacity = 0.85;  // 保存默认背景类型的窗口透明度
-  String _uiCustomImagePath = '';       // 用户界面自定义背景图片路径
-  ImageFitType _uiImageFitType = ImageFitType.fill;  // 用户界面自定义背景图片布局方式
-  bool _syncBackgroundImages = false;  // 是否同步用户界面和歌曲界面的背景图片
-  bool _syncGradientSettings = false;  // 是否同步用户界面和歌曲界面的渐变设置
-  GradientType _uiGradientType = GradientType.static;  // 用户界面渐变类型
-  double _uiGradientSongColorRatio = 0.7;  // 用户界面渐变中歌曲主题色占比（0.0-1.0）
-  bool _smoothColorTransition = true;  // 切换歌曲时背景颜色是否平滑过渡
+  bool _useBlurBackground = true; // 是否使用模糊背景
+  bool _showAlbumArt = true; // 是否显示专辑封面
+  bool _useSidebarGlass = true; // 是否使用侧边栏玻璃材质
+  bool _usePlayerGlass = true; // 是否使用播放栏玻璃材质
+  double _glassOpacity = 0.2; // 玻璃材质透明度
+  double _borderRadius = 0.0; // 主页面边框弧度值（默认为0，无弧度）
+  double _playerBarCoverRadius = 8.0; // 音乐栏封面圆角值
+  double _windowBorderRadius = 12.0; // 窗口边框弧度值
+  double _windowOpacity = 0.85; // 窗口背景透明度
+  double _cardOpacity = 0.85; // 音乐卡片透明度
+  UIBackgroundType _uiBackgroundType = UIBackgroundType.normal; // 用户界面背景类型
+  double _savedNormalWindowOpacity = 0.85; // 保存默认背景类型的窗口透明度
+  String _uiCustomImagePath = ''; // 用户界面自定义背景图片路径
+  ImageFitType _uiImageFitType = ImageFitType.fill; // 用户界面自定义背景图片布局方式
+  bool _syncBackgroundImages = false; // 是否同步用户界面和歌曲界面的背景图片
+  bool _syncGradientSettings = false; // 是否同步用户界面和歌曲界面的渐变设置
+  GradientType _uiGradientType = GradientType.static; // 用户界面渐变类型
+  double _uiGradientSongColorRatio = 0.7; // 用户界面渐变中歌曲主题色占比（0.0-1.0）
+  bool _smoothColorTransition = true; // 切换歌曲时背景颜色是否平滑过渡
 
   // 字体设置
-  String _fontPath = '';                // 自定义字体文件路径
-  String _fontName = '';                // 自定义字体名称
+  String _fontPath = ''; // 自定义字体文件路径
+  String _fontName = ''; // 自定义字体名称
 
   // 歌词设置
-  LyricsAlignment _lyricsAlignment = LyricsAlignment.center;  // 歌词对齐方式
-  double _lyricsFontSize = 16.0;       // 歌词字体大小
+  int _lyricsTimeOffsetMs = 0; // 歌词时间偏移，单位毫秒，正数表示提前显示（advance），负数表示延迟显示（delay）
+  LyricsAlignment _lyricsAlignment = LyricsAlignment.center; // 歌词对齐方式
+  double _lyricsFontSize = 16.0; // 歌词字体大小
   double _activeLyricsFontSize = 22.0; // 当前歌词字体大小
-  bool _showTranslation = true;        // 是否显示翻译
-  bool _enableLyricsBlur = true;       // 是否启用歌词模糊
-  double _fadeRangeTop = 200.0;       // 歌词顶部渐变范围
-  double _fadeRangeBottom = 200.0;     // 歌词底部渐变范围
-  int _fadeDirection = 0;              // 渐变方向 (0: 上下, 1: 左右, 2: 对角线)
-  double _fadeOpacity = 0.8;            // 渐变不透明度
-  int _blendModeIndex = 0;             // 混合模式索引
-  bool _useCustomBlur = true;           // 是否使用自定义模糊效果（而不是内置渐变）
-  bool _enableLyricsSelectionEffects = true;  // 是否启用歌词选择效果
-  LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow;  // 歌词效果类型
-  double _lyricsOpacity = 1.0;         // 歌词不透明度
-  int _lyricsLineGap = 8;              // 歌词行间距
-  int _scrollDuration = 500;          // 滚动动画时长(毫秒)
-  int _selectionAutoResumeDuration = 400;  // 选中行自动恢复时长(毫秒)
-  int _activeAutoResumeDuration = 3500;    // 播放行自动恢复时长(毫秒)
-  String _scrollCurve = 'easeInOutCubic';  // 滚动动画曲线
+  bool _showTranslation = true; // 是否显示翻译
+  bool _enableLyricsBlur = true; // 是否启用歌词模糊
+  double _fadeRangeTop = 200.0; // 歌词顶部渐变范围
+  double _fadeRangeBottom = 200.0; // 歌词底部渐变范围
+  int _fadeDirection = 0; // 渐变方向 (0: 上下, 1: 左右, 2: 对角线)
+  double _fadeOpacity = 0.8; // 渐变不透明度
+  int _blendModeIndex = 0; // 混合模式索引
+  bool _useCustomBlur = true; // 是否使用自定义模糊效果（而不是内置渐变）
+  bool _enableLyricsSelectionEffects = true; // 是否启用歌词选择效果
+  LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow; // 歌词效果类型
+  double _lyricsOpacity = 1.0; // 歌词不透明度
+  int _lyricsLineGap = 8; // 歌词行间距
+  int _scrollDuration = 500; // 滚动动画时长(毫秒)
+  int _selectionAutoResumeDuration = 400; // 选中行自动恢复时长(毫秒)
+  int _activeAutoResumeDuration = 3500; // 播放行自动恢复时长(毫秒)
+  String _scrollCurve = 'easeInOutCubic'; // 滚动动画曲线
 
   // 桌面歌词设置
-  bool _enableDesktopLyrics = false;  // 是否启用桌面歌词
-  bool _desktopLyricsLocked = false;  // 桌面歌词是否锁定
-  bool _showLockButton = true;        // 是否显示锁定按钮
-  bool _showControlButtons = true;    // 是否显示控制按钮
-  bool _enableKaraokeEffect = false;  // 是否启用卡拉OK效果
-  double _desktopLyricsFontSize = 30.0;  // 桌面歌词字体大小
-  bool _showBackgroundOnHover = true;  // 鼠标悬停时显示背景
-  bool _alwaysOnTop = true;          // 是否始终置顶
+  bool _enableDesktopLyrics = false; // 是否启用桌面歌词
+  bool _desktopLyricsLocked = false; // 桌面歌词是否锁定
+  bool _showLockButton = true; // 是否显示锁定按钮
+  bool _showControlButtons = true; // 是否显示控制按钮
+  bool _enableKaraokeEffect = false; // 是否启用卡拉OK效果
+  double _desktopLyricsFontSize = 30.0; // 桌面歌词字体大小
+  bool _showBackgroundOnHover = true; // 鼠标悬停时显示背景
+  bool _alwaysOnTop = true; // 是否始终置顶
 
   // 播放器设置
-  bool _autoPlayNext = true;           // 是否自动播放下一首
-  bool _savePlayProgress = true;       // 是否保存播放进度
-  bool _showPlayCount = true;          // 是否显示播放次数
-  bool _enableFadeEffect = false;      // 是否启用淡入淡出效果
-  double _fadeDuration = 2.0;          // 淡入淡出时长(秒)
-  int _defaultVolume = 70;             // 默认音量(0-100)
-  bool _showLyricsInPlayer = true;     // 播放器中是否显示歌词
-  PlayerBarStyle _playerBarStyle = PlayerBarStyle.normal;  // 播放栏样式
-  PlayerBarLength _playerBarLength = PlayerBarLength.fullWidth;  // 播放栏长度
+  bool _autoPlayNext = true; // 是否自动播放下一首
+  bool _savePlayProgress = true; // 是否保存播放进度
+  bool _showPlayCount = true; // 是否显示播放次数
+  bool _enableFadeEffect = false; // 是否启用淡入淡出效果
+  double _fadeDuration = 2.0; // 淡入淡出时长(秒)
+  int _defaultVolume = 70; // 默认音量(0-100)
+  bool _showLyricsInPlayer = true; // 播放器中是否显示歌词
+  PlayerBarStyle _playerBarStyle = PlayerBarStyle.normal; // 播放栏样式
+  PlayerBarLength _playerBarLength = PlayerBarLength.fullWidth; // 播放栏长度
 
   // 液态玻璃参数
-  double _liquidGlassDistortion = 0.075;          // 扭曲强度
-  double _liquidGlassDistortionWidth = 70.0;       // 扭曲宽度
-  double _liquidGlassChromaticAberration = 0.002;  // 色差强度
-  double _liquidGlassSaturation = 1.0;             // 饱和度
-  double _liquidGlassBlurSigma = 0.5;              // 模糊强度
-  double _liquidGlassMagnification = 1.0;           // 放大倍数
+  double _liquidGlassDistortion = 0.075; // 扭曲强度
+  double _liquidGlassDistortionWidth = 70.0; // 扭曲宽度
+  double _liquidGlassChromaticAberration = 0.002; // 色差强度
+  double _liquidGlassSaturation = 1.0; // 饱和度
+  double _liquidGlassBlurSigma = 0.5; // 模糊强度
+  double _liquidGlassMagnification = 1.0; // 放大倍数
 
   // 歌曲列表排序设置
-  String _songsSortBy = 'default';       // 排序方式: default, title, artist, album, duration, modified
-  bool _songsSortAscending = true;       // 是否升序
+  String _songsSortBy =
+      'default'; // 排序方式: default, title, artist, album, duration, modified
+  bool _songsSortAscending = true; // 是否升序
 
   // 歌曲页面设置
-  SongPageBackgroundType _songPageBackgroundType = SongPageBackgroundType.fluid;  // 歌曲页面背景类型
-  GradientType _gradientType = GradientType.static;  // 渐变类型
-  bool _isFluidDynamic = false;        // 流体背景是否动态
-  double _blurAmount = 30.0;          // 模糊程度
-  double _pageOpacity = 1.0;          // 页面透明度
-  double _gradientSongColorRatio = 0.7;  // 渐变中歌曲主题色占比（0.0-1.0）
-  String _customImagePath = '';       // 自定义背景图片路径
-  ImageFitType _imageFitType = ImageFitType.cover;  // 图片布局方式
+  SongPageBackgroundType _songPageBackgroundType =
+      SongPageBackgroundType.fluid; // 歌曲页面背景类型
+  GradientType _gradientType = GradientType.static; // 渐变类型
+  bool _isFluidDynamic = false; // 流体背景是否动态
+  double _blurAmount = 30.0; // 模糊程度
+  double _pageOpacity = 1.0; // 页面透明度
+  double _gradientSongColorRatio = 0.7; // 渐变中歌曲主题色占比（0.0-1.0）
+  String _customImagePath = ''; // 自定义背景图片路径
+  ImageFitType _imageFitType = ImageFitType.cover; // 图片布局方式
 
   // 流体背景参数
-  double _fluidBubblesSize = 400.0;          // 流体气泡大小
-  double _fluidVelocity = 120.0;              // 流体速度
-  int _fluidAnimationDuration = 2000;         // 流体动画持续时间（毫秒）
-  double _fluidOffsetAmount = 20.0;           // 流体偏移量
-  double _fluidLayerOpacity = 0.3;            // 流体层透明度
-  
+  double _fluidBubblesSize = 400.0; // 流体气泡大小
+  double _fluidVelocity = 120.0; // 流体速度
+  int _fluidAnimationDuration = 2000; // 流体动画持续时间（毫秒）
+  double _fluidOffsetAmount = 20.0; // 流体偏移量
+  double _fluidLayerOpacity = 0.3; // 流体层透明度
+
   // 封面设置
-  CoverShape _coverShape = CoverShape.square;  // 封面形状
-  CircleCoverState _circleCoverState = CircleCoverState.static;  // 圆形封面状态
-  double _coverSize = 300.0;                  // 封面大小
-  double _coverBorderRadius = 0.0;            // 封面方形时的圆角半径（默认为0，无弧度）
-  
+  CoverShape _coverShape = CoverShape.square; // 封面形状
+  CircleCoverState _circleCoverState = CircleCoverState.static; // 圆形封面状态
+  double _coverSize = 300.0; // 封面大小
+  double _coverBorderRadius = 0.0; // 封面方形时的圆角半径（默认为0，无弧度）
+
   // 封面旋转速度（固定为50秒/圈）
   double coverRotationSpeed = 50;
 
@@ -226,7 +228,8 @@ class SettingsProvider with ChangeNotifier {
   UIBackgroundType get uiBackgroundType => _uiBackgroundType;
 
   // 判断是否可以控制窗口透明度
-  bool get canControlWindowOpacity => _playerBarStyle != PlayerBarStyle.liquidGlass;
+  bool get canControlWindowOpacity =>
+      _playerBarStyle != PlayerBarStyle.liquidGlass;
   String get uiCustomImagePath => _uiCustomImagePath;
   ImageFitType get uiImageFitType => _uiImageFitType;
   bool get syncBackgroundImages => _syncBackgroundImages;
@@ -306,6 +309,7 @@ class SettingsProvider with ChangeNotifier {
         return BlendMode.dstIn;
     }
   }
+
   bool get useCustomBlur => _useCustomBlur;
   bool get enableLyricsSelectionEffects => _enableLyricsSelectionEffects;
   LyricsEffectType get lyricsEffectType => _lyricsEffectType;
@@ -314,11 +318,29 @@ class SettingsProvider with ChangeNotifier {
     await _saveSetting('lyrics_effect_type', value.index);
     notifyListeners();
   }
+
   double get lyricsOpacity => _lyricsOpacity;
   int get lyricsLineGap => _lyricsLineGap;
   int get scrollDuration => _scrollDuration;
   int get selectionAutoResumeDuration => _selectionAutoResumeDuration;
   int get activeAutoResumeDuration => _activeAutoResumeDuration;
+
+  /// 获取歌词时间偏移（秒），正数表示提前显示，负数表示延迟显示
+  double get lyricsTimeOffsetSeconds => _lyricsTimeOffsetMs / 1000.0;
+
+  /// 设置歌词时间偏移（秒），正数表示提前显示，负数表示延迟显示
+  Future<void> setLyricsTimeOffsetSeconds(double seconds) async {
+    _lyricsTimeOffsetMs = (seconds * 1000).round();
+    await _saveSetting('lyrics_time_offset_ms', _lyricsTimeOffsetMs);
+    notifyListeners();
+  }
+
+  /// 增量调整歌词时间偏移（秒），可为正（提前）或负（延迟）
+  Future<void> adjustLyricsTimeOffsetBySeconds(double delta) async {
+    _lyricsTimeOffsetMs += (delta * 1000).round();
+    await _saveSetting('lyrics_time_offset_ms', _lyricsTimeOffsetMs);
+    notifyListeners();
+  }
 
   // 桌面歌词设置 getters
   bool get enableDesktopLyrics => _enableDesktopLyrics;
@@ -351,7 +373,7 @@ class SettingsProvider with ChangeNotifier {
   int get fluidAnimationDuration => _fluidAnimationDuration;
   double get fluidOffsetAmount => _fluidOffsetAmount;
   double get fluidLayerOpacity => _fluidLayerOpacity;
-  
+
   // 封面设置 getters
   CoverShape get coverShape => _coverShape;
   CircleCoverState get circleCoverState => _circleCoverState;
@@ -378,8 +400,10 @@ class SettingsProvider with ChangeNotifier {
     _usePlayerGlass = prefs.getBool('use_player_glass') ?? true;
     _glassOpacity = (prefs.getDouble('glass_opacity') ?? 0.2).toDouble();
     _borderRadius = (prefs.getDouble('border_radius') ?? 0.0).toDouble();
-    _playerBarCoverRadius = (prefs.getDouble('player_bar_cover_radius') ?? 8.0).toDouble();
-    _windowBorderRadius = (prefs.getDouble('window_border_radius') ?? 12.0).toDouble();
+    _playerBarCoverRadius =
+        (prefs.getDouble('player_bar_cover_radius') ?? 8.0).toDouble();
+    _windowBorderRadius =
+        (prefs.getDouble('window_border_radius') ?? 12.0).toDouble();
     _windowOpacity = (prefs.getDouble('window_opacity') ?? 0.85).toDouble();
     _cardOpacity = (prefs.getDouble('card_opacity') ?? 0.85).toDouble();
     final uiBackgroundTypeIndex = prefs.getInt('ui_background_type') ?? 0;
@@ -391,7 +415,8 @@ class SettingsProvider with ChangeNotifier {
     _syncGradientSettings = prefs.getBool('sync_gradient_settings') ?? false;
     final uiGradientTypeIndex = prefs.getInt('ui_gradient_type') ?? 0;
     _uiGradientType = GradientType.values[uiGradientTypeIndex];
-    _uiGradientSongColorRatio = (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
+    _uiGradientSongColorRatio =
+        (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
     _smoothColorTransition = prefs.getBool('smooth_color_transition') ?? true;
 
     // 加载字体设置
@@ -423,7 +448,8 @@ class SettingsProvider with ChangeNotifier {
     final alignmentIndex = prefs.getInt('lyrics_alignment') ?? 1;
     _lyricsAlignment = LyricsAlignment.values[alignmentIndex];
     _lyricsFontSize = (prefs.getDouble('lyrics_font_size') ?? 16.0).toDouble();
-    _activeLyricsFontSize = (prefs.getDouble('active_lyrics_font_size') ?? 22.0).toDouble();
+    _activeLyricsFontSize =
+        (prefs.getDouble('active_lyrics_font_size') ?? 22.0).toDouble();
     _showTranslation = prefs.getBool('show_translation') ?? true;
     _enableLyricsBlur = prefs.getBool('enable_lyrics_blur') ?? true;
     _fadeRangeTop = (prefs.getDouble('fade_range_top') ?? 200.0);
@@ -432,15 +458,20 @@ class SettingsProvider with ChangeNotifier {
     _fadeOpacity = (prefs.getDouble('fade_opacity') ?? 0.8);
     _blendModeIndex = (prefs.getInt('blend_mode_index') ?? 0);
     _useCustomBlur = prefs.getBool('use_custom_blur') ?? true;
-    _enableLyricsSelectionEffects = prefs.getBool('enable_lyrics_selection_effects') ?? true;
+    _enableLyricsSelectionEffects =
+        prefs.getBool('enable_lyrics_selection_effects') ?? true;
     final lyricsEffectTypeIndex = prefs.getInt('lyrics_effect_type') ?? 0;
     _lyricsEffectType = LyricsEffectType.values[lyricsEffectTypeIndex];
     _lyricsOpacity = (prefs.getDouble('lyrics_opacity') ?? 1.0).toDouble();
     _lyricsLineGap = prefs.getInt('lyrics_line_gap') ?? 8;
     _scrollDuration = prefs.getInt('scroll_duration') ?? 500;
-    _selectionAutoResumeDuration = prefs.getInt('selection_auto_resume_duration') ?? 400;
-    _activeAutoResumeDuration = prefs.getInt('active_auto_resume_duration') ?? 3500;
+    _selectionAutoResumeDuration =
+        prefs.getInt('selection_auto_resume_duration') ?? 400;
+    _activeAutoResumeDuration =
+        prefs.getInt('active_auto_resume_duration') ?? 3500;
     _scrollCurve = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
+    // 加载歌词偏移（毫秒）
+    _lyricsTimeOffsetMs = prefs.getInt('lyrics_time_offset_ms') ?? 0;
 
     // 加载桌面歌词设置
     // 桌面歌词默认关闭，不保留上次退出的状态
@@ -449,7 +480,8 @@ class SettingsProvider with ChangeNotifier {
     _showLockButton = prefs.getBool('show_lock_button') ?? true;
     _showControlButtons = prefs.getBool('show_control_buttons') ?? true;
     _enableKaraokeEffect = prefs.getBool('enable_karaoke_effect') ?? false;
-    _desktopLyricsFontSize = (prefs.getDouble('desktop_lyrics_font_size') ?? 30.0).toDouble();
+    _desktopLyricsFontSize =
+        (prefs.getDouble('desktop_lyrics_font_size') ?? 30.0).toDouble();
     _showBackgroundOnHover = prefs.getBool('show_background_on_hover') ?? true;
     _alwaysOnTop = prefs.getBool('always_on_top') ?? true;
 
@@ -466,22 +498,30 @@ class SettingsProvider with ChangeNotifier {
     final playerBarLengthIndex = prefs.getInt('player_bar_length') ?? 0;
     _playerBarLength = PlayerBarLength.values[playerBarLengthIndex];
     // 加载液态玻璃参数
-    _liquidGlassDistortion = (prefs.getDouble('liquid_glass_distortion') ?? 0.075).toDouble();
+    _liquidGlassDistortion =
+        (prefs.getDouble('liquid_glass_distortion') ?? 0.075).toDouble();
     if (_liquidGlassDistortion < 0.01) _liquidGlassDistortion = 0.075;
 
-    _liquidGlassDistortionWidth = (prefs.getDouble('liquid_glass_distortion_width') ?? 70.0).toDouble();
+    _liquidGlassDistortionWidth =
+        (prefs.getDouble('liquid_glass_distortion_width') ?? 70.0).toDouble();
 
-    _liquidGlassChromaticAberration = (prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.002).toDouble();
-    if (_liquidGlassChromaticAberration < 0.001) _liquidGlassChromaticAberration = 0.002;
+    _liquidGlassChromaticAberration =
+        (prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.002)
+            .toDouble();
+    if (_liquidGlassChromaticAberration < 0.001)
+      _liquidGlassChromaticAberration = 0.002;
 
-    _liquidGlassSaturation = (prefs.getDouble('liquid_glass_saturation') ?? 1.0).toDouble();
+    _liquidGlassSaturation =
+        (prefs.getDouble('liquid_glass_saturation') ?? 1.0).toDouble();
     if (_liquidGlassSaturation < 0.1) _liquidGlassSaturation = 1.0;
 
-    _liquidGlassBlurSigma = (prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5).toDouble();
+    _liquidGlassBlurSigma =
+        (prefs.getDouble('liquid_glass_blur_sigma') ?? 0.5).toDouble();
     if (_liquidGlassBlurSigma < 0.1) _liquidGlassBlurSigma = 0.5;
     if (_liquidGlassBlurSigma > 3.0) _liquidGlassBlurSigma = 3.0;
 
-    _liquidGlassMagnification = (prefs.getDouble('liquid_glass_magnification') ?? 1.0).toDouble();
+    _liquidGlassMagnification =
+        (prefs.getDouble('liquid_glass_magnification') ?? 1.0).toDouble();
 
     // 加载歌曲列表排序设置
     _songsSortBy = prefs.getString('songs_sort_by') ?? 'default';
@@ -489,31 +529,37 @@ class SettingsProvider with ChangeNotifier {
 
     // 加载歌曲页面设置
     final backgroundTypeIndex = prefs.getInt('song_page_background_type') ?? 0;
-    _songPageBackgroundType = SongPageBackgroundType.values[backgroundTypeIndex];
+    _songPageBackgroundType =
+        SongPageBackgroundType.values[backgroundTypeIndex];
     final gradientTypeIndex = prefs.getInt('gradient_type') ?? 0;
     _gradientType = GradientType.values[gradientTypeIndex];
     _isFluidDynamic = prefs.getBool('is_fluid_dynamic') ?? false;
     _blurAmount = (prefs.getDouble('blur_amount') ?? 30.0).toDouble();
     _pageOpacity = (prefs.getDouble('page_opacity') ?? 1.0).toDouble();
-    _gradientSongColorRatio = (prefs.getDouble('gradient_song_color_ratio') ?? 0.7).toDouble();
+    _gradientSongColorRatio =
+        (prefs.getDouble('gradient_song_color_ratio') ?? 0.7).toDouble();
     _customImagePath = prefs.getString('custom_image_path') ?? '';
     final imageFitTypeIndex = prefs.getInt('image_fit_type') ?? 1;
     _imageFitType = ImageFitType.values[imageFitTypeIndex];
 
     // 加载流体背景参数
-    _fluidBubblesSize = (prefs.getDouble('fluid_bubbles_size') ?? 400.0).toDouble();
+    _fluidBubblesSize =
+        (prefs.getDouble('fluid_bubbles_size') ?? 400.0).toDouble();
     _fluidVelocity = (prefs.getDouble('fluid_velocity') ?? 120.0).toDouble();
     _fluidAnimationDuration = prefs.getInt('fluid_animation_duration') ?? 2000;
-    _fluidOffsetAmount = (prefs.getDouble('fluid_offset_amount') ?? 20.0).toDouble();
-    _fluidLayerOpacity = (prefs.getDouble('fluid_layer_opacity') ?? 0.3).toDouble();
-    
+    _fluidOffsetAmount =
+        (prefs.getDouble('fluid_offset_amount') ?? 20.0).toDouble();
+    _fluidLayerOpacity =
+        (prefs.getDouble('fluid_layer_opacity') ?? 0.3).toDouble();
+
     // 加载封面设置
     final coverShapeIndex = prefs.getInt('cover_shape') ?? 0;
     _coverShape = CoverShape.values[coverShapeIndex];
     final circleCoverStateIndex = prefs.getInt('circle_cover_state') ?? 0;
     _circleCoverState = CircleCoverState.values[circleCoverStateIndex];
     _coverSize = (prefs.getDouble('cover_size') ?? 300.0).toDouble();
-    _coverBorderRadius = (prefs.getDouble('cover_border_radius') ?? 16.0).toDouble();
+    _coverBorderRadius =
+        (prefs.getDouble('cover_border_radius') ?? 16.0).toDouble();
 
     _hasLoadedSettings = true;
     notifyListeners();
@@ -554,7 +600,7 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setUsePlayerGlass(bool value) async {
     _usePlayerGlass = value;
-    
+
     // 当启用液态玻璃效果时，将窗口背景透明度设置为完全不透明
     if (value) {
       _savedNormalWindowOpacity = _windowOpacity;
@@ -565,7 +611,7 @@ class SettingsProvider with ChangeNotifier {
       _windowOpacity = _savedNormalWindowOpacity;
       await _saveSetting('window_opacity', _windowOpacity);
     }
-    
+
     await _saveSetting('use_player_glass', value);
     notifyListeners();
   }
@@ -609,18 +655,20 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setUIBackgroundType(UIBackgroundType value) async {
     // 当从默认背景切换到流体/渐变背景时，保存当前透明度并设置为0
     if (_uiBackgroundType == UIBackgroundType.normal &&
-        (value == UIBackgroundType.fluid || value == UIBackgroundType.gradient)) {
+        (value == UIBackgroundType.fluid ||
+            value == UIBackgroundType.gradient)) {
       _savedNormalWindowOpacity = _windowOpacity;
       _windowOpacity = 0.0;
       await _saveSetting('window_opacity', _windowOpacity);
     }
     // 当从流体/渐变背景切换回默认背景时，恢复之前保存的透明度
-    else if ((_uiBackgroundType == UIBackgroundType.fluid || _uiBackgroundType == UIBackgroundType.gradient) &&
+    else if ((_uiBackgroundType == UIBackgroundType.fluid ||
+            _uiBackgroundType == UIBackgroundType.gradient) &&
         value == UIBackgroundType.normal) {
       _windowOpacity = _savedNormalWindowOpacity;
       await _saveSetting('window_opacity', _windowOpacity);
     }
-    
+
     _uiBackgroundType = value;
     await _saveSetting('ui_background_type', _uiBackgroundType.index);
     notifyListeners();
@@ -675,7 +723,8 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setUIGradientSongColorRatio(double value) async {
     _uiGradientSongColorRatio = value.clamp(0.0, 1.0);
-    await _saveSetting('ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
+    await _saveSetting(
+        'ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
     // 如果启用了同步，同时更新歌曲页面的歌曲主题色占比
     if (_syncGradientSettings) {
       _gradientSongColorRatio = value;
@@ -735,7 +784,8 @@ class SettingsProvider with ChangeNotifier {
     // 通知flutter_lyric版桌面歌词窗口更新字体
     if (common.lyricsWindowControllerFlutterLyric != null) {
       try {
-        common.lyricsWindowControllerFlutterLyric!.updateFont(_fontPath, _fontName);
+        common.lyricsWindowControllerFlutterLyric!
+            .updateFont(_fontPath, _fontName);
       } catch (e) {
         debugPrint('通知flutter_lyric桌面歌词更新字体失败: $e');
       }
@@ -845,13 +895,15 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setSelectionAutoResumeDuration(int value) async {
     _selectionAutoResumeDuration = value.clamp(100, 2000);
-    await _saveSetting('selection_auto_resume_duration', _selectionAutoResumeDuration);
+    await _saveSetting(
+        'selection_auto_resume_duration', _selectionAutoResumeDuration);
     notifyListeners();
   }
 
   Future<void> setActiveAutoResumeDuration(int value) async {
     _activeAutoResumeDuration = value.clamp(1000, 10000);
-    await _saveSetting('active_auto_resume_duration', _activeAutoResumeDuration);
+    await _saveSetting(
+        'active_auto_resume_duration', _activeAutoResumeDuration);
     notifyListeners();
   }
 
@@ -906,13 +958,15 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setPlayerBarStyle(PlayerBarStyle value) async {
     // 当从默认样式切换到液态玻璃样式时，保存当前透明度并设置为1.0（完全不透明）
-    if (_playerBarStyle == PlayerBarStyle.normal && value == PlayerBarStyle.liquidGlass) {
+    if (_playerBarStyle == PlayerBarStyle.normal &&
+        value == PlayerBarStyle.liquidGlass) {
       _savedNormalWindowOpacity = _windowOpacity;
       _windowOpacity = 1.0;
       await _saveSetting('window_opacity', _windowOpacity);
     }
     // 当从液态玻璃样式切换回默认样式时，恢复之前保存的透明度
-    else if (_playerBarStyle == PlayerBarStyle.liquidGlass && value == PlayerBarStyle.normal) {
+    else if (_playerBarStyle == PlayerBarStyle.liquidGlass &&
+        value == PlayerBarStyle.normal) {
       _windowOpacity = _savedNormalWindowOpacity;
       await _saveSetting('window_opacity', _windowOpacity);
     }
@@ -929,8 +983,10 @@ class SettingsProvider with ChangeNotifier {
   }
 
   // 桌面歌词设置 setters
-  Future<void> setEnableDesktopLyrics(bool value, {bool skipWindowOperations = false}) async {
-    print('[${DateTime.now().toIso8601String()}] setEnableDesktopLyrics(value=$value, skipWindowOperations=$skipWindowOperations)');
+  Future<void> setEnableDesktopLyrics(bool value,
+      {bool skipWindowOperations = false}) async {
+    print(
+        '[${DateTime.now().toIso8601String()}] setEnableDesktopLyrics(value=$value, skipWindowOperations=$skipWindowOperations)');
     _enableDesktopLyrics = value;
     await _saveSetting('enable_desktop_lyrics', value);
     notifyListeners();
@@ -938,54 +994,65 @@ class SettingsProvider with ChangeNotifier {
     // 处理桌面歌词窗口的显示和隐藏
     if (!skipWindowOperations) {
       if (value) {
-      print('[${DateTime.now().toIso8601String()}] Desktop lyrics enabling');
-      // 如果启用桌面歌词，显示窗口
-      // 按需创建桌面歌词窗口
-      if (common.lyricsWindowController == null) {
-        print('[${DateTime.now().toIso8601String()}] initDesktopLyrics() because controller is null');
-        await initDesktopLyrics();
-      }
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics enabling');
+        // 如果启用桌面歌词，显示窗口
+        // 按需创建桌面歌词窗口
+        if (common.lyricsWindowController == null) {
+          print(
+              '[${DateTime.now().toIso8601String()}] initDesktopLyrics() because controller is null');
+          await initDesktopLyrics();
+        }
 
-      // 显示桌面歌词窗口
-      if (common.lyricsWindowController != null && !common.lyricsWindowVisible) {
-        print('[${DateTime.now().toIso8601String()}] Showing desktop lyrics window');
-        await common.lyricsWindowController!.show();
-        common.lyricsWindowVisible = true;
-        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window shown');
+        // 显示桌面歌词窗口
+        if (common.lyricsWindowController != null &&
+            !common.lyricsWindowVisible) {
+          print(
+              '[${DateTime.now().toIso8601String()}] Showing desktop lyrics window');
+          await common.lyricsWindowController!.show();
+          common.lyricsWindowVisible = true;
+          print(
+              '[${DateTime.now().toIso8601String()}] Desktop lyrics window shown');
+        } else {
+          print(
+              '[${DateTime.now().toIso8601String()}] Desktop lyrics window already visible or controller missing, visible=${common.lyricsWindowVisible}, controller=${common.lyricsWindowController != null}');
+        }
       } else {
-        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window already visible or controller missing, visible=${common.lyricsWindowVisible}, controller=${common.lyricsWindowController != null}');
-      }
-      } else {
-      print('[${DateTime.now().toIso8601String()}] Desktop lyrics disabling');
-      // 先解锁歌词窗口，避免下次显示时仍处于锁定状态
-      if (common.lyricsWindowControllerFlutterLyric != null) {
-        try {
-          await common.lyricsWindowControllerFlutterLyric!.invokeMethod('unlock');
-        } catch (e) {}
-      } else if (common.lyricsWindowController != null) {
-        try {
-          await common.lyricsWindowController!.invokeMethod('unlock');
-        } catch (e) {}
-      }
-      // 如果禁用桌面歌词，隐藏窗口
-      if (common.lyricsWindowController != null) {
-        print('[${DateTime.now().toIso8601String()}] Hiding desktop lyrics window');
-        await common.lyricsWindowController!.hide();
-        common.lyricsWindowVisible = false;
-        print('[${DateTime.now().toIso8601String()}] Desktop lyrics window hidden');
-      } else {
-        print('[${DateTime.now().toIso8601String()}] No desktop lyrics controller to hide');
-      }
+        print('[${DateTime.now().toIso8601String()}] Desktop lyrics disabling');
+        // 先解锁歌词窗口，避免下次显示时仍处于锁定状态
+        if (common.lyricsWindowControllerFlutterLyric != null) {
+          try {
+            await common.lyricsWindowControllerFlutterLyric!
+                .invokeMethod('unlock');
+          } catch (e) {}
+        } else if (common.lyricsWindowController != null) {
+          try {
+            await common.lyricsWindowController!.invokeMethod('unlock');
+          } catch (e) {}
+        }
+        // 如果禁用桌面歌词，隐藏窗口
+        if (common.lyricsWindowController != null) {
+          print(
+              '[${DateTime.now().toIso8601String()}] Hiding desktop lyrics window');
+          await common.lyricsWindowController!.hide();
+          common.lyricsWindowVisible = false;
+          print(
+              '[${DateTime.now().toIso8601String()}] Desktop lyrics window hidden');
+        } else {
+          print(
+              '[${DateTime.now().toIso8601String()}] No desktop lyrics controller to hide');
+        }
 
-      // 也隐藏 flutter_lyric 桌面歌词窗口
-      if (common.lyricsWindowControllerFlutterLyric != null) {
-        print('[${DateTime.now().toIso8601String()}] Hiding Flutter Lyric desktop lyrics window');
-        await common.lyricsWindowControllerFlutterLyric!.hide();
-        common.lyricsWindowFlutterLyricVisible = false;
-        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
-      }
-      // 重置锁定状态
-      _desktopLyricsLocked = false;
+        // 也隐藏 flutter_lyric 桌面歌词窗口
+        if (common.lyricsWindowControllerFlutterLyric != null) {
+          print(
+              '[${DateTime.now().toIso8601String()}] Hiding Flutter Lyric desktop lyrics window');
+          await common.lyricsWindowControllerFlutterLyric!.hide();
+          common.lyricsWindowFlutterLyricVisible = false;
+          print(
+              '[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window hidden');
+        }
+        // 重置锁定状态
+        _desktopLyricsLocked = false;
       }
     }
   }
@@ -993,6 +1060,33 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setDesktopLyricsLocked(bool value) async {
     _desktopLyricsLocked = value;
     await _saveSetting('desktop_lyrics_locked', value);
+
+    // 更新跨进程通知器
+    try {
+      common.desktopLyricsLockNotifier.value = value;
+    } catch (e) {}
+
+    // 通知桌面歌词窗口（优先 flutter_lyric，其次旧版）
+    try {
+      if (value) {
+        if (common.lyricsWindowControllerFlutterLyric != null) {
+          await common.lyricsWindowControllerFlutterLyric!
+              .invokeMethod('lock_lyrics');
+        } else if (common.lyricsWindowController != null) {
+          await common.lyricsWindowController!.invokeMethod('lock_lyrics');
+        }
+      } else {
+        if (common.lyricsWindowControllerFlutterLyric != null) {
+          await common.lyricsWindowControllerFlutterLyric!
+              .invokeMethod('unlock');
+        } else if (common.lyricsWindowController != null) {
+          await common.lyricsWindowController!.invokeMethod('unlock');
+        }
+      }
+    } catch (e) {
+      // 忽略 IPC 错误
+    }
+
     notifyListeners();
   }
 
@@ -1024,7 +1118,8 @@ class SettingsProvider with ChangeNotifier {
     // 通知桌面歌词窗口更新字体大小
     if (common.lyricsWindowController != null) {
       try {
-        await common.lyricsWindowController!.updateDesktopLyricsFontSize(_desktopLyricsFontSize);
+        await common.lyricsWindowController!
+            .updateDesktopLyricsFontSize(_desktopLyricsFontSize);
       } catch (e) {
         // 更新桌面歌词字体大小失败
       }
@@ -1044,10 +1139,12 @@ class SettingsProvider with ChangeNotifier {
       if (common.lyricsWindowControllerFlutterLyric != null) {
         await common.lyricsWindowControllerFlutterLyric!.show();
         common.lyricsWindowFlutterLyricVisible = true;
-        print('[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window shown');
+        print(
+            '[${DateTime.now().toIso8601String()}] Flutter Lyric desktop lyrics window shown');
       }
     } catch (e) {
-      print('[${DateTime.now().toIso8601String()}] Show Flutter Lyric desktop lyrics error: $e');
+      print(
+          '[${DateTime.now().toIso8601String()}] Show Flutter Lyric desktop lyrics error: $e');
     }
   }
 
@@ -1155,7 +1252,8 @@ class SettingsProvider with ChangeNotifier {
     // 如果启用了同步，同时更新用户界面的歌曲主题色占比
     if (_syncGradientSettings) {
       _uiGradientSongColorRatio = value;
-      await _saveSetting('ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
+      await _saveSetting(
+          'ui_gradient_song_color_ratio', _uiGradientSongColorRatio);
     }
     notifyListeners();
   }
@@ -1207,28 +1305,26 @@ class SettingsProvider with ChangeNotifier {
     await _saveSetting('fluid_layer_opacity', _fluidLayerOpacity);
     notifyListeners();
   }
-  
+
   // 封面设置 setters
   Future<void> setCoverShape(CoverShape value) async {
     _coverShape = value;
     await _saveSetting('cover_shape', _coverShape.index);
     notifyListeners();
   }
-  
+
   Future<void> setCircleCoverState(CircleCoverState value) async {
     _circleCoverState = value;
     await _saveSetting('circle_cover_state', _circleCoverState.index);
     notifyListeners();
   }
-  
+
   Future<void> setCoverSize(double value) async {
     _coverSize = value.clamp(200.0, 500.0);
     await _saveSetting('cover_size', _coverSize);
     notifyListeners();
   }
-  
 
-  
   Future<void> setCoverBorderRadius(double value) async {
     _coverBorderRadius = value.clamp(0.0, 50.0);
     await _saveSetting('cover_border_radius', _coverBorderRadius);
@@ -1286,7 +1382,7 @@ class SettingsProvider with ChangeNotifier {
     await prefs.remove('fluid_animation_duration');
     await prefs.remove('fluid_offset_amount');
     await prefs.remove('fluid_layer_opacity');
-    
+
     // 重置封面设置
     await prefs.remove('cover_shape');
     await prefs.remove('circle_cover_state');
@@ -1303,80 +1399,113 @@ class SettingsProvider with ChangeNotifier {
     final Map<String, dynamic> settingsMap = {};
 
     // 用户界面设置
-    settingsMap['use_blur_background'] = prefs.getBool('use_blur_background') ?? true;
+    settingsMap['use_blur_background'] =
+        prefs.getBool('use_blur_background') ?? true;
     settingsMap['show_album_art'] = prefs.getBool('show_album_art') ?? true;
-    settingsMap['use_sidebar_glass'] = prefs.getBool('use_sidebar_glass') ?? true;
+    settingsMap['use_sidebar_glass'] =
+        prefs.getBool('use_sidebar_glass') ?? true;
     settingsMap['use_player_glass'] = prefs.getBool('use_player_glass') ?? true;
     settingsMap['glass_opacity'] = prefs.getDouble('glass_opacity') ?? 0.2;
     settingsMap['border_radius'] = prefs.getDouble('border_radius') ?? 8.0;
-    settingsMap['player_bar_cover_radius'] = prefs.getDouble('player_bar_cover_radius') ?? 8.0;
-    settingsMap['window_border_radius'] = prefs.getDouble('window_border_radius') ?? 12.0;
+    settingsMap['player_bar_cover_radius'] =
+        prefs.getDouble('player_bar_cover_radius') ?? 8.0;
+    settingsMap['window_border_radius'] =
+        prefs.getDouble('window_border_radius') ?? 12.0;
     settingsMap['window_opacity'] = prefs.getDouble('window_opacity') ?? 0.85;
     settingsMap['card_opacity'] = prefs.getDouble('card_opacity') ?? 0.85;
     settingsMap['ui_background_type'] = prefs.getInt('ui_background_type') ?? 0;
-    settingsMap['ui_custom_image_path'] = prefs.getString('ui_custom_image_path') ?? '';
+    settingsMap['ui_custom_image_path'] =
+        prefs.getString('ui_custom_image_path') ?? '';
     settingsMap['ui_image_fit_type'] = prefs.getInt('ui_image_fit_type') ?? 0;
-    settingsMap['sync_background_images'] = prefs.getBool('sync_background_images') ?? false;
-    settingsMap['sync_gradient_settings'] = prefs.getBool('sync_gradient_settings') ?? false;
+    settingsMap['sync_background_images'] =
+        prefs.getBool('sync_background_images') ?? false;
+    settingsMap['sync_gradient_settings'] =
+        prefs.getBool('sync_gradient_settings') ?? false;
     settingsMap['ui_gradient_type'] = prefs.getInt('ui_gradient_type') ?? 0;
-    settingsMap['ui_gradient_song_color_ratio'] = prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
+    settingsMap['ui_gradient_song_color_ratio'] =
+        prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
 
     // 歌词设置
     settingsMap['lyrics_alignment'] = prefs.getInt('lyrics_alignment') ?? 1;
-    settingsMap['lyrics_font_size'] = prefs.getDouble('lyrics_font_size') ?? 16.0;
-    settingsMap['active_lyrics_font_size'] = prefs.getDouble('active_lyrics_font_size') ?? 22.0;
+    settingsMap['lyrics_font_size'] =
+        prefs.getDouble('lyrics_font_size') ?? 16.0;
+    settingsMap['active_lyrics_font_size'] =
+        prefs.getDouble('active_lyrics_font_size') ?? 22.0;
     settingsMap['show_translation'] = prefs.getBool('show_translation') ?? true;
-    settingsMap['enable_lyrics_blur'] = prefs.getBool('enable_lyrics_blur') ?? true;
+    settingsMap['enable_lyrics_blur'] =
+        prefs.getBool('enable_lyrics_blur') ?? true;
     settingsMap['lyrics_opacity'] = prefs.getDouble('lyrics_opacity') ?? 1.0;
     settingsMap['lyrics_line_gap'] = prefs.getInt('lyrics_line_gap') ?? 8;
     settingsMap['scroll_duration'] = prefs.getInt('scroll_duration') ?? 500;
-    settingsMap['selection_auto_resume_duration'] = prefs.getInt('selection_auto_resume_duration') ?? 400;
-    settingsMap['active_auto_resume_duration'] = prefs.getInt('active_auto_resume_duration') ?? 3500;
-    settingsMap['scroll_curve'] = prefs.getString('scroll_curve') ?? 'easeInOutCubic';
+    settingsMap['selection_auto_resume_duration'] =
+        prefs.getInt('selection_auto_resume_duration') ?? 400;
+    settingsMap['active_auto_resume_duration'] =
+        prefs.getInt('active_auto_resume_duration') ?? 3500;
+    settingsMap['scroll_curve'] =
+        prefs.getString('scroll_curve') ?? 'easeInOutCubic';
 
     // 播放器设置
     settingsMap['auto_play_next'] = prefs.getBool('auto_play_next') ?? true;
-    settingsMap['save_play_progress'] = prefs.getBool('save_play_progress') ?? true;
+    settingsMap['save_play_progress'] =
+        prefs.getBool('save_play_progress') ?? true;
     settingsMap['show_play_count'] = prefs.getBool('show_play_count') ?? true;
-    settingsMap['enable_fade_effect'] = prefs.getBool('enable_fade_effect') ?? true;
+    settingsMap['enable_fade_effect'] =
+        prefs.getBool('enable_fade_effect') ?? true;
     settingsMap['fade_duration'] = prefs.getDouble('fade_duration') ?? 2.0;
     settingsMap['default_volume'] = prefs.getInt('default_volume') ?? 70;
-    settingsMap['show_lyrics_in_player'] = prefs.getBool('show_lyrics_in_player') ?? true;
+    settingsMap['show_lyrics_in_player'] =
+        prefs.getBool('show_lyrics_in_player') ?? true;
     settingsMap['player_bar_style'] = prefs.getInt('player_bar_style') ?? 0;
     settingsMap['player_bar_length'] = prefs.getInt('player_bar_length') ?? 0;
 
     // 液态玻璃参数
-    settingsMap['liquid_glass_distortion'] = prefs.getDouble('liquid_glass_distortion') ?? 0.15;
-    settingsMap['liquid_glass_distortion_width'] = prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
-    settingsMap['liquid_glass_chromatic_aberration'] = prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.003;
-    settingsMap['liquid_glass_saturation'] = prefs.getDouble('liquid_glass_saturation') ?? 1.0;
-    settingsMap['liquid_glass_blur_sigma'] = prefs.getDouble('liquid_glass_blur_sigma') ?? 20.0;
-    settingsMap['liquid_glass_magnification'] = prefs.getDouble('liquid_glass_magnification') ?? 1.0;
+    settingsMap['liquid_glass_distortion'] =
+        prefs.getDouble('liquid_glass_distortion') ?? 0.15;
+    settingsMap['liquid_glass_distortion_width'] =
+        prefs.getDouble('liquid_glass_distortion_width') ?? 40.0;
+    settingsMap['liquid_glass_chromatic_aberration'] =
+        prefs.getDouble('liquid_glass_chromatic_aberration') ?? 0.003;
+    settingsMap['liquid_glass_saturation'] =
+        prefs.getDouble('liquid_glass_saturation') ?? 1.0;
+    settingsMap['liquid_glass_blur_sigma'] =
+        prefs.getDouble('liquid_glass_blur_sigma') ?? 20.0;
+    settingsMap['liquid_glass_magnification'] =
+        prefs.getDouble('liquid_glass_magnification') ?? 1.0;
 
     // 歌曲页面设置
-    settingsMap['song_page_background_type'] = prefs.getInt('song_page_background_type') ?? 0;
+    settingsMap['song_page_background_type'] =
+        prefs.getInt('song_page_background_type') ?? 0;
     settingsMap['gradient_type'] = prefs.getInt('gradient_type') ?? 0;
-    settingsMap['is_fluid_dynamic'] = prefs.getBool('is_fluid_dynamic') ?? false;
+    settingsMap['is_fluid_dynamic'] =
+        prefs.getBool('is_fluid_dynamic') ?? false;
     settingsMap['blur_amount'] = prefs.getDouble('blur_amount') ?? 30.0;
     settingsMap['page_opacity'] = prefs.getDouble('page_opacity') ?? 1.0;
-    settingsMap['gradient_song_color_ratio'] = prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
-    settingsMap['custom_image_path'] = prefs.getString('custom_image_path') ?? '';
+    settingsMap['gradient_song_color_ratio'] =
+        prefs.getDouble('gradient_song_color_ratio') ?? 0.7;
+    settingsMap['custom_image_path'] =
+        prefs.getString('custom_image_path') ?? '';
     settingsMap['image_fit_type'] = prefs.getInt('image_fit_type') ?? 1;
 
     // 封面设置
     settingsMap['cover_shape'] = prefs.getInt('cover_shape') ?? 0;
     settingsMap['circle_cover_state'] = prefs.getInt('circle_cover_state') ?? 0;
-    settingsMap['cover_border_radius'] = prefs.getDouble('cover_border_radius') ?? 16.0;
+    settingsMap['cover_border_radius'] =
+        prefs.getDouble('cover_border_radius') ?? 16.0;
 
     // 流体背景参数
-    settingsMap['fluid_bubbles_size'] = prefs.getDouble('fluid_bubbles_size') ?? 400.0;
+    settingsMap['fluid_bubbles_size'] =
+        prefs.getDouble('fluid_bubbles_size') ?? 400.0;
     settingsMap['fluid_velocity'] = prefs.getDouble('fluid_velocity') ?? 120.0;
-    settingsMap['fluid_animation_duration'] = prefs.getInt('fluid_animation_duration') ?? 2000;
-    settingsMap['fluid_offset_amount'] = prefs.getDouble('fluid_offset_amount') ?? 20.0;
-    settingsMap['fluid_layer_opacity'] = prefs.getDouble('fluid_layer_opacity') ?? 0.3;
+    settingsMap['fluid_animation_duration'] =
+        prefs.getInt('fluid_animation_duration') ?? 2000;
+    settingsMap['fluid_offset_amount'] =
+        prefs.getDouble('fluid_offset_amount') ?? 20.0;
+    settingsMap['fluid_layer_opacity'] =
+        prefs.getDouble('fluid_layer_opacity') ?? 0.3;
 
     // 颜色平滑过渡
-    settingsMap['smooth_color_transition'] = prefs.getBool('smooth_color_transition') ?? true;
+    settingsMap['smooth_color_transition'] =
+        prefs.getBool('smooth_color_transition') ?? true;
 
     // 字体设置
     settingsMap['font_path'] = prefs.getString('font_path') ?? '';
@@ -1384,24 +1513,31 @@ class SettingsProvider with ChangeNotifier {
 
     // 歌词特效设置
     settingsMap['fade_range_top'] = prefs.getDouble('fade_range_top') ?? 200.0;
-    settingsMap['fade_range_bottom'] = prefs.getDouble('fade_range_bottom') ?? 200.0;
+    settingsMap['fade_range_bottom'] =
+        prefs.getDouble('fade_range_bottom') ?? 200.0;
     settingsMap['fade_direction'] = prefs.getInt('fade_direction') ?? 0;
     settingsMap['fade_opacity'] = prefs.getDouble('fade_opacity') ?? 0.8;
     settingsMap['blend_mode_index'] = prefs.getInt('blend_mode_index') ?? 0;
     settingsMap['use_custom_blur'] = prefs.getBool('use_custom_blur') ?? true;
-    settingsMap['enable_lyrics_selection_effects'] = prefs.getBool('enable_lyrics_selection_effects') ?? true;
+    settingsMap['enable_lyrics_selection_effects'] =
+        prefs.getBool('enable_lyrics_selection_effects') ?? true;
     settingsMap['lyrics_effect_type'] = prefs.getInt('lyrics_effect_type') ?? 0;
-    settingsMap['enable_karaoke_effect'] = prefs.getBool('enable_karaoke_effect') ?? false;
+    settingsMap['enable_karaoke_effect'] =
+        prefs.getBool('enable_karaoke_effect') ?? false;
 
     // 桌面歌词设置
-    settingsMap['enable_desktop_lyrics'] = prefs.getBool('enable_desktop_lyrics') ?? false;
-    settingsMap['desktop_lyrics_font_size'] = prefs.getDouble('desktop_lyrics_font_size') ?? 30.0;
-    settingsMap['show_background_on_hover'] = prefs.getBool('show_background_on_hover') ?? true;
+    settingsMap['enable_desktop_lyrics'] =
+        prefs.getBool('enable_desktop_lyrics') ?? false;
+    settingsMap['desktop_lyrics_font_size'] =
+        prefs.getDouble('desktop_lyrics_font_size') ?? 30.0;
+    settingsMap['show_background_on_hover'] =
+        prefs.getBool('show_background_on_hover') ?? true;
     settingsMap['always_on_top'] = prefs.getBool('always_on_top') ?? true;
 
     // 歌曲页面控件设置
     settingsMap['show_lock_button'] = prefs.getBool('show_lock_button') ?? true;
-    settingsMap['show_control_buttons'] = prefs.getBool('show_control_buttons') ?? true;
+    settingsMap['show_control_buttons'] =
+        prefs.getBool('show_control_buttons') ?? true;
     settingsMap['cover_size'] = prefs.getDouble('cover_size') ?? 300.0;
 
     return jsonEncode(settingsMap);
@@ -1415,13 +1551,15 @@ class SettingsProvider with ChangeNotifier {
     // 导入所有设置项
     // 用户界面设置
     if (settingsMap.containsKey('use_blur_background')) {
-      await prefs.setBool('use_blur_background', settingsMap['use_blur_background']);
+      await prefs.setBool(
+          'use_blur_background', settingsMap['use_blur_background']);
     }
     if (settingsMap.containsKey('show_album_art')) {
       await prefs.setBool('show_album_art', settingsMap['show_album_art']);
     }
     if (settingsMap.containsKey('use_sidebar_glass')) {
-      await prefs.setBool('use_sidebar_glass', settingsMap['use_sidebar_glass']);
+      await prefs.setBool(
+          'use_sidebar_glass', settingsMap['use_sidebar_glass']);
     }
     if (settingsMap.containsKey('use_player_glass')) {
       await prefs.setBool('use_player_glass', settingsMap['use_player_glass']);
@@ -1433,7 +1571,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setDouble('border_radius', settingsMap['border_radius']);
     }
     if (settingsMap.containsKey('window_border_radius')) {
-      await prefs.setDouble('window_border_radius', settingsMap['window_border_radius']);
+      await prefs.setDouble(
+          'window_border_radius', settingsMap['window_border_radius']);
     }
     if (settingsMap.containsKey('window_opacity')) {
       await prefs.setDouble('window_opacity', settingsMap['window_opacity']);
@@ -1442,25 +1581,30 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setDouble('card_opacity', settingsMap['card_opacity']);
     }
     if (settingsMap.containsKey('ui_background_type')) {
-      await prefs.setInt('ui_background_type', settingsMap['ui_background_type']);
+      await prefs.setInt(
+          'ui_background_type', settingsMap['ui_background_type']);
     }
     if (settingsMap.containsKey('ui_custom_image_path')) {
-      await prefs.setString('ui_custom_image_path', settingsMap['ui_custom_image_path']);
+      await prefs.setString(
+          'ui_custom_image_path', settingsMap['ui_custom_image_path']);
     }
     if (settingsMap.containsKey('ui_image_fit_type')) {
       await prefs.setInt('ui_image_fit_type', settingsMap['ui_image_fit_type']);
     }
     if (settingsMap.containsKey('sync_background_images')) {
-      await prefs.setBool('sync_background_images', settingsMap['sync_background_images']);
+      await prefs.setBool(
+          'sync_background_images', settingsMap['sync_background_images']);
     }
     if (settingsMap.containsKey('sync_gradient_settings')) {
-      await prefs.setBool('sync_gradient_settings', settingsMap['sync_gradient_settings']);
+      await prefs.setBool(
+          'sync_gradient_settings', settingsMap['sync_gradient_settings']);
     }
     if (settingsMap.containsKey('ui_gradient_type')) {
       await prefs.setInt('ui_gradient_type', settingsMap['ui_gradient_type']);
     }
     if (settingsMap.containsKey('ui_gradient_song_color_ratio')) {
-      await prefs.setDouble('ui_gradient_song_color_ratio', settingsMap['ui_gradient_song_color_ratio']);
+      await prefs.setDouble('ui_gradient_song_color_ratio',
+          settingsMap['ui_gradient_song_color_ratio']);
     }
 
     // 播放器设置
@@ -1468,13 +1612,15 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setBool('auto_play_next', settingsMap['auto_play_next']);
     }
     if (settingsMap.containsKey('save_play_progress')) {
-      await prefs.setBool('save_play_progress', settingsMap['save_play_progress']);
+      await prefs.setBool(
+          'save_play_progress', settingsMap['save_play_progress']);
     }
     if (settingsMap.containsKey('show_play_count')) {
       await prefs.setBool('show_play_count', settingsMap['show_play_count']);
     }
     if (settingsMap.containsKey('enable_fade_effect')) {
-      await prefs.setBool('enable_fade_effect', settingsMap['enable_fade_effect']);
+      await prefs.setBool(
+          'enable_fade_effect', settingsMap['enable_fade_effect']);
     }
     if (settingsMap.containsKey('fade_duration')) {
       await prefs.setDouble('fade_duration', settingsMap['fade_duration']);
@@ -1483,7 +1629,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setInt('default_volume', settingsMap['default_volume']);
     }
     if (settingsMap.containsKey('show_lyrics_in_player')) {
-      await prefs.setBool('show_lyrics_in_player', settingsMap['show_lyrics_in_player']);
+      await prefs.setBool(
+          'show_lyrics_in_player', settingsMap['show_lyrics_in_player']);
     }
     if (settingsMap.containsKey('player_bar_style')) {
       await prefs.setInt('player_bar_style', settingsMap['player_bar_style']);
@@ -1493,13 +1640,15 @@ class SettingsProvider with ChangeNotifier {
     }
 
     if (settingsMap.containsKey('song_page_background_type')) {
-      await prefs.setInt('song_page_background_type', settingsMap['song_page_background_type']);
+      await prefs.setInt('song_page_background_type',
+          settingsMap['song_page_background_type']);
     }
     if (settingsMap.containsKey('page_opacity')) {
       await prefs.setDouble('page_opacity', settingsMap['page_opacity']);
     }
     if (settingsMap.containsKey('custom_image_path')) {
-      await prefs.setString('custom_image_path', settingsMap['custom_image_path']);
+      await prefs.setString(
+          'custom_image_path', settingsMap['custom_image_path']);
     }
     if (settingsMap.containsKey('image_fit_type')) {
       await prefs.setInt('image_fit_type', settingsMap['image_fit_type']);
@@ -1508,7 +1657,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setInt('gradient_type', settingsMap['gradient_type']);
     }
     if (settingsMap.containsKey('gradient_song_color_ratio')) {
-      await prefs.setDouble('gradient_song_color_ratio', settingsMap['gradient_song_color_ratio']);
+      await prefs.setDouble('gradient_song_color_ratio',
+          settingsMap['gradient_song_color_ratio']);
     }
     if (settingsMap.containsKey('blur_amount')) {
       await prefs.setDouble('blur_amount', settingsMap['blur_amount']);
@@ -1519,16 +1669,19 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setInt('lyrics_alignment', settingsMap['lyrics_alignment']);
     }
     if (settingsMap.containsKey('lyrics_font_size')) {
-      await prefs.setDouble('lyrics_font_size', settingsMap['lyrics_font_size']);
+      await prefs.setDouble(
+          'lyrics_font_size', settingsMap['lyrics_font_size']);
     }
     if (settingsMap.containsKey('active_lyrics_font_size')) {
-      await prefs.setDouble('active_lyrics_font_size', settingsMap['active_lyrics_font_size']);
+      await prefs.setDouble(
+          'active_lyrics_font_size', settingsMap['active_lyrics_font_size']);
     }
     if (settingsMap.containsKey('show_translation')) {
       await prefs.setBool('show_translation', settingsMap['show_translation']);
     }
     if (settingsMap.containsKey('enable_lyrics_blur')) {
-      await prefs.setBool('enable_lyrics_blur', settingsMap['enable_lyrics_blur']);
+      await prefs.setBool(
+          'enable_lyrics_blur', settingsMap['enable_lyrics_blur']);
     }
     if (settingsMap.containsKey('lyrics_opacity')) {
       await prefs.setDouble('lyrics_opacity', settingsMap['lyrics_opacity']);
@@ -1540,10 +1693,12 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setInt('scroll_duration', settingsMap['scroll_duration']);
     }
     if (settingsMap.containsKey('selection_auto_resume_duration')) {
-      await prefs.setInt('selection_auto_resume_duration', settingsMap['selection_auto_resume_duration']);
+      await prefs.setInt('selection_auto_resume_duration',
+          settingsMap['selection_auto_resume_duration']);
     }
     if (settingsMap.containsKey('active_auto_resume_duration')) {
-      await prefs.setInt('active_auto_resume_duration', settingsMap['active_auto_resume_duration']);
+      await prefs.setInt('active_auto_resume_duration',
+          settingsMap['active_auto_resume_duration']);
     }
     if (settingsMap.containsKey('scroll_curve')) {
       await prefs.setString('scroll_curve', settingsMap['scroll_curve']);
@@ -1551,27 +1706,34 @@ class SettingsProvider with ChangeNotifier {
 
     // 液态玻璃参数
     if (settingsMap.containsKey('liquid_glass_distortion')) {
-      await prefs.setDouble('liquid_glass_distortion', settingsMap['liquid_glass_distortion']);
+      await prefs.setDouble(
+          'liquid_glass_distortion', settingsMap['liquid_glass_distortion']);
     }
     if (settingsMap.containsKey('liquid_glass_distortion_width')) {
-      await prefs.setDouble('liquid_glass_distortion_width', settingsMap['liquid_glass_distortion_width']);
+      await prefs.setDouble('liquid_glass_distortion_width',
+          settingsMap['liquid_glass_distortion_width']);
     }
     if (settingsMap.containsKey('liquid_glass_chromatic_aberration')) {
-      await prefs.setDouble('liquid_glass_chromatic_aberration', settingsMap['liquid_glass_chromatic_aberration']);
+      await prefs.setDouble('liquid_glass_chromatic_aberration',
+          settingsMap['liquid_glass_chromatic_aberration']);
     }
     if (settingsMap.containsKey('liquid_glass_saturation')) {
-      await prefs.setDouble('liquid_glass_saturation', settingsMap['liquid_glass_saturation']);
+      await prefs.setDouble(
+          'liquid_glass_saturation', settingsMap['liquid_glass_saturation']);
     }
     if (settingsMap.containsKey('liquid_glass_blur_sigma')) {
-      await prefs.setDouble('liquid_glass_blur_sigma', settingsMap['liquid_glass_blur_sigma']);
+      await prefs.setDouble(
+          'liquid_glass_blur_sigma', settingsMap['liquid_glass_blur_sigma']);
     }
     if (settingsMap.containsKey('liquid_glass_magnification')) {
-      await prefs.setDouble('liquid_glass_magnification', settingsMap['liquid_glass_magnification']);
+      await prefs.setDouble('liquid_glass_magnification',
+          settingsMap['liquid_glass_magnification']);
     }
 
     // 歌曲页面设置
     if (settingsMap.containsKey('song_page_background_type')) {
-      await prefs.setInt('song_page_background_type', settingsMap['song_page_background_type']);
+      await prefs.setInt('song_page_background_type',
+          settingsMap['song_page_background_type']);
     }
     if (settingsMap.containsKey('gradient_type')) {
       await prefs.setInt('gradient_type', settingsMap['gradient_type']);
@@ -1586,10 +1748,12 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setDouble('page_opacity', settingsMap['page_opacity']);
     }
     if (settingsMap.containsKey('gradient_song_color_ratio')) {
-      await prefs.setDouble('gradient_song_color_ratio', settingsMap['gradient_song_color_ratio']);
+      await prefs.setDouble('gradient_song_color_ratio',
+          settingsMap['gradient_song_color_ratio']);
     }
     if (settingsMap.containsKey('custom_image_path')) {
-      await prefs.setString('custom_image_path', settingsMap['custom_image_path']);
+      await prefs.setString(
+          'custom_image_path', settingsMap['custom_image_path']);
     }
     if (settingsMap.containsKey('image_fit_type')) {
       await prefs.setInt('image_fit_type', settingsMap['image_fit_type']);
@@ -1597,24 +1761,29 @@ class SettingsProvider with ChangeNotifier {
 
     // 流体背景参数
     if (settingsMap.containsKey('fluid_bubbles_size')) {
-      await prefs.setDouble('fluid_bubbles_size', settingsMap['fluid_bubbles_size']);
+      await prefs.setDouble(
+          'fluid_bubbles_size', settingsMap['fluid_bubbles_size']);
     }
     if (settingsMap.containsKey('fluid_velocity')) {
       await prefs.setDouble('fluid_velocity', settingsMap['fluid_velocity']);
     }
     if (settingsMap.containsKey('fluid_animation_duration')) {
-      await prefs.setInt('fluid_animation_duration', settingsMap['fluid_animation_duration']);
+      await prefs.setInt(
+          'fluid_animation_duration', settingsMap['fluid_animation_duration']);
     }
     if (settingsMap.containsKey('fluid_offset_amount')) {
-      await prefs.setDouble('fluid_offset_amount', settingsMap['fluid_offset_amount']);
+      await prefs.setDouble(
+          'fluid_offset_amount', settingsMap['fluid_offset_amount']);
     }
     if (settingsMap.containsKey('fluid_layer_opacity')) {
-      await prefs.setDouble('fluid_layer_opacity', settingsMap['fluid_layer_opacity']);
+      await prefs.setDouble(
+          'fluid_layer_opacity', settingsMap['fluid_layer_opacity']);
     }
 
     // 颜色平滑过渡
     if (settingsMap.containsKey('smooth_color_transition')) {
-      await prefs.setBool('smooth_color_transition', settingsMap['smooth_color_transition']);
+      await prefs.setBool(
+          'smooth_color_transition', settingsMap['smooth_color_transition']);
     }
 
     // 字体设置
@@ -1630,7 +1799,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setDouble('fade_range_top', settingsMap['fade_range_top']);
     }
     if (settingsMap.containsKey('fade_range_bottom')) {
-      await prefs.setDouble('fade_range_bottom', settingsMap['fade_range_bottom']);
+      await prefs.setDouble(
+          'fade_range_bottom', settingsMap['fade_range_bottom']);
     }
     if (settingsMap.containsKey('fade_direction')) {
       await prefs.setInt('fade_direction', settingsMap['fade_direction']);
@@ -1645,24 +1815,30 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setBool('use_custom_blur', settingsMap['use_custom_blur']);
     }
     if (settingsMap.containsKey('enable_lyrics_selection_effects')) {
-      await prefs.setBool('enable_lyrics_selection_effects', settingsMap['enable_lyrics_selection_effects']);
+      await prefs.setBool('enable_lyrics_selection_effects',
+          settingsMap['enable_lyrics_selection_effects']);
     }
     if (settingsMap.containsKey('lyrics_effect_type')) {
-      await prefs.setInt('lyrics_effect_type', settingsMap['lyrics_effect_type']);
+      await prefs.setInt(
+          'lyrics_effect_type', settingsMap['lyrics_effect_type']);
     }
     if (settingsMap.containsKey('enable_karaoke_effect')) {
-      await prefs.setBool('enable_karaoke_effect', settingsMap['enable_karaoke_effect']);
+      await prefs.setBool(
+          'enable_karaoke_effect', settingsMap['enable_karaoke_effect']);
     }
 
     // 桌面歌词设置
     if (settingsMap.containsKey('enable_desktop_lyrics')) {
-      await prefs.setBool('enable_desktop_lyrics', settingsMap['enable_desktop_lyrics']);
+      await prefs.setBool(
+          'enable_desktop_lyrics', settingsMap['enable_desktop_lyrics']);
     }
     if (settingsMap.containsKey('desktop_lyrics_font_size')) {
-      await prefs.setDouble('desktop_lyrics_font_size', settingsMap['desktop_lyrics_font_size']);
+      await prefs.setDouble(
+          'desktop_lyrics_font_size', settingsMap['desktop_lyrics_font_size']);
     }
     if (settingsMap.containsKey('show_background_on_hover')) {
-      await prefs.setBool('show_background_on_hover', settingsMap['show_background_on_hover']);
+      await prefs.setBool(
+          'show_background_on_hover', settingsMap['show_background_on_hover']);
     }
     if (settingsMap.containsKey('always_on_top')) {
       await prefs.setBool('always_on_top', settingsMap['always_on_top']);
@@ -1673,7 +1849,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setBool('show_lock_button', settingsMap['show_lock_button']);
     }
     if (settingsMap.containsKey('show_control_buttons')) {
-      await prefs.setBool('show_control_buttons', settingsMap['show_control_buttons']);
+      await prefs.setBool(
+          'show_control_buttons', settingsMap['show_control_buttons']);
     }
     if (settingsMap.containsKey('cover_size')) {
       await prefs.setDouble('cover_size', settingsMap['cover_size']);

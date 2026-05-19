@@ -14,8 +14,8 @@ import 'desktop/desktop_lyrics_flutter_lyric_fixed.dart';
 import 'desktop/extensions/window_controller_extension.dart';
 import 'desktop/my_tray_listener.dart';
 import 'models/playlist_model.dart';
-import 'package:flutter_music_player/pages/albums_page.dart';
-import 'package:flutter_music_player/pages/artists_page.dart';
+import 'package:flutter_music_player/pages/albums_page_optimized.dart';
+import 'package:flutter_music_player/pages/artists_page_optimized.dart';
 import 'package:flutter_music_player/screens/home_screen.dart';
 import 'providers/music_provider.dart';
 import 'providers/navigation_provider.dart';
@@ -37,8 +37,8 @@ final globalHotkeyService = GlobalHotkeyService();
 
 // 状态标志
 bool _hasRestoredPlayProgress = false; // 标记是否已恢复播放进度
-bool _isTrayMenuInitialized = false;    // 托盘菜单初始化标志
-MyTrayListener? _trayListener;          // 全局托盘监听器实例
+bool _isTrayMenuInitialized = false; // 托盘菜单初始化标志
+MyTrayListener? _trayListener; // 全局托盘监听器实例
 
 // ==================== 应用入口 ====================
 
@@ -50,7 +50,7 @@ void main() async {
     await windowManager.ensureInitialized();
 
     final windowController = await WindowController.fromCurrentEngine();
-    
+
     // 检查是否是桌面歌词窗口
     if (windowController.arguments == 'desktop_lyrics') {
       await _initDesktopLyricsWindow(windowController);
@@ -95,7 +95,8 @@ Future<void> _initDesktopLyricsWindow(WindowController windowController) async {
 }
 
 /// 初始化flutter_lyric桌面歌词窗口
-Future<void> _initDesktopLyricsFlutterLyricWindow(WindowController windowController) async {
+Future<void> _initDesktopLyricsFlutterLyricWindow(
+    WindowController windowController) async {
   await windowController.desktopLyricsCustomInitialize();
 
   final windowOptions = WindowOptions(
@@ -135,7 +136,7 @@ Future<void> _initMainWindow() async {
     await windowManager.setPreventClose(true);
     await windowManager.show();
     await windowManager.focus();
-    
+
     // 初始化主窗口控制器和托盘
     mainWindowController = await WindowController.fromCurrentEngine();
     await _setupTrayIcon();
@@ -208,7 +209,7 @@ class _MyAppState extends State<MyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     // 监听窗口关闭事件
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       windowManager.addListener(this);
@@ -216,7 +217,8 @@ class _MyAppState extends State<MyApp>
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final windowController = await WindowController.fromCurrentEngine();
         if (globalPlayerProvider != null) {
-          await windowController.mainCustomInitialize(globalPlayerProvider!, settingsProvider: globalSettingsProvider);
+          await windowController.mainCustomInitialize(globalPlayerProvider!,
+              settingsProvider: globalSettingsProvider);
         }
       });
     }
@@ -270,7 +272,8 @@ class _MyAppState extends State<MyApp>
           return provider;
         }),
         // 播放器提供者（依赖音乐和设置提供者）
-        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider, PlayerProvider>(
+        ChangeNotifierProxyProvider2<MusicProvider, SettingsProvider,
+            PlayerProvider>(
           create: (context) {
             final provider = PlayerProvider();
             globalPlayerProvider = provider;
@@ -281,7 +284,7 @@ class _MyAppState extends State<MyApp>
             playerProvider.setMusicProvider(musicProvider);
             playerProvider.setSettingsProvider(settingsProvider);
             globalPlayerProvider = playerProvider;
-            
+
             // 初始化全局热键服务
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (playerProvider != null) {
@@ -293,7 +296,7 @@ class _MyAppState extends State<MyApp>
                 _setupTrayMenu();
               }
             });
-            
+
             // 恢复播放进度
             if (!_hasRestoredPlayProgress &&
                 musicProvider.hasInitialized &&
@@ -303,7 +306,7 @@ class _MyAppState extends State<MyApp>
                 playerProvider?.restorePlayProgress();
               });
             }
-            
+
             return playerProvider;
           },
         ),
@@ -314,9 +317,11 @@ class _MyAppState extends State<MyApp>
           if (!_isWindowMethodsInitialized && !_isInitializing) {
             _isInitializing = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final windowController = await WindowController.fromCurrentEngine();
+              final windowController =
+                  await WindowController.fromCurrentEngine();
               if (playerProvider != null) {
-                await windowController.mainCustomInitialize(playerProvider, settingsProvider: settings);
+                await windowController.mainCustomInitialize(playerProvider,
+                    settingsProvider: settings);
                 _isWindowMethodsInitialized = true;
               }
               _isInitializing = false;
@@ -324,7 +329,8 @@ class _MyAppState extends State<MyApp>
           }
 
           // 加载自定义字体
-          final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
+          final fontFamily =
+              settings.fontName.isNotEmpty ? settings.fontName : null;
 
           return MaterialApp(
             title: 'Music Player',
@@ -341,9 +347,13 @@ class _MyAppState extends State<MyApp>
                       // 背景层
                       Positioned.fill(
                         child: Container(
-                          color: settings.uiBackgroundType == UIBackgroundType.normal
-                              ? Theme.of(context).colorScheme.surface.withOpacity(
-                                  settings.windowOpacity.clamp(0.1, 1.0))
+                          color: settings.uiBackgroundType ==
+                                  UIBackgroundType.normal
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(
+                                      settings.windowOpacity.clamp(0.1, 1.0))
                               : Theme.of(context).colorScheme.surface,
                         ),
                       ),
@@ -354,7 +364,8 @@ class _MyAppState extends State<MyApp>
                             controller: globalLiquidGlassViewController,
                             pixelRatio: 1.0,
                             realTimeCapture: true,
-                            refreshRate: LiquidGlassRefreshRate.deviceRefreshRate,
+                            refreshRate:
+                                LiquidGlassRefreshRate.deviceRefreshRate,
                             useSync: true,
                             backgroundWidget: const SizedBox.expand(),
                             children: const [],
@@ -369,12 +380,14 @@ class _MyAppState extends State<MyApp>
             ),
             routes: {
               '/artists': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-                return ArtistsPage(navigateToArtist: args?['artist'] as String?);
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
+                return const ArtistsPageOptimized();
               },
               '/albums': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-                return AlbumsPage(navigateToAlbum: args?['album'] as String?);
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
+                return const AlbumsPageOptimized();
               },
             },
           );

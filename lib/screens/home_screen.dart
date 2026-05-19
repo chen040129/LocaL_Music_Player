@@ -64,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 窗口事件监听器
   late final _WindowEventListener _windowListener = _WindowEventListener(this);
-  
 
   @override
   void initState() {
@@ -75,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // 设置主题切换回调
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      final settingsProvider =
+          Provider.of<SettingsProvider>(context, listen: false);
 
       themeProvider.onThemeChanged = _onThemeChanged;
 
@@ -94,8 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 初始化内容区域尺寸
       _updateContentDimensions();
-      
-
     });
 
     // 添加渲染回调，监听布局变化
@@ -107,7 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       // 检查内容区域尺寸是否变化
       final currentWidth = _getContentWidth();
-      if (currentWidth != null && _lastContentWidth != null && currentWidth != _lastContentWidth) {
+      if (currentWidth != null &&
+          _lastContentWidth != null &&
+          currentWidth != _lastContentWidth) {
         _updateContentDimensions();
       }
       _lastContentWidth = currentWidth;
@@ -157,7 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _maximizeWindow() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      final settingsProvider =
+          Provider.of<SettingsProvider>(context, listen: false);
 
       // 保存当前的播放栏样式
       final originalStyle = settingsProvider.playerBarStyle;
@@ -284,9 +285,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double? _cachedContentWidth;
 
-  void _forceWindowRedraw() async {
+  Future<void> _forceWindowRedraw() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.setSize(await windowManager.getSize());
+    }
+  }
+
+  Future<void> _resetLiquidGlassStyleIfNeeded() async {
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    if (settingsProvider.playerBarStyle == PlayerBarStyle.liquidGlass) {
+      await settingsProvider.setPlayerBarStyle(PlayerBarStyle.normal);
+      await Future.delayed(const Duration(milliseconds: 120));
+      if (!mounted) return;
+      await settingsProvider.setPlayerBarStyle(PlayerBarStyle.liquidGlass);
     }
   }
 
@@ -456,7 +468,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // 使用ValueKey确保页面切换时重新创建
     switch (currentPage) {
       case AppPage.songs:
-        return SongsPage(key: ValueKey('songs_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return SongsPage(
+            key: ValueKey('songs_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.albums:
         return AlbumsPage(
             key: ValueKey('albums_$_currentPage'),
@@ -468,21 +482,37 @@ class _HomeScreenState extends State<HomeScreen> {
             navigateToArtist: navigationProvider.navigateToArtistName,
             onSidebarToggle: _toggleSidebar);
       case AppPage.folders:
-        return FoldersPage(key: ValueKey('folders_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return FoldersPage(
+            key: ValueKey('folders_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.playlists:
-        return PlaylistsPage(key: ValueKey('playlists_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return PlaylistsPage(
+            key: ValueKey('playlists_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.scanner:
-        return ScannerPage(key: ValueKey('scanner_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return ScannerPage(
+            key: ValueKey('scanner_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.library:
-        return LibraryPage(key: ValueKey('library_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return LibraryPage(
+            key: ValueKey('library_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.statistics:
-        return StatisticsPage(key: ValueKey('statistics_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return StatisticsPage(
+            key: ValueKey('statistics_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.settings:
-        return SettingsPage(key: ValueKey('settings_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return SettingsPage(
+            key: ValueKey('settings_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       case AppPage.about:
-        return AboutPage(key: ValueKey('about_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return AboutPage(
+            key: ValueKey('about_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
       default:
-        return SongsPage(key: ValueKey('songs_$_currentPage'), onSidebarToggle: _toggleSidebar);
+        return SongsPage(
+            key: ValueKey('songs_$_currentPage'),
+            onSidebarToggle: _toggleSidebar);
     }
   }
 
@@ -519,7 +549,10 @@ class _HomeScreenState extends State<HomeScreen> {
         // 液态玻璃的背景需要提供一个实际的背景色，避免显示LiquidGlassView的黑色背景
         // 使用主题的surface颜色，并根据窗口透明度调整
         Widget backgroundContent = Material(
-          color: Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+          color: Theme.of(context)
+              .colorScheme
+              .surface
+              .withOpacity(settings.windowOpacity),
           child: Scaffold(
             backgroundColor: Colors.transparent,
             body: Stack(
@@ -533,9 +566,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       switch (settings.uiBackgroundType) {
                         case UIBackgroundType.normal:
                           return Container(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.transparent
-                                : Theme.of(context).colorScheme.surface.withOpacity(settings.windowOpacity),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.transparent
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .surface
+                                        .withOpacity(settings.windowOpacity),
                           );
                         case UIBackgroundType.fluid:
                           return Stack(
@@ -645,12 +682,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       // 默认模式下的播放栏 - 放在 Stack 顶层以覆盖导航栏
                       if (settings.playerBarStyle == PlayerBarStyle.normal)
                         Positioned(
-                          left: settings.playerBarLength == PlayerBarLength.fullWidth ? 16 : (_getContentPosition()?.dx ?? 0) + 16,
+                          left: settings.playerBarLength ==
+                                  PlayerBarLength.fullWidth
+                              ? 16
+                              : (_getContentPosition()?.dx ?? 0) + 16,
                           right: 16,
                           bottom: 16,
                           child: const PlayerControlBar(),
                         ),
-
                     ],
                   ),
                 ),
@@ -664,18 +703,21 @@ class _HomeScreenState extends State<HomeScreen> {
         if (settings.playerBarStyle == PlayerBarStyle.liquidGlass) {
           // 获取内容区域的位置和宽度
           final contentPosition = _getContentPosition();
-          final contentWidth = _getContentWidth() ?? 
-              MediaQuery.of(context).size.width - (_isSidebarExpanded ? 240 : 0);
+          final contentWidth = _getContentWidth() ??
+              MediaQuery.of(context).size.width -
+                  (_isSidebarExpanded ? 240 : 0);
 
           // 根据播放栏长度决定宽度和位置
-          final playerBarWidth = settings.playerBarLength == PlayerBarLength.fullWidth
-              ? MediaQuery.of(context).size.width - 32
-              : contentWidth - 32;
+          final playerBarWidth =
+              settings.playerBarLength == PlayerBarLength.fullWidth
+                  ? MediaQuery.of(context).size.width - 32
+                  : contentWidth - 32;
 
           // 计算左边距：全宽模式使用16，内容宽度模式使用contentPosition?.dx + 16
-          final double leftMargin = settings.playerBarLength == PlayerBarLength.fullWidth
-              ? 16
-              : (contentPosition?.dx ?? 0) + 16;
+          final double leftMargin =
+              settings.playerBarLength == PlayerBarLength.fullWidth
+                  ? 16
+                  : (contentPosition?.dx ?? 0) + 16;
 
           return LiquidGlassView(
             controller: _liquidGlassViewController,
@@ -722,8 +764,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 visibility: true,
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withAlpha((settings.glassOpacity * 60).round())
-                    : Colors.grey.withAlpha((settings.glassOpacity * 60).round()),
+                    ? Colors.white
+                        .withAlpha((settings.glassOpacity * 60).round())
+                    : Colors.grey
+                        .withAlpha((settings.glassOpacity * 60).round()),
                 child: const PlayerControlBarLiquidGlass(),
               ),
             ],
@@ -739,9 +783,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 监听设置变化
   void _listenToSettingsChanges(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    final navigationProvider =
+        Provider.of<NavigationProvider>(context, listen: false);
 
     // 检查透明度是否变化
     if (settingsProvider.glassOpacity != _lastGlassOpacity) {
@@ -759,7 +805,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // 由于app_pages.dart中没有定义lyrics页面，我们需要通过其他方式判断
     // 这里我们通过检查当前路由是否包含lyrics来判断
     final currentRoute = ModalRoute.of(context)?.settings.name;
-    final isLyricsPage = currentRoute != null && currentRoute.contains('lyrics');
+    final isLyricsPage =
+        currentRoute != null && currentRoute.contains('lyrics');
     if (!isLyricsPage) {
       // 只有不在歌词页面时才应用窗口边框弧度
       _updateWindowBorderRadius(settingsProvider.windowBorderRadius);
@@ -779,44 +826,43 @@ class _WindowEventListener extends WindowListener {
 
   _WindowEventListener(this._state);
 
-  @override
-  void onWindowResize() {
-    // 当窗口大小变化时，更新窗口大小并触发液态玻璃重新捕获
+  void _refreshLiquidGlassOnWindowChange() {
     _state._updateWindowSize().then((_) {
       if (_state.mounted) {
         _state._liquidGlassViewController.captureOnce();
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (_state.mounted) {
+            _state._updateContentDimensions();
+          }
+        });
       }
     });
   }
 
   @override
+  void onWindowResize() {
+    // 当窗口大小变化时，更新窗口大小并触发液态玻璃重新捕获
+    _refreshLiquidGlassOnWindowChange();
+  }
+
+  @override
   void onWindowMaximize() {
-    // 当窗口最大化时，更新窗口大小并触发液态玻璃重新捕获
-    _state._updateWindowSize().then((_) {
-      if (_state.mounted) {
-        _state._liquidGlassViewController.captureOnce();
-      }
+    // 当窗口最大化时，先切回默认样式再恢复液态玻璃，修复插件在最大化下的显示bug
+    _state._resetLiquidGlassStyleIfNeeded().then((_) {
+      _refreshLiquidGlassOnWindowChange();
     });
   }
 
   @override
   void onWindowUnmaximize() {
     // 当窗口恢复时，更新窗口大小并触发液态玻璃重新捕获
-    _state._updateWindowSize().then((_) {
-      if (_state.mounted) {
-        _state._liquidGlassViewController.captureOnce();
-      }
-    });
+    _refreshLiquidGlassOnWindowChange();
   }
 
   @override
   void onWindowRestore() {
     // 当窗口恢复时，更新窗口大小并触发液态玻璃重新捕获
-    _state._updateWindowSize().then((_) {
-      if (_state.mounted) {
-        _state._liquidGlassViewController.captureOnce();
-      }
-    });
+    _refreshLiquidGlassOnWindowChange();
   }
 
   @override
@@ -832,8 +878,8 @@ class _WindowEventListener extends WindowListener {
   @override
   void onWindowEvent(String eventName) {
     // 监听所有窗口事件，包括拖动标题栏
-    if (eventName == 'onWindowResize' || 
-        eventName == 'onWindowMaximize' || 
+    if (eventName == 'onWindowResize' ||
+        eventName == 'onWindowMaximize' ||
         eventName == 'onWindowUnmaximize' ||
         eventName == 'onWindowRestore') {
       _state._updateWindowSize().then((_) {

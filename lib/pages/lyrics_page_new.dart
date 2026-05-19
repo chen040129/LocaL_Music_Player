@@ -191,6 +191,26 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// 使用动画过渡到播放列表页面（模拟拖动封面效果）
+  void _animateToPlaylist() {
+    _pageSwitchController.forward().then((_) {
+      setState(() {
+        _currentPage = 1;
+      });
+      _pageSwitchController.reset();
+    });
+  }
+
+  /// 使用动画过渡到封面页面（模拟拖动封面效果）
+  void _animateToCover() {
+    _pageSwitchController.reverse().then((_) {
+      setState(() {
+        _currentPage = 0;
+      });
+      _pageSwitchController.reset();
+    });
+  }
+
   Future<void> _checkAlwaysOnTop() async {
     final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
     if (mounted) {
@@ -637,23 +657,26 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           _coverDragStartX;
                                                                   if (dragDistance >
                                                                       100) {
-                                                                    // 向右拖动，切换到播放列表
-                                                                    setState(
-                                                                        () {
-                                                                      _currentPage =
-                                                                          1;
+                                                                    // 向右拖动，使用动画过渡到播放列表
+                                                                    setState(() {
+                                                                      _coverDragStartX =
+                                                                          0.0;
+                                                                      _coverDragCurrentX =
+                                                                          0.0;
+                                                                      _coverDragOffset =
+                                                                          0.0;
+                                                                    });
+                                                                    _animateToPlaylist();
+                                                                  } else {
+                                                                    setState(() {
+                                                                      _coverDragStartX =
+                                                                          0.0;
+                                                                      _coverDragCurrentX =
+                                                                          0.0;
                                                                       _coverDragOffset =
                                                                           0.0;
                                                                     });
                                                                   }
-                                                                  setState(() {
-                                                                    _coverDragStartX =
-                                                                        0.0;
-                                                                    _coverDragCurrentX =
-                                                                        0.0;
-                                                                    _coverDragOffset =
-                                                                        0.0;
-                                                                  });
                                                                 },
                                                                 child:
                                                                     AnimatedBuilder(
@@ -662,13 +685,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                   builder:
                                                                       (context,
                                                                           child) {
-                                                                    return Transform
-                                                                        .scale(
-                                                                      scale: 1.0 -
-                                                                          _pageSwitchAnimation.value *
-                                                                              0.2,
-                                                                      child:
-                                                                          Opacity(
+                                                                    return Opacity(
                                                                         opacity:
                                                                             1.0 -
                                                                                 _pageSwitchAnimation.value * 0.8,
@@ -685,8 +702,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                                 AlbumCoverWidget(),
                                                                           ),
                                                                         ),
-                                                                      ),
-                                                                    );
+                                                                      );
                                                                   },
                                                                   child:
                                                                       SizedBox(
@@ -1257,12 +1273,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                             child:
                                                                                 GestureDetector(
                                                                               onTap: () {
-                                                                                _pageSwitchController.forward().then((_) {
-                                                                                  setState(() {
-                                                                                    _currentPage = 1;
-                                                                                  });
-                                                                                  _pageSwitchController.reset();
-                                                                                });
+                                                                                _animateToPlaylist();
                                                                               },
                                                                               child: AnimatedContainer(
                                                                                 duration: const Duration(milliseconds: 200),
@@ -1958,12 +1969,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
               )
             : GestureDetector(
                 onTap: () {
-                  _pageSwitchController.reverse().then((_) {
-                    setState(() {
-                      _currentPage = 0;
-                    });
-                    _pageSwitchController.reset();
-                  });
+                  _animateToCover();
                 },
                 onHorizontalDragStart: (details) {
                   setState(() {
@@ -1983,17 +1989,20 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                 onHorizontalDragEnd: (details) {
                   final dragDistance = _coverDragCurrentX - _coverDragStartX;
                   if (dragDistance < -100) {
-                    // 向左拖动，切换到歌曲信息
+                    // 向左拖动，使用动画过渡到封面页面
                     setState(() {
-                      _currentPage = 0;
+                      _coverDragStartX = 0.0;
+                      _coverDragCurrentX = 0.0;
+                      _coverDragOffset = 0.0;
+                    });
+                    _animateToCover();
+                  } else {
+                    setState(() {
+                      _coverDragStartX = 0.0;
+                      _coverDragCurrentX = 0.0;
                       _coverDragOffset = 0.0;
                     });
                   }
-                  setState(() {
-                    _coverDragStartX = 0.0;
-                    _coverDragCurrentX = 0.0;
-                    _coverDragOffset = 0.0;
-                  });
                 },
                 child: Transform.translate(
                   offset: Offset(_coverDragOffset * 0.3, 0),
@@ -2024,16 +2033,20 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                             final dragDistance =
                                 _coverDragCurrentX - _coverDragStartX;
                             if (dragDistance < -100) {
+                              // 向左拖动，使用动画过渡到封面页面
                               setState(() {
-                                _currentPage = 0;
+                                _coverDragStartX = 0.0;
+                                _coverDragCurrentX = 0.0;
+                                _coverDragOffset = 0.0;
+                              });
+                              _animateToCover();
+                            } else {
+                              setState(() {
+                                _coverDragStartX = 0.0;
+                                _coverDragCurrentX = 0.0;
                                 _coverDragOffset = 0.0;
                               });
                             }
-                            setState(() {
-                              _coverDragStartX = 0.0;
-                              _coverDragCurrentX = 0.0;
-                              _coverDragOffset = 0.0;
-                            });
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(

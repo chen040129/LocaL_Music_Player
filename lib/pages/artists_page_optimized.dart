@@ -7,6 +7,7 @@ import 'package:lpinyin/lpinyin.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../providers/music_provider.dart';
 import '../services/music_scanner_service.dart';
+import '../constants/app_icons.dart';
 
 class ArtistsPageOptimized extends StatefulWidget {
   const ArtistsPageOptimized({Key? key}) : super(key: key);
@@ -15,7 +16,8 @@ class ArtistsPageOptimized extends StatefulWidget {
   State<ArtistsPageOptimized> createState() => _ArtistsPageOptimizedState();
 }
 
-class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with AutomaticKeepAliveClientMixin {
+class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -26,8 +28,34 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
   // 字母索引
   final ItemScrollController _scrollController = ItemScrollController();
   final List<String> _alphabet = [
-    '0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+    '0',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+    '#'
   ];
 
   // 展开的艺术家
@@ -69,7 +97,9 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
     if (_pinyinCache.containsKey(text)) {
       return _pinyinCache[text]!;
     }
-    final pinyin = PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE).toUpperCase();
+    final pinyin =
+        PinyinHelper.getPinyinE(text, format: PinyinFormat.WITHOUT_TONE)
+            .toUpperCase();
     _pinyinCache[text] = pinyin;
     return pinyin;
   }
@@ -124,7 +154,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.person, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
+                Icon(CupertinoIcons.person,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
                 const SizedBox(width: 8),
                 Text(
                   '艺术家',
@@ -139,7 +170,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                     return Text(
                       ' ${musicProvider.artists.length}',
                       style: TextStyle(
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         fontSize: 14,
                       ),
                     );
@@ -152,14 +184,16 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         AppIcons.search,
-                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                        color:
+                            Theme.of(context).iconTheme.color?.withOpacity(0.5),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -169,7 +203,10 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                           decoration: InputDecoration(
                             hintText: '搜索',
                             hintStyle: TextStyle(
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  ?.withOpacity(0.5),
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
@@ -177,7 +214,10 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                             contentPadding: EdgeInsets.zero,
                           ),
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.7),
                             fontSize: 14,
                           ),
                           onChanged: (value) {
@@ -201,7 +241,10 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                           },
                           child: Icon(
                             AppIcons.clearCircledSolid,
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             size: 18,
                           ),
                         ),
@@ -228,7 +271,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                       _alphabetIndexCache.clear();
                     });
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'name',
                       child: Text('按名称排序'),
@@ -273,8 +317,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                 List<String> sortedArtists;
 
                 // 检查是否可以使用缓存的排序结果
-                if (_cachedSortedArtists != null && 
-                    _lastSortBy == _sortBy && 
+                if (_cachedSortedArtists != null &&
+                    _lastSortBy == _sortBy &&
                     _lastIsAscending == _isAscending &&
                     _searchQuery.isEmpty) {
                   sortedArtists = _cachedSortedArtists!;
@@ -284,7 +328,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                   // 预加载所有艺术家的音乐列表
                   for (var artist in sortedArtists) {
                     if (!_artistMusicCache.containsKey(artist)) {
-                      _artistMusicCache[artist] = musicProvider.getMusicByArtist(artist);
+                      _artistMusicCache[artist] =
+                          musicProvider.getMusicByArtist(artist);
                     }
                   }
 
@@ -293,18 +338,26 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                       sortedArtists.sort((a, b) {
                         final aPinyin = _getPinyin(a);
                         final bPinyin = _getPinyin(b);
-                        return _isAscending ? aPinyin.compareTo(bPinyin) : bPinyin.compareTo(aPinyin);
+                        return _isAscending
+                            ? aPinyin.compareTo(bPinyin)
+                            : bPinyin.compareTo(aPinyin);
                       });
                       break;
                     case 'count':
                       sortedArtists.sort((a, b) {
-                        final aCount = _artistMusicCache.containsKey(a) 
-                            ? _artistMusicCache[a]!.length 
-                            : (_artistMusicCache[a] = musicProvider.getMusicByArtist(a)).length;
-                        final bCount = _artistMusicCache.containsKey(b) 
-                            ? _artistMusicCache[b]!.length 
-                            : (_artistMusicCache[b] = musicProvider.getMusicByArtist(b)).length;
-                        return _isAscending ? aCount.compareTo(bCount) : bCount.compareTo(aCount);
+                        final aCount = _artistMusicCache.containsKey(a)
+                            ? _artistMusicCache[a]!.length
+                            : (_artistMusicCache[a] =
+                                    musicProvider.getMusicByArtist(a))
+                                .length;
+                        final bCount = _artistMusicCache.containsKey(b)
+                            ? _artistMusicCache[b]!.length
+                            : (_artistMusicCache[b] =
+                                    musicProvider.getMusicByArtist(b))
+                                .length;
+                        return _isAscending
+                            ? aCount.compareTo(bCount)
+                            : bCount.compareTo(aCount);
                       });
                       break;
                     default:
@@ -335,13 +388,19 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                         Icon(
                           CupertinoIcons.person,
                           size: 64,
-                          color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
+                          color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              ?.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           '暂无艺术家',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.5),
                             fontSize: 16,
                           ),
                         ),
@@ -349,7 +408,10 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                         Text(
                           '扫描音乐后将自动显示艺术家',
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.4),
+                            color: Theme.of(context)
+                                .iconTheme
+                                .color
+                                ?.withOpacity(0.4),
                             fontSize: 14,
                           ),
                         ),
@@ -369,18 +431,25 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                       itemBuilder: (context, index) {
                         final artist = sortedArtists[index];
                         // 使用缓存获取艺术家音乐
-                        final artistMusics = _artistMusicCache.containsKey(artist) 
-                            ? _artistMusicCache[artist]! 
-                            : (_artistMusicCache[artist] = musicProvider.getMusicByArtist(artist));
+                        final artistMusics =
+                            _artistMusicCache.containsKey(artist)
+                                ? _artistMusicCache[artist]!
+                                : (_artistMusicCache[artist] =
+                                    musicProvider.getMusicByArtist(artist));
 
                         // 艺术家首字母
-                        String initial = artist.isNotEmpty ? artist[0].toUpperCase() : '';
+                        String initial =
+                            artist.isNotEmpty ? artist[0].toUpperCase() : '';
 
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: ExpansionTile(
                             leading: CircleAvatar(
-                              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.1),
                               child: Text(
                                 initial,
                                 style: TextStyle(
@@ -399,12 +468,18 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                             subtitle: Text(
                               '${artistMusics.length} 首歌曲',
                               style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                color: Theme.of(context)
+                                    .iconTheme
+                                    .color
+                                    ?.withOpacity(0.7),
                               ),
                             ),
                             trailing: Icon(
                               CupertinoIcons.chevron_down,
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  ?.withOpacity(0.5),
                             ),
                             onExpansionChanged: (isExpanded) {
                               setState(() {
@@ -415,7 +490,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                 }
                               });
                             },
-                            initiallyExpanded: _expandedArtists.contains(artist),
+                            initiallyExpanded:
+                                _expandedArtists.contains(artist),
                             children: [
                               // 使用Builder延迟构建歌曲列表
                               Builder(
@@ -423,7 +499,8 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                   return Column(
                                     children: artistMusics.map((music) {
                                       // 使用缓存键
-                                      final cacheKey = '${music.title}_${music.album}';
+                                      final cacheKey =
+                                          '${music.title}_${music.album}';
 
                                       return ListTile(
                                         leading: music.coverArt != null
@@ -439,21 +516,34 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                                     width: 48,
                                                     height: 48,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) {
+                                                    errorBuilder: (context,
+                                                        error, stackTrace) {
                                                       return Icon(
-                                                        CupertinoIcons.music_note,
+                                                        CupertinoIcons
+                                                            .music_note,
                                                         size: 48,
-                                                        color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                        color: Theme.of(context)
+                                                            .iconTheme
+                                                            .color
+                                                            ?.withOpacity(0.5),
                                                       );
                                                     },
-                                                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                                    frameBuilder: (context,
+                                                        child,
+                                                        frame,
+                                                        wasSynchronouslyLoaded) {
                                                       if (wasSynchronouslyLoaded) {
                                                         return child;
                                                       }
                                                       return AnimatedOpacity(
                                                         child: child,
-                                                        opacity: frame == null ? 0 : 1,
-                                                        duration: const Duration(milliseconds: 300),
+                                                        opacity: frame == null
+                                                            ? 0
+                                                            : 1,
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    300),
                                                         curve: Curves.easeOut,
                                                       );
                                                     },
@@ -461,24 +551,35 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                             : Icon(
                                                 CupertinoIcons.music_note,
                                                 size: 48,
-                                                color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                                                color: Theme.of(context)
+                                                    .iconTheme
+                                                    .color
+                                                    ?.withOpacity(0.5),
                                               ),
                                         title: Text(
                                           music.title,
                                           style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onSurface,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
                                           ),
                                         ),
                                         subtitle: Text(
                                           music.album,
                                           style: TextStyle(
-                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color
+                                                ?.withOpacity(0.7),
                                           ),
                                         ),
                                         trailing: Text(
                                           _formatDuration(music.duration),
                                           style: TextStyle(
-                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+                                            color: Theme.of(context)
+                                                .iconTheme
+                                                .color
+                                                ?.withOpacity(0.7),
                                             fontSize: 12,
                                           ),
                                         ),
@@ -514,41 +615,51 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                               final letter = alphabet[index];
 
                               // 使用缓存检查是否有以该字母开头的艺术家
-                              final hasArtists = _alphabetIndexCache.containsKey(letter)
+                              final hasArtists = _alphabetIndexCache
+                                      .containsKey(letter)
                                   ? _alphabetIndexCache[letter]! > 0
                                   : (() {
                                       // 一次性计算所有字母的索引
                                       for (var l in _alphabet) {
-                                        if (!_alphabetIndexCache.containsKey(l)) {
-                                          _alphabetIndexCache[l] = sortedArtists.where((artist) {
+                                        if (!_alphabetIndexCache
+                                            .containsKey(l)) {
+                                          _alphabetIndexCache[l] =
+                                              sortedArtists.where((artist) {
                                             final pinyin = _getPinyin(artist);
                                             if (l == '0') {
-                                              return RegExp(r'^[0-9]').hasMatch(artist);
+                                              return RegExp(r'^[0-9]')
+                                                  .hasMatch(artist);
                                             } else if (l == '#') {
-                                              return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                              return !RegExp(r'^[A-Z0-9]')
+                                                  .hasMatch(pinyin);
                                             } else {
                                               return pinyin.startsWith(l);
                                             }
                                           }).length;
                                         }
                                       }
-                                      return _alphabetIndexCache[letter]!;
+                                      return _alphabetIndexCache[letter]! > 0;
                                     })();
 
                               return GestureDetector(
                                 onTap: () {
                                   // 使用缓存滚动到对应字母的位置
-                                  int? targetIndex = _alphabetIndexCache['${letter}_index'];
+                                  int? targetIndex =
+                                      _alphabetIndexCache['${letter}_index'];
                                   if (targetIndex == null) {
                                     // 一次性计算所有字母的索引位置
                                     for (var l in _alphabet) {
-                                      if (!_alphabetIndexCache.containsKey('${l}_index')) {
-                                        final idx = sortedArtists.indexWhere((artist) {
+                                      if (!_alphabetIndexCache
+                                          .containsKey('${l}_index')) {
+                                        final idx =
+                                            sortedArtists.indexWhere((artist) {
                                           final pinyin = _getPinyin(artist);
                                           if (l == '0') {
-                                            return RegExp(r'^[0-9]').hasMatch(artist);
+                                            return RegExp(r'^[0-9]')
+                                                .hasMatch(artist);
                                           } else if (l == '#') {
-                                            return !RegExp(r'^[A-Z0-9]').hasMatch(pinyin);
+                                            return !RegExp(r'^[A-Z0-9]')
+                                                .hasMatch(pinyin);
                                           } else {
                                             return pinyin.startsWith(l);
                                           }
@@ -556,10 +667,12 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                         _alphabetIndexCache['${l}_index'] = idx;
                                       }
                                     }
-                                    targetIndex = _alphabetIndexCache['${letter}_index'];
+                                    targetIndex =
+                                        _alphabetIndexCache['${letter}_index'];
                                   }
 
-                                  if (targetIndex != null && targetIndex != -1) {
+                                  if (targetIndex != null &&
+                                      targetIndex != -1) {
                                     _scrollToIndex(targetIndex);
                                   }
                                 },
@@ -571,9 +684,16 @@ class _ArtistsPageOptimizedState extends State<ArtistsPageOptimized> with Automa
                                     style: TextStyle(
                                       fontSize: hasArtists ? 12 : 10,
                                       color: hasArtists
-                                          ? Theme.of(context).colorScheme.primary
-                                          : Theme.of(context).iconTheme.color?.withOpacity(0.3),
-                                      fontWeight: hasArtists ? FontWeight.bold : FontWeight.normal,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .iconTheme
+                                              .color
+                                              ?.withOpacity(0.3),
+                                      fontWeight: hasArtists
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                 ),

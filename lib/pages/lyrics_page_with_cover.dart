@@ -504,16 +504,13 @@ class _LyricsPageWithCoverState extends State<LyricsPageWithCover>
                                                         child: AnimatedBuilder(
                                                           animation: _pageSwitchAnimation,
                                                           builder: (context, child) {
-                                                            return Transform.scale(
-                                                              scale: 1.0 - _pageSwitchAnimation.value * 0.2,
-                                                              child: Opacity(
-                                                                opacity: 1.0 - _pageSwitchAnimation.value * 0.8,
-                                                                child: Transform.translate(
-                                                                  offset: Offset(_coverDragOffset * 0.3, 0),
-                                                                  child: Opacity(
-                                                                    opacity: 1 - (_coverDragOffset.abs() / 400),
-                                                                    child: AlbumCoverWidget(),
-                                                                  ),
+                                                            return Opacity(
+                                                              opacity: 1.0 - _pageSwitchAnimation.value * 0.8,
+                                                              child: Transform.translate(
+                                                                offset: Offset(_coverDragOffset * 0.3, 0),
+                                                                child: Opacity(
+                                                                  opacity: 1 - (_coverDragOffset.abs() / 400),
+                                                                  child: AlbumCoverWidget(),
                                                                 ),
                                                               ),
                                                             );

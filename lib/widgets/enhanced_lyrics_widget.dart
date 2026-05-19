@@ -59,20 +59,23 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
     // 初始化时立即设置进度为0，确保第一句歌词显示在中间
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // 使用一个简单的延迟来确保UI已经完全加载
-      Future.delayed(const Duration(milliseconds: 200), () {
+      Future.delayed(const Duration(milliseconds: 200), () async {
         // 设置进度为第一个非空行，确保第一句歌词显示在中间
         _lyricController.setProgress(Duration.zero);
 
         // 等待一小段时间，确保设置生效
-        Future.delayed(const Duration(milliseconds: 100), () {
-          // 立即触发动画，确保歌词居中显示
-          _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
+        await Future.delayed(const Duration(milliseconds: 100));
+        // 立即触发动画，确保歌词居中显示
+        _lyricController.notifyEvent(LyricEvent.playSwitchAnimation);
 
-          // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
-          Future.delayed(const Duration(milliseconds: 100), () {
-            _lyricController.setProgress(widget.position);
-          });
-        });
+        // 短暂延迟后再设置当前播放位置，确保第一句歌词有足够时间居中显示
+        await Future.delayed(const Duration(milliseconds: 100));
+        // 应用用户设置的歌词偏移
+        final settings = Provider.of<SettingsProvider>(context, listen: false);
+        final offsetMs = settings.lyricsTimeOffsetSeconds * 1000.0;
+        final adjusted =
+            widget.position + Duration(milliseconds: offsetMs.round());
+        _lyricController.setProgress(adjusted);
       });
     });
 
@@ -120,7 +123,11 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
     if (oldWidget.position != widget.position) {
       // 只有在用户没有手动滚动时才更新进度
       if (!_isUserScrolling) {
-        _lyricController.setProgress(widget.position);
+        final settings = Provider.of<SettingsProvider>(context, listen: false);
+        final offsetMs = settings.lyricsTimeOffsetSeconds * 1000.0;
+        final adjusted =
+            widget.position + Duration(milliseconds: offsetMs.round());
+        _lyricController.setProgress(adjusted);
       }
       _lastPosition = widget.position;
     }
@@ -190,7 +197,8 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
       valueListenable: _styleNotifier,
       builder: (context, style, child) {
         // 使用增强的歌词样式，添加更多视觉效果
-        final fontFamily = settings.fontName.isNotEmpty ? settings.fontName : null;
+        final fontFamily =
+            settings.fontName.isNotEmpty ? settings.fontName : null;
         final adjustedStyle = LyricStyle(
           textStyle: TextStyle(
             fontFamily: fontFamily,
@@ -212,12 +220,16 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                 ? [
                     // 添加阴影效果
                     Shadow(
-                      color: isDark ? Colors.black.withOpacity(0.6) : Colors.grey.withOpacity(0.6),
+                      color: isDark
+                          ? Colors.black.withOpacity(0.6)
+                          : Colors.grey.withOpacity(0.6),
                       blurRadius: 4.0,
                       offset: const Offset(2.0, 2.0),
                     ),
                     Shadow(
-                      color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+                      color: isDark
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.3),
                       blurRadius: 8.0,
                       offset: const Offset(1.0, 1.0),
                     ),
@@ -254,14 +266,17 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
           activeAlignment: MainAxisAlignment.center,
 
           scrollDuration: Duration(milliseconds: settings.scrollDuration),
-          selectionAutoResumeDuration: Duration(milliseconds: settings.selectionAutoResumeDuration),
-          activeAutoResumeDuration: Duration(milliseconds: settings.activeAutoResumeDuration),
+          selectionAutoResumeDuration:
+              Duration(milliseconds: settings.selectionAutoResumeDuration),
+          activeAutoResumeDuration:
+              Duration(milliseconds: settings.activeAutoResumeDuration),
           scrollCurve: _getCurve(settings.scrollCurve),
           disableTouchEvent: false,
           selectionAutoResumeMode: SelectionAutoResumeMode.afterSelecting,
           // 添加渐变效果 - 更明显的渐变
           fadeRange: settings.enableLyricsBlur
-              ? FadeRange(top: settings.fadeRangeTop, bottom: settings.fadeRangeBottom)
+              ? FadeRange(
+                  top: settings.fadeRangeTop, bottom: settings.fadeRangeBottom)
               : null,
         );
 
@@ -272,11 +287,59 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
           child: Stack(
             children: [
               // 歌词视图 - 使用RepaintBoundary包裹以便截图
-              RepaintBoundary(
-                key: ValueKey('lyrics_view_${_lyricController.hashCode}'),
-                child: LyricView(
-                  controller: _lyricController,
-                  style: adjustedStyle,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onSecondaryTapDown: (details) async {
+                  final settings =
+                      Provider.of<SettingsProvider>(context, listen: false);
+                  final currentOffset = settings.lyricsTimeOffsetSeconds;
+                  final items = <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      child: Text(
+                          '当前偏移: ${currentOffset >= 0 ? '+' : ''}${currentOffset.toStringAsFixed(2)} s'),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem<String>(
+                      value: 'advance',
+                      child: Text('提前 0.5 秒'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delay',
+                      child: Text('延迟 0.5 秒'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'reset',
+                      child: Text('重置歌词偏移'),
+                    ),
+                  ];
+
+                  final selected = await showMenu<String>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                      details.globalPosition.dx,
+                      details.globalPosition.dy,
+                      details.globalPosition.dx,
+                      details.globalPosition.dy,
+                    ),
+                    items: items,
+                  );
+
+                  if (selected == null) return;
+                  if (selected == 'advance') {
+                    await settings.adjustLyricsTimeOffsetBySeconds(0.5);
+                  } else if (selected == 'delay') {
+                    await settings.adjustLyricsTimeOffsetBySeconds(-0.5);
+                  } else if (selected == 'reset') {
+                    await settings.setLyricsTimeOffsetSeconds(0.0);
+                  }
+                },
+                child: RepaintBoundary(
+                  key: ValueKey('lyrics_view_${_lyricController.hashCode}'),
+                  child: LyricView(
+                    controller: _lyricController,
+                    style: adjustedStyle,
+                  ),
                 ),
               ),
               // 拖动时显示时间和虚线
@@ -300,7 +363,9 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                           child: CustomPaint(
                             size: const Size(double.infinity, 1),
                             painter: DashedLinePainter(
-                              color: isDark ? Colors.white.withOpacity(0.5) : Colors.black.withOpacity(0.5),
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.5)
+                                  : Colors.black.withOpacity(0.5),
                               strokeWidth: 1.0,
                               dashWidth: 4.0,
                               dashSpace: 2.0,
@@ -315,7 +380,8 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                         child: FractionalTranslation(
                           translation: Offset(0, -0.5),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.black.withOpacity(0.6)
@@ -336,7 +402,6 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
                   );
                 },
               ),
-
             ],
           ),
         );
