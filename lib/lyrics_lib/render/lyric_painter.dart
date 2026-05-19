@@ -61,19 +61,28 @@ class LyricPainter extends CustomPainter {
     canvas.translate(0, -scrollY);
     totalTranslateY -= scrollY;
     var selectedIndex = -1;
+    // 第一遍：先计算 selectedIndex
+    var tempTranslateY = totalTranslateY;
+    for (var i = 0; i < layout.metrics.length; i++) {
+      final isActive = i == playIndex;
+      final lineHeight = layout.getLineHeight(isActive, i);
+      tempTranslateY += lineHeight;
+      if ((tempTranslateY + layout.style.lineGap / 2) >= selectionPosition &&
+          selectedIndex == -1) {
+        selectedIndex = i;
+      }
+      tempTranslateY += layout.style.lineGap;
+    }
+    // 通知锚点行变化
+    if (selectedIndex >= 0) {
+      onAnchorIndexChange(selectedIndex);
+    }
+    // 第二遍：绘制歌词
     final showLineRects = <int, Rect>{};
     for (var i = 0; i < layout.metrics.length; i++) {
       final isActive = i == playIndex;
       final lineHeight = layout.getLineHeight(isActive, i);
       totalTranslateY += lineHeight;
-      //计算高亮
-      if ((totalTranslateY + layout.style.lineGap / 2) >= selectionPosition &&
-          selectedIndex == -1) {
-        selectedIndex = i;
-        onAnchorIndexChange(
-          i,
-        );
-      }
       if (totalTranslateY - lineHeight >= size.height) {
         break;
       }
@@ -89,6 +98,7 @@ class LyricPainter extends CustomPainter {
             size,
             i,
             selectedIndex == i,
+            selectedIndex >= 0 ? selectedIndex : playIndex,
           );
         }
       }
@@ -224,8 +234,23 @@ class LyricPainter extends CustomPainter {
     Size size,
     int index,
     bool isInAnchorArea,
+    int focusIndex,
   ) {
     final isActive = playIndex == index;
+    // 计算与播放行的距离，用于渐变模糊和透明度
+    final distance = (index - focusIndex).abs();
+    final maxSigma = layout.style.inactiveBlurSigma;
+    final baseOpacity = layout.style.inactiveOpacity;
+    // 渐变因子：距离越远越接近1，距离越近越接近0
+    final maxDistance = layout.style.inactiveBlurRange > 0 ? layout.style.inactiveBlurRange : 5.0;
+    final gradientFactor = (distance / maxDistance).clamp(0.0, 1.0);
+    // 渐变模糊强度：距离越远越模糊
+    final lineSigma = maxSigma > 0 && distance > 0 ? maxSigma * gradientFactor : 0.0;
+    // 渐变透明度：距离越远越透明
+    final lineOpacity = baseOpacity < 1.0 && distance > 0
+        ? 1.0 - (1.0 - baseOpacity) * gradientFactor
+        : 1.0;
+    final shouldBlur = lineSigma > 0;
     TextStyle replaceTextStyle(TextStyle style, Color color) {
       return style.copyWith(
           color: isSelecting && isInAnchorArea ? color : style.color);
@@ -236,15 +261,27 @@ class LyricPainter extends CustomPainter {
     final oldSpan = painter.text!;
 
     // 创建一个新的 TextSpan，只修改 color
+    // 如果是非活跃行，应用渐变透明度
     painter.text = TextSpan(
       text: oldSpan.toPlainText(), // 保持文字不变
       style: replaceTextStyle(
         oldSpan.style!,
         layout.style.selectedColor,
+      ).copyWith(
+        color: (!isActive && lineOpacity < 1.0)
+            ? (oldSpan.style?.color ?? Colors.white).withOpacity(lineOpacity)
+            : null,
       ),
     );
     canvas.save();
     canvas.translate(calcContentAliginOffset(painter.width, size.width), 0);
+
+    // 非当前歌词渐变模糊效果：距离越远模糊越强
+    if (shouldBlur) {
+      final paint = Paint()
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: lineSigma, sigmaY: lineSigma, tileMode: ui.TileMode.decal);
+      canvas.saveLayer(null, paint);
+    }
     if (_debugLyric) {
       canvas.drawRect(
           Rect.fromLTWH(0, 0, painter.width, painter.height),
@@ -266,6 +303,10 @@ class LyricPainter extends CustomPainter {
           highlightTotalWidth: metric.words?.isNotEmpty == true
               ? activeHighlightWidth
               : double.infinity);
+    }
+    // 恢复模糊 saveLayer
+    if (shouldBlur) {
+      canvas.restore();
     }
     canvas.restore();
     final mainHeight = isActive ? metric.activeHeight : metric.height;

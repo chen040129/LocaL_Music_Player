@@ -528,23 +528,24 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                   value: settings.usePlayerGlass,
                   onChanged: (value) => settings.setUsePlayerGlass(value),
                 ),
-                const Divider(height: 32),
+                if (settings.usePlayerGlass) ...[
+                  const Divider(height: 32),
 
-                // 玻璃透明度滑块
-                _buildSliderTile(
-                  title: '玻璃透明度',
-                  subtitle: '调整玻璃材质的透明度',
-                  icon: CupertinoIcons.eye,
-                  value: 1.0 - settings.glassOpacity,
-                  min: 0.0,
-                  max: 1.0,
-                  divisions: 100,
-                  label: '${((1.0 - settings.glassOpacity) * 100).toInt()}%',
-                  onChanged: (value) => settings.setGlassOpacity(1.0 - value),
-                ),
-                const Divider(height: 32),
+                  // 玻璃透明度滑块
+                  _buildSliderTile(
+                    title: '玻璃透明度',
+                    subtitle: '调整玻璃材质的透明度',
+                    icon: CupertinoIcons.eye,
+                    value: 1.0 - settings.glassOpacity,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 100,
+                    label: '${((1.0 - settings.glassOpacity) * 100).toInt()}%',
+                    onChanged: (value) => settings.setGlassOpacity(1.0 - value),
+                  ),
+                  const Divider(height: 32),
 
-                // 播放栏样式选择
+                  // 播放栏样式选择
                 const Text('播放栏样式'),
                 const SizedBox(height: 8),
                 SegmentedButton<PlayerBarStyle>(
@@ -672,6 +673,7 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       ],
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -1079,23 +1081,24 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                   value: settings.usePlayerGlass,
                   onChanged: (value) => settings.setUsePlayerGlass(value),
                 ),
-                const Divider(height: 32),
+                if (settings.usePlayerGlass) ...[
+                  const Divider(height: 32),
 
-                // 玻璃透明度滑块
-                _buildSliderTile(
-                  title: '玻璃透明度',
-                  subtitle: '调整玻璃材质的透明度',
-                  icon: CupertinoIcons.eye,
-                  value: 1.0 - settings.glassOpacity,
-                  min: 0.0,
-                  max: 1.0,
-                  divisions: 100,
-                  label: '${((1.0 - settings.glassOpacity) * 100).toInt()}%',
-                  onChanged: (value) => settings.setGlassOpacity(1.0 - value),
-                ),
-                const Divider(height: 32),
+                  // 玻璃透明度滑块
+                  _buildSliderTile(
+                    title: '玻璃透明度',
+                    subtitle: '调整玻璃材质的透明度',
+                    icon: CupertinoIcons.eye,
+                    value: 1.0 - settings.glassOpacity,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 100,
+                    label: '${((1.0 - settings.glassOpacity) * 100).toInt()}%',
+                    onChanged: (value) => settings.setGlassOpacity(1.0 - value),
+                  ),
+                  const Divider(height: 32),
 
-                // 边框弧度值滑块
+                  // 边框弧度值滑块
                 _buildSliderTile(
                   title: '边框弧度值',
                   subtitle: '调整主页面元素的边框弧度',
@@ -1259,6 +1262,7 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       ],
                     ),
                   ),
+                ],
 
               ],
             ),

@@ -82,6 +82,17 @@ class LyricStyle {
   /// 上下渐隐范围（上、下）/ Fade range (top, bottom)
   final FadeRange? fadeRange;
 
+  // ==================== 非当前歌词模糊 Inactive Line Blur ====================
+
+  /// 非当前歌词模糊强度（0 = 不模糊）/ Inactive line blur sigma (0 = no blur)
+  final double inactiveBlurSigma;
+
+  /// 非当前歌词透明度（1.0 = 完全不透明）/ Inactive line opacity (1.0 = fully opaque)
+  final double inactiveOpacity;
+
+  /// 非当前歌词渐变模糊范围（行数）/ Inactive blur gradient range (number of lines)
+  final double inactiveBlurRange;
+
   // ==================== 滚动动画相关 Scroll Animation ====================
 
   /// 滚动动画时长 / Scroll animation duration
@@ -165,6 +176,9 @@ class LyricStyle {
     this.activeHighlightGradient,
     MainAxisAlignment? activeAlignment,
     this.activeLineOnly = false,
+    this.inactiveBlurSigma = 0,
+    this.inactiveOpacity = 1.0,
+    this.inactiveBlurRange = 5.0,
   })  : activeAnchorPosition = activeAnchorPosition ?? selectionAnchorPosition,
         activeAlignment = activeAlignment ?? selectionAlignment,
         assert(selectionAutoResumeDuration < activeAutoResumeDuration,
@@ -205,6 +219,9 @@ class LyricStyle {
     Object? activeHighlightGradient = _unset,
     bool? activeLineOnly,
     bool? disableTouchEvent,
+    double? inactiveBlurSigma,
+    double? inactiveOpacity,
+    double? inactiveBlurRange,
   }) {
     return LyricStyle(
       activeHighlightColor: activeHighlightColor == _unset
@@ -254,6 +271,9 @@ class LyricStyle {
           : activeHighlightGradient as LinearGradient?,
       activeLineOnly: activeLineOnly ?? this.activeLineOnly,
       disableTouchEvent: disableTouchEvent ?? this.disableTouchEvent,
+      inactiveBlurSigma: inactiveBlurSigma ?? this.inactiveBlurSigma,
+      inactiveOpacity: inactiveOpacity ?? this.inactiveOpacity,
+      inactiveBlurRange: inactiveBlurRange ?? this.inactiveBlurRange,
     );
   }
 

@@ -80,14 +80,21 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\audioplayers_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\desktop_multi_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\FLAC.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\flutter_soloud_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\ogg.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\opus.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\share_plus_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\tray_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\vcruntime140.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\vcruntime140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\vorbis.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\vorbisfile.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\tray_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Desktop\WATCH\LocaL_Music_Player\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

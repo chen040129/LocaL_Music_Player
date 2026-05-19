@@ -202,8 +202,11 @@ class _OptimizedLyricsWidgetState extends State<OptimizedLyricsWidget> {
           selectionAutoResumeMode: SelectionAutoResumeMode.afterSelecting,
           // 添加渐变效果
           fadeRange: settings.enableLyricsBlur 
-              ? const FadeRange(top: 50.0, bottom: 50.0) 
+              ? FadeRange(top: 50.0, bottom: 50.0) 
               : null,
+          inactiveBlurSigma: settings.enableInactiveBlur ? settings.inactiveBlurSigma : 0,
+          inactiveOpacity: settings.enableInactiveBlur ? settings.inactiveOpacity : 1.0,
+          inactiveBlurRange: settings.enableInactiveBlur ? settings.inactiveBlurRange : 5.0,
         );
 
         return Container(

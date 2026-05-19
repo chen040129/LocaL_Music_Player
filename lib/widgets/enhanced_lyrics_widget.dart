@@ -278,6 +278,10 @@ class _EnhancedLyricsWidgetState extends State<EnhancedLyricsWidget> {
               ? FadeRange(
                   top: settings.fadeRangeTop, bottom: settings.fadeRangeBottom)
               : null,
+          // 非当前歌词模糊
+          inactiveBlurSigma: settings.enableInactiveBlur ? settings.inactiveBlurSigma : 0,
+          inactiveOpacity: settings.enableInactiveBlur ? settings.inactiveOpacity : 1.0,
+          inactiveBlurRange: settings.enableInactiveBlur ? settings.inactiveBlurRange : 5.0,
         );
 
         return Container(

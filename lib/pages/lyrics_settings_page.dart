@@ -55,6 +55,12 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
                   _buildGradientSettings(context),
                   const SizedBox(height: 24),
 
+                  // 非当前歌词模糊设置
+                  _buildSectionHeader('非当前歌词模糊'),
+                  const SizedBox(height: 16),
+                  _buildInactiveBlurSettings(context),
+                  const SizedBox(height: 24),
+
                   // 桌面歌词设置
                   _buildSectionHeader('桌面歌词'),
                   const SizedBox(height: 16),
@@ -379,6 +385,148 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
       },
     );
   }
+
+  /// 构建非当前歌词模糊设置
+
+  Widget _buildInactiveBlurSettings(BuildContext context) {
+
+    return Consumer<SettingsProvider>(
+
+      builder: (context, settings, child) {
+
+        return Card(
+
+          elevation: 0,
+
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+
+          shape: RoundedRectangleBorder(
+
+            borderRadius: BorderRadius.circular(12),
+
+            side: BorderSide(
+
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+
+            ),
+
+          ),
+
+          child: Padding(
+
+            padding: const EdgeInsets.all(16),
+
+            child: Column(
+
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+
+                _buildSwitchTile(
+
+                  title: '启用非当前歌词模糊',
+
+                  subtitle: '对非当前播放的歌词行添加模糊和透明度效果',
+
+                  icon: CupertinoIcons.eye_slash,
+
+                  value: settings.enableInactiveBlur,
+
+                  onChanged: (value) => settings.setEnableInactiveBlur(value),
+
+                ),
+
+                if (settings.enableInactiveBlur) ...[
+
+                  const SizedBox(height: 16),
+
+                  _buildSliderTile(
+
+                    title: '模糊强度',
+
+                    subtitle: '调整非当前歌词的模糊程度',
+
+                    icon: CupertinoIcons.eye_slash,
+
+                    value: settings.inactiveBlurSigma,
+
+                    min: 0.5,
+
+                    max: 10.0,
+
+                    divisions: 19,
+
+                    label: settings.inactiveBlurSigma.toStringAsFixed(1),
+
+                    onChanged: (value) => settings.setInactiveBlurSigma(value),
+
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  _buildSliderTile(
+
+                    title: '透明度',
+
+                    subtitle: '调整非当前歌词的透明度',
+
+                    icon: CupertinoIcons.sun_min,
+
+                    value: settings.inactiveOpacity,
+
+                    min: 0.1,
+
+                    max: 1.0,
+
+                    divisions: 18,
+
+                    label: (settings.inactiveOpacity * 100).round().toString() + '%',
+
+                    onChanged: (value) => settings.setInactiveOpacity(value),
+
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  _buildSliderTile(
+
+                    title: '渐变范围',
+
+                    subtitle: '调整从清晰到模糊的渐变距离（行数）',
+
+                    icon: CupertinoIcons.arrow_right_arrow_left,
+
+                    value: settings.inactiveBlurRange,
+
+                    min: 1.0,
+
+                    max: 15.0,
+
+                    divisions: 14,
+
+                    label: settings.inactiveBlurRange.round().toString(),
+
+                    onChanged: (value) => settings.setInactiveBlurRange(value),
+
+                  ),
+
+                ],
+
+              ],
+
+            ),
+
+          ),
+
+        );
+
+      },
+
+    );
+
+  }
+
+
 
   /// 构建动画设置
   Widget _buildAnimationSettings(BuildContext context) {

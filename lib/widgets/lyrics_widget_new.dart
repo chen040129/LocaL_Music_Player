@@ -265,6 +265,10 @@ class _LyricsWidgetState extends State<LyricsWidget> {
           // 禁用高亮效果 - 去除悬停时的浅灰色矩形边缘
           activeHighlightColor: null,
           activeHighlightGradient: null,
+          // 非当前歌词模糊
+          inactiveBlurSigma: settings.enableInactiveBlur ? settings.inactiveBlurSigma : 0,
+          inactiveOpacity: settings.enableInactiveBlur ? settings.inactiveOpacity : 1.0,
+          inactiveBlurRange: settings.enableInactiveBlur ? settings.inactiveBlurRange : 5.0,
         );
 
         return Container(

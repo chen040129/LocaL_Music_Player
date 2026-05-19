@@ -129,6 +129,10 @@ class SettingsProvider with ChangeNotifier {
   bool _useCustomBlur = true; // 是否使用自定义渐变遮罩（而不是内置渐变）
   LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow; // 歌词效果类型
   double _lyricsOpacity = 1.0; // 歌词不透明度
+  bool _enableInactiveBlur = false; // 是否启用非当前歌词模糊
+  double _inactiveBlurSigma = 2.0; // 非当前歌词模糊强度
+  double _inactiveOpacity = 0.5; // 非当前歌词透明度
+  double _inactiveBlurRange = 5.0; // 非当前歌词渐变模糊范围（行数）
   int _lyricsLineGap = 8; // 歌词行间距
   int _scrollDuration = 500; // 滚动动画时长(毫秒)
   int _selectionAutoResumeDuration = 400; // 选中行自动恢复时长(毫秒)
@@ -252,6 +256,10 @@ class SettingsProvider with ChangeNotifier {
   int get fadeDirection => _fadeDirection;
   double get fadeOpacity => _fadeOpacity;
   int get blendModeIndex => _blendModeIndex;
+  bool get enableInactiveBlur => _enableInactiveBlur;
+  double get inactiveBlurSigma => _inactiveBlurSigma;
+  double get inactiveOpacity => _inactiveOpacity;
+  double get inactiveBlurRange => _inactiveBlurRange;
 
   // 获取混合模式
   BlendMode get blendMode {
@@ -459,6 +467,10 @@ class SettingsProvider with ChangeNotifier {
     final lyricsEffectTypeIndex = prefs.getInt('lyrics_effect_type') ?? 0;
     _lyricsEffectType = LyricsEffectType.values[lyricsEffectTypeIndex];
     _lyricsOpacity = (prefs.getDouble('lyrics_opacity') ?? 1.0).toDouble();
+    _enableInactiveBlur = prefs.getBool('enable_inactive_blur') ?? false;
+    _inactiveBlurSigma = (prefs.getDouble('inactive_blur_sigma') ?? 2.0).toDouble();
+    _inactiveOpacity = (prefs.getDouble('inactive_opacity') ?? 0.5).toDouble();
+    _inactiveBlurRange = (prefs.getDouble('inactive_blur_range') ?? 5.0).toDouble();
     _lyricsLineGap = prefs.getInt('lyrics_line_gap') ?? 8;
     _scrollDuration = prefs.getInt('scroll_duration') ?? 500;
     _selectionAutoResumeDuration =
@@ -868,6 +880,30 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setLyricsOpacity(double value) async {
     _lyricsOpacity = value.clamp(0.3, 1.0);
     await _saveSetting('lyrics_opacity', _lyricsOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setEnableInactiveBlur(bool value) async {
+    _enableInactiveBlur = value;
+    await _saveSetting('enable_inactive_blur', value);
+    notifyListeners();
+  }
+
+  Future<void> setInactiveBlurSigma(double value) async {
+    _inactiveBlurSigma = value.clamp(0.5, 10.0);
+    await _saveSetting('inactive_blur_sigma', _inactiveBlurSigma);
+    notifyListeners();
+  }
+
+  Future<void> setInactiveOpacity(double value) async {
+    _inactiveOpacity = value.clamp(0.1, 1.0);
+    await _saveSetting('inactive_opacity', _inactiveOpacity);
+    notifyListeners();
+  }
+
+  Future<void> setInactiveBlurRange(double value) async {
+    _inactiveBlurRange = value.clamp(1.0, 15.0);
+    await _saveSetting('inactive_blur_range', _inactiveBlurRange);
     notifyListeners();
   }
 
@@ -1425,6 +1461,10 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['enable_lyrics_blur'] =
         prefs.getBool('enable_lyrics_blur') ?? true;
     settingsMap['lyrics_opacity'] = prefs.getDouble('lyrics_opacity') ?? 1.0;
+    settingsMap['enable_inactive_blur'] = prefs.getBool('enable_inactive_blur') ?? false;
+    settingsMap['inactive_blur_sigma'] = prefs.getDouble('inactive_blur_sigma') ?? 2.0;
+    settingsMap['inactive_opacity'] = prefs.getDouble('inactive_opacity') ?? 0.5;
+    settingsMap['inactive_blur_range'] = prefs.getDouble('inactive_blur_range') ?? 5.0;
     settingsMap['lyrics_line_gap'] = prefs.getInt('lyrics_line_gap') ?? 8;
     settingsMap['scroll_duration'] = prefs.getInt('scroll_duration') ?? 500;
     settingsMap['selection_auto_resume_duration'] =
@@ -1674,6 +1714,18 @@ class SettingsProvider with ChangeNotifier {
     if (settingsMap.containsKey('lyrics_opacity')) {
       await prefs.setDouble('lyrics_opacity', settingsMap['lyrics_opacity']);
     }
+    if (settingsMap.containsKey('enable_inactive_blur')) {
+      await prefs.setBool('enable_inactive_blur', settingsMap['enable_inactive_blur']);
+    }
+    if (settingsMap.containsKey('inactive_blur_sigma')) {
+      await prefs.setDouble('inactive_blur_sigma', settingsMap['inactive_blur_sigma']);
+    }
+    if (settingsMap.containsKey('inactive_opacity')) {
+      await prefs.setDouble('inactive_opacity', settingsMap['inactive_opacity']);
+    }
+    if (settingsMap.containsKey('inactive_blur_range')) {
+      await prefs.setDouble('inactive_blur_range', settingsMap['inactive_blur_range']);
+    }
     if (settingsMap.containsKey('lyrics_line_gap')) {
       await prefs.setInt('lyrics_line_gap', settingsMap['lyrics_line_gap']);
     }
@@ -1838,6 +1890,22 @@ class SettingsProvider with ChangeNotifier {
     }
     if (settingsMap.containsKey('cover_size')) {
       await prefs.setDouble('cover_size', settingsMap['cover_size']);
+    }
+
+    // 播放栏封面圆角
+    if (settingsMap.containsKey('player_bar_cover_radius')) {
+      await prefs.setDouble('player_bar_cover_radius', settingsMap['player_bar_cover_radius']);
+    }
+
+    // 封面设置
+    if (settingsMap.containsKey('cover_shape')) {
+      await prefs.setInt('cover_shape', settingsMap['cover_shape']);
+    }
+    if (settingsMap.containsKey('circle_cover_state')) {
+      await prefs.setInt('circle_cover_state', settingsMap['circle_cover_state']);
+    }
+    if (settingsMap.containsKey('cover_border_radius')) {
+      await prefs.setDouble('cover_border_radius', settingsMap['cover_border_radius']);
     }
 
     // 重新加载设置
