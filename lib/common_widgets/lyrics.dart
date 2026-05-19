@@ -81,6 +81,8 @@ class KaraokeTextState extends State<KaraokeText>
   Widget build(BuildContext context) {
     return RichText(
       textAlign: widget.expanded ? TextAlign.left : TextAlign.center,
+      overflow: TextOverflow.visible,
+      maxLines: 1,
       text: TextSpan(children: widget.line.tokens.map(buildTokenSpan).toList()),
     );
   }
