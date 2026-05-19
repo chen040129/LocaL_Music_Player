@@ -86,7 +86,8 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     final lines = desktopLyricsLines;
     if (lines != null && lines.isNotEmpty) {
       final index = lines.indexWhere((line) =>
-          line.start == desktopLyricLine!.start && line.text == desktopLyricLine!.text);
+          line.start == desktopLyricLine!.start &&
+          line.text == desktopLyricLine!.text);
       if (index != -1 && index + 1 < lines.length) {
         final nextStart = lines[index + 1].start;
         final computed = nextStart - lines[index].start;
@@ -99,16 +100,20 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     final lastToken = desktopLyricLine!.tokens.isNotEmpty
         ? desktopLyricLine!.tokens.last
         : null;
-    if (duration == const Duration(milliseconds: 5000) && lastToken?.end != null) {
+    if (duration == const Duration(milliseconds: 5000) &&
+        lastToken?.end != null) {
       final computed = lastToken!.end! - desktopLyricLine!.start;
       if (computed > Duration.zero) {
         duration = computed;
       }
     }
 
-    final holdDuration = Duration(milliseconds: min(300, (duration.inMilliseconds * 0.15).round()));
+    final holdDuration = Duration(
+        milliseconds: min(400, (duration.inMilliseconds * 0.3).round()));
     final scrollDuration = duration - holdDuration;
-    return scrollDuration > Duration.zero ? scrollDuration : const Duration(milliseconds: 1);
+    return scrollDuration > Duration.zero
+        ? scrollDuration
+        : const Duration(milliseconds: 1);
   }
 
   double _measureTextWidth(String text, TextStyle style) {
@@ -136,8 +141,9 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     }
 
     final elapsed = _displayPosition - _lineStart;
-    final progress = elapsed.inMilliseconds / _lineDuration.inMilliseconds;
-    _scrollOffset = _maxScrollOffset * progress.clamp(0.0, 1.0);
+    final progress = (elapsed.inMilliseconds / _lineDuration.inMilliseconds).clamp(0.0, 1.0);
+    final eased = Curves.easeInOut.transform(progress);
+    _scrollOffset = _maxScrollOffset * eased;
   }
 
   Widget _buildContent(TextStyle style) {
@@ -177,7 +183,8 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
     return ValueListenableBuilder(
       valueListenable: updateDesktopLyricsNotifier,
       builder: (context, value, child) {
-        final fontFamily = desktopLyricsFontName.isNotEmpty ? desktopLyricsFontName : null;
+        final fontFamily =
+            desktopLyricsFontName.isNotEmpty ? desktopLyricsFontName : null;
         final fontSize = isMobile ? 20.0 : desktopLyricsFontSize;
         final style = TextStyle(
           fontFamily: fontFamily,
@@ -208,7 +215,8 @@ class _DesktopLyricsWidgetState extends State<DesktopLyricsWidget>
                 ? constraints.maxWidth
                 : MediaQuery.of(context).size.width;
             _updateScrollMetrics(maxWidth, desktopLyricLine!.text, style);
-            final alignment = _maxScrollOffset > 0 ? Alignment.centerLeft : Alignment.center;
+            final alignment =
+                _maxScrollOffset > 0 ? Alignment.centerLeft : Alignment.center;
 
             return ClipRect(
               child: SizedBox(

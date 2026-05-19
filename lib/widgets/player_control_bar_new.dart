@@ -60,8 +60,8 @@ class _PlayerControlBarNewState extends State<PlayerControlBarNew>
                         gaplessPlayback: true,
                         filterQuality: FilterQuality.low,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            CupertinoIcons.music_note,
+                              draggable: false,
+                              outOfBoundaries: false,
                             size: 56,
                           );
                         },
@@ -95,6 +95,28 @@ class _PlayerControlBarNewState extends State<PlayerControlBarNew>
                         color: Theme.of(context)
                             .iconTheme
                             .color
+
+    void _openLyrics(BuildContext context) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) {
+            return Consumer<SettingsProvider>(
+              builder: (context, settings, child) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.zero,
+                  child: const LyricsPage(),
+                );
+              },
+            );
+          },
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    }
                             ?.withOpacity(0.5),
                         fontSize: 12,
                       ),
@@ -135,27 +157,9 @@ class _PlayerControlBarNewState extends State<PlayerControlBarNew>
               color: Colors.transparent,
               elevation: 0,
               child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        return Consumer<SettingsProvider>(
-                          builder: (context, settings, child) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.zero,
-                              child: const LyricsPage(),
-                            );
-                          },
-                        );
-                      },
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      transitionDuration: const Duration(milliseconds: 300),
-                    ),
-                  );
+                  _openLyrics(context);
                 },
                 child: Stack(
                   children: [
@@ -189,13 +193,17 @@ class _PlayerControlBarNewState extends State<PlayerControlBarNew>
                                 borderSoftness: 2.5,
                                 lightIntensity: 1.5,
                                 lightDirection: 39.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: const SizedBox(
-                                height: 60,
-                                width: 400,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: () => _openLyrics(context),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const SizedBox(
+                                  height: 60,
+                                  width: 400,
+                                ),
                               ),
                             ),
                           ),
@@ -209,6 +217,28 @@ class _PlayerControlBarNewState extends State<PlayerControlBarNew>
           },
         );
       },
+
+  void _openLyrics(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: const LyricsPage(),
+              );
+            },
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
     );
   }
 }

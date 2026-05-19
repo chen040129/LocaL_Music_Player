@@ -44,6 +44,28 @@ class _PlayerControlBarState extends State<PlayerControlBar>
     );
   }
 
+  void _openLyrics(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(0),
+                child: const LyricsPage(),
+              );
+            },
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PlayerProvider>(
@@ -60,28 +82,9 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                 onEnter: (_) => setState(() => _isHoveringBar = true),
                 onExit: (_) => setState(() => _isHoveringBar = false),
                 child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) {
-                          return Consumer<SettingsProvider>(
-                            builder: (context, settings, child) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(0),
-                                child: const LyricsPage(),
-                              );
-                            },
-                          );
-                        },
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 300),
-                      ),
-                    );
+                    _openLyrics(context);
                   },
                   child: LiquidGlassWidget(
                     enabled: settings.usePlayerGlass,
@@ -116,7 +119,10 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                                   ),
                                 ],
                               ),
-                              child: Row(children: [
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTap: () => _openLyrics(context),
+                                child: Row(children: [
                                 // 专辑封面
                                 Consumer<SettingsProvider>(
                                   builder: (context, settings, child) {
@@ -420,7 +426,7 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                                 ),
                               ]),
                             ),
-
+                            ),
                           ],
                         ),
                       ),
