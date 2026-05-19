@@ -20,6 +20,7 @@ import 'package:flutter_music_player/pages/library_page.dart';
 import 'package:flutter_music_player/pages/statistics_page.dart';
 import 'package:flutter_music_player/pages/settings_page.dart';
 import 'package:flutter_music_player/pages/about_page.dart';
+import 'package:flutter_music_player/pages/dsp_settings_page.dart';
 
 class HomeScreenOptimized extends StatefulWidget {
   const HomeScreenOptimized({Key? key}) : super(key: key);
@@ -140,6 +141,8 @@ class _HomeScreenOptimizedState extends State<HomeScreenOptimized> {
         return const StatisticsPage();
       case AppPage.settings:
         return const SettingsPage();
+      case AppPage.dsp:
+        return const DspSettingsPage();
       case AppPage.about:
         return const AboutPage();
       default:

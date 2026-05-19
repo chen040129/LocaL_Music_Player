@@ -33,6 +33,7 @@ import 'package:flutter_music_player/pages/library_page.dart';
 import 'package:flutter_music_player/pages/statistics_page.dart';
 import 'package:flutter_music_player/pages/settings_page.dart';
 import 'package:flutter_music_player/pages/about_page.dart';
+import 'package:flutter_music_player/pages/dsp_settings_page.dart';
 import 'package:flutter_music_player/models/playlist_model.dart';
 import 'package:fluid_background/fluid_background.dart';
 
@@ -505,6 +506,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return SettingsPage(
             key: ValueKey('settings_$_currentPage'),
             onSidebarToggle: _toggleSidebar);
+      case AppPage.dsp:
+        return DspSettingsPage(
+            key: ValueKey('dsp_$_currentPage'),
+        );
       case AppPage.about:
         return AboutPage(
             key: ValueKey('about_$_currentPage'),

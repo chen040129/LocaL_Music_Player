@@ -459,6 +459,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.33"
+  flutter_soloud:
+    dependency: "direct main"
+    description:
+      path: "../flutter_soloud"
+      relative: true
+    source: path
+    version: "3.5.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter

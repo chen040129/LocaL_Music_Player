@@ -21,6 +21,7 @@ import 'providers/music_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/player_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/dsp_provider.dart';
 import 'services/global_hotkey_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -265,6 +266,8 @@ class _MyAppState extends State<MyApp>
         ChangeNotifierProvider(create: (context) => PlaylistService()),
         // 导航提供者
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        // DSP 音频效果提供者
+        ChangeNotifierProvider(create: (context) => DspProvider()),
         // 设置提供者
         ChangeNotifierProvider(create: (context) {
           final provider = SettingsProvider();

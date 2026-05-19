@@ -34,6 +34,8 @@ dependencies:
 
   audioplayers:
     path: ../audioplayers/packages/audioplayers
+  flutter_soloud:
+    path: ../flutter_soloud
   audio_metadata_reader: ^1.4.2
 
   amlv: ^1.0.2
