@@ -291,10 +291,10 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 启用歌词模糊开关
+                // 启用歌词渐变开关
                 _buildSwitchTile(
-                  title: '启用歌词模糊',
-                  subtitle: '在歌词上下区域添加模糊效果',
+                  title: '启用歌词渐变',
+                  subtitle: '在歌词上下区域添加渐变淡出效果',
                   icon: CupertinoIcons.photo,
                   value: settings.enableLyricsBlur,
                   onChanged: (value) => settings.setEnableLyricsBlur(value),
@@ -398,16 +398,6 @@ class _LyricsSettingsPageState extends State<LyricsSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 启用歌词选择效果开关
-                _buildSwitchTile(
-                  title: '启用歌词选择效果',
-                  subtitle: '在歌词行选择时显示特殊效果',
-                  icon: CupertinoIcons.pin,
-                  value: settings.enableLyricsSelectionEffects,
-                  onChanged: (value) => settings.setEnableLyricsSelectionEffects(value),
-                ),
-                const Divider(height: 32),
-
                 // 滚动动画设置组
                 _buildSectionSubHeader('滚动动画'),
                 const SizedBox(height: 8),

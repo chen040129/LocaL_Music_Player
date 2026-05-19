@@ -120,14 +120,13 @@ class SettingsProvider with ChangeNotifier {
   double _lyricsFontSize = 16.0; // 歌词字体大小
   double _activeLyricsFontSize = 22.0; // 当前歌词字体大小
   bool _showTranslation = true; // 是否显示翻译
-  bool _enableLyricsBlur = true; // 是否启用歌词模糊
+  bool _enableLyricsBlur = true; // 是否启用歌词渐变
   double _fadeRangeTop = 200.0; // 歌词顶部渐变范围
   double _fadeRangeBottom = 200.0; // 歌词底部渐变范围
   int _fadeDirection = 0; // 渐变方向 (0: 上下, 1: 左右, 2: 对角线)
   double _fadeOpacity = 0.8; // 渐变不透明度
   int _blendModeIndex = 0; // 混合模式索引
-  bool _useCustomBlur = true; // 是否使用自定义模糊效果（而不是内置渐变）
-  bool _enableLyricsSelectionEffects = true; // 是否启用歌词选择效果
+  bool _useCustomBlur = true; // 是否使用自定义渐变遮罩（而不是内置渐变）
   LyricsEffectType _lyricsEffectType = LyricsEffectType.shadow; // 歌词效果类型
   double _lyricsOpacity = 1.0; // 歌词不透明度
   int _lyricsLineGap = 8; // 歌词行间距
@@ -311,7 +310,6 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get useCustomBlur => _useCustomBlur;
-  bool get enableLyricsSelectionEffects => _enableLyricsSelectionEffects;
   LyricsEffectType get lyricsEffectType => _lyricsEffectType;
   Future<void> setLyricsEffectType(LyricsEffectType value) async {
     _lyricsEffectType = value;
@@ -458,8 +456,6 @@ class SettingsProvider with ChangeNotifier {
     _fadeOpacity = (prefs.getDouble('fade_opacity') ?? 0.8);
     _blendModeIndex = (prefs.getInt('blend_mode_index') ?? 0);
     _useCustomBlur = prefs.getBool('use_custom_blur') ?? true;
-    _enableLyricsSelectionEffects =
-        prefs.getBool('enable_lyrics_selection_effects') ?? true;
     final lyricsEffectTypeIndex = prefs.getInt('lyrics_effect_type') ?? 0;
     _lyricsEffectType = LyricsEffectType.values[lyricsEffectTypeIndex];
     _lyricsOpacity = (prefs.getDouble('lyrics_opacity') ?? 1.0).toDouble();
@@ -866,12 +862,6 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setUseCustomBlur(bool value) async {
     _useCustomBlur = value;
     await _saveSetting('use_custom_blur', value);
-    notifyListeners();
-  }
-
-  Future<void> setEnableLyricsSelectionEffects(bool value) async {
-    _enableLyricsSelectionEffects = value;
-    await _saveSetting('enable_lyrics_selection_effects', value);
     notifyListeners();
   }
 
@@ -1519,8 +1509,6 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['fade_opacity'] = prefs.getDouble('fade_opacity') ?? 0.8;
     settingsMap['blend_mode_index'] = prefs.getInt('blend_mode_index') ?? 0;
     settingsMap['use_custom_blur'] = prefs.getBool('use_custom_blur') ?? true;
-    settingsMap['enable_lyrics_selection_effects'] =
-        prefs.getBool('enable_lyrics_selection_effects') ?? true;
     settingsMap['lyrics_effect_type'] = prefs.getInt('lyrics_effect_type') ?? 0;
     settingsMap['enable_karaoke_effect'] =
         prefs.getBool('enable_karaoke_effect') ?? false;
@@ -1813,10 +1801,6 @@ class SettingsProvider with ChangeNotifier {
     }
     if (settingsMap.containsKey('use_custom_blur')) {
       await prefs.setBool('use_custom_blur', settingsMap['use_custom_blur']);
-    }
-    if (settingsMap.containsKey('enable_lyrics_selection_effects')) {
-      await prefs.setBool('enable_lyrics_selection_effects',
-          settingsMap['enable_lyrics_selection_effects']);
     }
     if (settingsMap.containsKey('lyrics_effect_type')) {
       await prefs.setInt(
