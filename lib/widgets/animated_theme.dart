@@ -15,7 +15,7 @@ class ThemeTransition extends StatefulWidget {
 }
 
 class _ThemeTransitionState extends State<ThemeTransition>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   ThemeMode? _previousThemeMode;

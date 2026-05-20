@@ -34,7 +34,7 @@ class MaskCard extends StatefulWidget {
 }
 
 class _MaskCardState extends State<MaskCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 

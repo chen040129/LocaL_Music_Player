@@ -94,32 +94,66 @@ class _AlbumCoverWidgetState extends State<AlbumCoverWidget>
             borderRadius: settings.coverShape == CoverShape.square
                 ? BorderRadius.circular(settings.coverBorderRadius)
                 : BorderRadius.circular(size / 2),
-            child: currentMusic?.coverArt != null
-                ? (settings.coverShape == CoverShape.circle &&
-                        settings.circleCoverState == CircleCoverState.rotating
-                    ? RotationTransition(
-                        turns: _rotationController,
-                        child: Image.memory(
-                          currentMusic!.coverArt!,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Image.memory(
-                        currentMusic!.coverArt!,
-                        fit: BoxFit.cover,
-                      ))
-                : Container(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      AppIcons.musicNote,
-                      size: size * 0.23,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.3),
-                    ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 600),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return ScaleTransition(
+                  scale: Tween<double>(begin: 0.94, end: 1.0).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
                   ),
+                  child: FadeTransition(
+                    opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                    child: child,
+                  ),
+                );
+              },
+              child: currentMusic?.coverArt != null
+                  ? (settings.coverShape == CoverShape.circle &&
+                          settings.circleCoverState == CircleCoverState.rotating
+                      ? RotationTransition(
+                          turns: _rotationController,
+                          child: KeyedSubtree(
+                            key: ValueKey(currentMusic?.id ?? 'no_music'),
+                            child: Image.memory(
+                              currentMusic!.coverArt!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : KeyedSubtree(
+                          key: ValueKey(currentMusic?.id ?? 'no_music'),
+                          child: Image.memory(
+                            currentMusic!.coverArt!,
+                            fit: BoxFit.cover,
+                          ),
+                        ))
+                  : KeyedSubtree(
+                      key: const ValueKey('no_cover'),
+                      child: Container(
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          AppIcons.musicNote,
+                          size: size * 0.23,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.3),
+                        ),
+                      ),
+                    ),
+            ),
           ),
         );
       },

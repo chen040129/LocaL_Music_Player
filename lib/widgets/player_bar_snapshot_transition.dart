@@ -19,7 +19,7 @@ class PlayerBarSnapshotTransition extends StatefulWidget {
 }
 
 class _PlayerBarSnapshotTransitionState extends State<PlayerBarSnapshotTransition>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _showSnapshot = true;
   String? _snapshotImage;
   Rect? _snapshotRect;

@@ -140,32 +140,49 @@ class _PlayerControlBarState extends State<PlayerControlBar>
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(
                                             settings.borderRadius),
-                                        child: currentMusic?.coverArt != null
-                                            ? Image.memory(
-                                                currentMusic!.coverArt!,
-                                                width: 48,
-                                                height: 48,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error,
-                                                    stackTrace) {
-                                                  return Icon(
+                                        child: AnimatedSwitcher(
+                                          duration: const Duration(milliseconds: 300),
+                                          switchInCurve: Curves.easeInOut,
+                                          switchOutCurve: Curves.easeInOut,
+                                          transitionBuilder: (Widget child, Animation<double> animation) {
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            );
+                                          },
+                                          child: currentMusic?.coverArt != null
+                                              ? KeyedSubtree(
+                                                  key: ValueKey(currentMusic?.id ?? 'no_music'),
+                                                  child: Image.memory(
+                                                    currentMusic!.coverArt!,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error,
+                                                        stackTrace) {
+                                                      return Icon(
+                                                        AppIcons.musicNote,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withOpacity(0.6),
+                                                        size: 28,
+                                                      );
+                                                    },
+                                                  ),
+                                                )
+                                              : KeyedSubtree(
+                                                  key: const ValueKey('no_cover'),
+                                                  child: Icon(
                                                     AppIcons.musicNote,
                                                     color: Theme.of(context)
                                                         .colorScheme
                                                         .onSurface
                                                         .withOpacity(0.6),
                                                     size: 28,
-                                                  );
-                                                },
-                                              )
-                                            : Icon(
-                                                AppIcons.musicNote,
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withOpacity(0.6),
-                                                size: 28,
-                                              ),
+                                                  ),
+                                                ),
+                                        ),
                                       ),
                                     );
                                   },

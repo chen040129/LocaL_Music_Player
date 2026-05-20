@@ -48,6 +48,8 @@ mixin LyricLineSwitchMixin<T extends StatefulWidget>
   }
 
   void onPlaySwitchAnimation(_) {
+    _exitAnimationController.duration = style.switchExitDuration;
+    _enterAnimationController.duration = style.switchEnterDuration;
     _exitAnimationController.forward(from: 0);
     _enterAnimationController.forward(from: 0);
   }

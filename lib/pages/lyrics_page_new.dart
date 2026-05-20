@@ -137,6 +137,15 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   late AnimationController _pageSwitchController;
   late Animation<double> _pageSwitchAnimation;
 
+  // 统一的封面切换动画
+  AnimationController? _coverTransitionController;
+  Animation<double>? _coverTransitionAnimation;
+  dynamic _previousMusicId;
+  Uint8List? _previousCoverArt;
+  Uint8List? _currentCoverArt;
+  bool _isCoverTransitioning = false;
+  bool _coverTransitionInitialized = false;
+
   static const Duration _animationDuration = Duration(milliseconds: 200);
   static const BoxConstraints _iconButtonConstraints = BoxConstraints(
     minWidth: 32,
@@ -177,12 +186,74 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
     );
     _pageSwitchAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_pageSwitchController);
+
+    // 初始化封面切换动画
+    _coverTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    _coverTransitionAnimation = CurvedAnimation(
+      parent: _coverTransitionController!,
+      curve: Curves.easeInOutCubic,
+    );
+    _coverTransitionController!.value = 1.0; // 初始状态：完全可见
+    _coverTransitionInitialized = true;
+  }
+
+  /// 当歌曲变化时，统一驱动封面和背景的过渡动画
+  Future<void> _startCoverTransition(Uint8List? newCoverArt, dynamic newMusicId, bool smoothTransition) async {
+    if (!_coverTransitionInitialized) return;
+    if (_previousMusicId == newMusicId) return;
+
+    final controller = _coverTransitionController!;
+
+    // 更新动画时长
+    controller.duration = smoothTransition
+        ? const Duration(milliseconds: 2000)
+        : const Duration(milliseconds: 500);
+
+    // 保存旧封面（此时不更新 _currentCoverArt，避免闪烁）
+    _previousCoverArt = _currentCoverArt;
+    _previousMusicId = newMusicId;
+
+    if (newCoverArt == null) {
+      // 无新封面，直接完成
+      setState(() {
+        _currentCoverArt = null;
+        _isCoverTransitioning = false;
+      });
+      return;
+    }
+
+    // 预缓存新图片（此时子组件仍显示旧图片）
+    try {
+      await precacheImage(MemoryImage(newCoverArt), context);
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // 预缓存完成后再更新为新图片，开始过渡
+    setState(() {
+      _currentCoverArt = newCoverArt;
+      _isCoverTransitioning = true;
+    });
+    controller.value = 0.0;
+
+    await controller.forward();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isCoverTransitioning = false;
+      _previousCoverArt = null;
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _pageSwitchController.dispose();
+    _coverTransitionController?.dispose();
 
     // 恢复窗口透明度
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -415,6 +486,16 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
 
+        // 检测歌曲变化，触发统一的封面/背景过渡动画
+        if (currentMusic?.id != _previousMusicId && _previousMusicId != null) {
+          final settings = context.read<SettingsProvider>();
+          _startCoverTransition(currentMusic?.coverArt, currentMusic?.id, settings.smoothColorTransition);
+        } else if (_currentCoverArt == null && currentMusic?.coverArt != null) {
+          // 首次加载封面
+          _currentCoverArt = currentMusic!.coverArt;
+          _previousMusicId = currentMusic.id;
+        }
+
         return Scaffold(
           backgroundColor: Colors.transparent,
           body: Consumer<SettingsProvider>(
@@ -443,18 +524,15 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                             case SongPageBackgroundType.fluid:
                               return _buildFluidBackground(player, settings);
                             case SongPageBackgroundType.blur:
-                              if (currentMusic?.coverArt != null) {
+                              if (_currentCoverArt != null) {
                                 return Opacity(
                                   opacity: 0.3,
-                                  child: ImageFiltered(
-                                    imageFilter: ui.ImageFilter.blur(
-                                      sigmaX: settings.blurAmount,
-                                      sigmaY: settings.blurAmount,
-                                    ),
-                                    child: Image.memory(
-                                      currentMusic!.coverArt!,
-                                      fit: BoxFit.cover,
-                                    ),
+                                  child: _SyncedBlurBackground(
+                                    blurAmount: settings.blurAmount,
+                                    transitionAnimation: _coverTransitionAnimation ?? const AlwaysStoppedAnimation(1.0),
+                                    isTransitioning: _isCoverTransitioning,
+                                    previousCoverArt: _previousCoverArt,
+                                    currentCoverArt: _currentCoverArt!,
                                   ),
                                 );
                               }
@@ -730,20 +808,20 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
                                                                           ClipRRect(
                                                                         borderRadius:
                                                                             BorderRadius.circular(0),
-                                                                        child: currentMusic?.coverArt !=
-                                                                                null
-                                                                            ? Image.memory(
-                                                                                currentMusic!.coverArt!,
-                                                                                fit: BoxFit.cover,
-                                                                              )
-                                                                            : Container(
-                                                                                color: colorScheme.surfaceContainerHighest,
-                                                                                child: Icon(
-                                                                                  AppIcons.musicNote,
-                                                                                  size: 80,
-                                                                                  color: colorScheme.onSurface.withOpacity(0.3),
-                                                                                ),
-                                                                              ),
+                                                                        child: _SyncedCoverSwitcher(
+                                                                          transitionAnimation: _coverTransitionAnimation ?? const AlwaysStoppedAnimation(1.0),
+                                                                          isTransitioning: _isCoverTransitioning,
+                                                                          previousCoverArt: _previousCoverArt,
+                                                                          currentCoverArt: _currentCoverArt,
+                                                                          noCoverWidget: Container(
+                                                                            color: colorScheme.surfaceContainerHighest,
+                                                                            child: Icon(
+                                                                              AppIcons.musicNote,
+                                                                              size: 80,
+                                                                              color: colorScheme.onSurface.withOpacity(0.3),
+                                                                            ),
+                                                                          ),
+                                                                        ),
                                                                       ),
                                                                     ),
                                                                   ),
@@ -2358,5 +2436,118 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         constraints: const BoxConstraints(),
       );
     }
+  }
+}
+
+/// 同步模糊背景组件
+/// 由父级 _LyricsPageState 统一驱动动画，确保封面和背景完全同步
+class _SyncedBlurBackground extends StatelessWidget {
+  final double blurAmount;
+  final Animation<double> transitionAnimation;
+  final bool isTransitioning;
+  final Uint8List? previousCoverArt;
+  final Uint8List currentCoverArt;
+
+  const _SyncedBlurBackground({
+    Key? key,
+    required this.blurAmount,
+    required this.transitionAnimation,
+    required this.isTransitioning,
+    required this.previousCoverArt,
+    required this.currentCoverArt,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // 淡出动画：1 → 0
+    final fadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(transitionAnimation);
+
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 底层：旧图片（淡出）
+          if (previousCoverArt != null && isTransitioning)
+            FadeTransition(
+              opacity: fadeOutAnimation,
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(
+                  sigmaX: blurAmount,
+                  sigmaY: blurAmount,
+                ),
+                child: Image.memory(
+                  previousCoverArt!,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          // 上层：新图片（淡入）
+          FadeTransition(
+            opacity: transitionAnimation,
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(
+                sigmaX: blurAmount,
+                sigmaY: blurAmount,
+              ),
+              child: Image.memory(
+                currentCoverArt,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 同步封面切换组件
+/// 由父级 _LyricsPageState 统一驱动动画，确保封面和背景完全同步
+class _SyncedCoverSwitcher extends StatelessWidget {
+  final Animation<double> transitionAnimation;
+  final bool isTransitioning;
+  final Uint8List? previousCoverArt;
+  final Uint8List? currentCoverArt;
+  final Widget noCoverWidget;
+
+  const _SyncedCoverSwitcher({
+    Key? key,
+    required this.transitionAnimation,
+    required this.isTransitioning,
+    required this.previousCoverArt,
+    required this.currentCoverArt,
+    required this.noCoverWidget,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // 淡出动画：1 → 0
+    final fadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(transitionAnimation);
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 底层：旧封面（淡出）
+        if (previousCoverArt != null && isTransitioning)
+          FadeTransition(
+            opacity: fadeOutAnimation,
+            child: Image.memory(
+              previousCoverArt!,
+              fit: BoxFit.cover,
+            ),
+          ),
+        // 上层：新封面（淡入）或无封面占位
+        if (currentCoverArt != null)
+          FadeTransition(
+            opacity: transitionAnimation,
+            child: Image.memory(
+              currentCoverArt!,
+              fit: BoxFit.cover,
+            ),
+          )
+        else
+          noCoverWidget,
+      ],
+    );
   }
 }
