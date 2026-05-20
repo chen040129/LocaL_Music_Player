@@ -212,6 +212,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       icon: Icon(CupertinoIcons.color_filter),
                     ),
                     ButtonSegment(
+                      value: UIBackgroundType.blur,
+                      label: Text('模糊'),
+                      icon: Icon(CupertinoIcons.photo),
+                    ),
+                    ButtonSegment(
                       value: UIBackgroundType.customImage,
                       label: Text('自定义图片'),
                       icon: Icon(CupertinoIcons.photo_on_rectangle),
@@ -303,6 +308,29 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           divisions: 95,
                           label: '${settings.fluidAnimationDuration}ms',
                           onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
+                        ),
+                      ],
+                    ),
+                  ),
+                // 模糊背景设置
+                if (settings.uiBackgroundType == UIBackgroundType.blur)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('模糊效果'),
+                        const SizedBox(height: 8),
+                        _buildSliderTile(
+                          title: '模糊程度',
+                          subtitle: '调整背景的模糊程度',
+                          icon: CupertinoIcons.photo,
+                          value: settings.uiBlurAmount,
+                          min: 0.0,
+                          max: 50.0,
+                          divisions: 50,
+                          label: '${settings.uiBlurAmount.toInt()}',
+                          onChanged: (value) => settings.setUIBlurAmount(value),
                         ),
                       ],
                     ),
@@ -798,6 +826,11 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                       icon: Icon(CupertinoIcons.color_filter),
                     ),
                     ButtonSegment(
+                      value: UIBackgroundType.blur,
+                      label: Text('模糊'),
+                      icon: Icon(CupertinoIcons.photo),
+                    ),
+                    ButtonSegment(
                       value: UIBackgroundType.customImage,
                       label: Text('自定义图片'),
                       icon: Icon(CupertinoIcons.photo_on_rectangle),
@@ -887,6 +920,29 @@ class _UISettingsPageState extends State<UISettingsPage> with AutomaticKeepAlive
                           divisions: 95,
                           label: '${settings.fluidAnimationDuration}ms',
                           onChanged: (value) => settings.setFluidAnimationDuration(value.toInt()),
+                        ),
+                      ],
+                    ),
+                  ),
+                // 模糊背景设置
+                if (settings.uiBackgroundType == UIBackgroundType.blur)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionSubHeader('模糊效果'),
+                        const SizedBox(height: 8),
+                        _buildSliderTile(
+                          title: '模糊程度',
+                          subtitle: '调整背景的模糊程度',
+                          icon: CupertinoIcons.photo,
+                          value: settings.uiBlurAmount,
+                          min: 0.0,
+                          max: 50.0,
+                          divisions: 50,
+                          label: '${settings.uiBlurAmount.toInt()}',
+                          onChanged: (value) => settings.setUIBlurAmount(value),
                         ),
                       ],
                     ),

@@ -144,6 +144,7 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   Uint8List? _previousCoverArt;
   Uint8List? _currentCoverArt;
   bool _isCoverTransitioning = false;
+  bool _isCoverTransitionInProgress = false;
   bool _coverTransitionInitialized = false;
 
   static const Duration _animationDuration = Duration(milliseconds: 200);
@@ -204,49 +205,58 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
   Future<void> _startCoverTransition(Uint8List? newCoverArt, dynamic newMusicId, bool smoothTransition) async {
     if (!_coverTransitionInitialized) return;
     if (_previousMusicId == newMusicId) return;
+    if (_isCoverTransitionInProgress) return;
 
-    final controller = _coverTransitionController!;
+    _isCoverTransitionInProgress = true;
 
-    // 更新动画时长
-    controller.duration = smoothTransition
-        ? const Duration(milliseconds: 2000)
-        : const Duration(milliseconds: 500);
-
-    // 保存旧封面（此时不更新 _currentCoverArt，避免闪烁）
-    _previousCoverArt = _currentCoverArt;
-    _previousMusicId = newMusicId;
-
-    if (newCoverArt == null) {
-      // 无新封面，直接完成
-      setState(() {
-        _currentCoverArt = null;
-        _isCoverTransitioning = false;
-      });
-      return;
-    }
-
-    // 预缓存新图片（此时子组件仍显示旧图片）
     try {
-      await precacheImage(MemoryImage(newCoverArt), context);
-    } catch (_) {}
+      final controller = _coverTransitionController!;
 
-    if (!mounted) return;
+      // 更新动画时长
+      controller.duration = smoothTransition
+          ? const Duration(milliseconds: 2000)
+          : const Duration(milliseconds: 500);
 
-    // 预缓存完成后再更新为新图片，开始过渡
-    setState(() {
-      _currentCoverArt = newCoverArt;
-      _isCoverTransitioning = true;
-    });
-    controller.value = 0.0;
+      // 保存旧封面（此时不更新 _currentCoverArt，避免闪烁）
+      _previousCoverArt = _currentCoverArt;
+      _previousMusicId = newMusicId;
 
-    await controller.forward();
+      if (newCoverArt == null) {
+        // 无新封面，直接完成
+        if (mounted) {
+          setState(() {
+            _currentCoverArt = null;
+            _isCoverTransitioning = false;
+          });
+        }
+        return;
+      }
 
-    if (!mounted) return;
+      // 预缓存新图片（此时子组件仍显示旧图片）
+      try {
+        await precacheImage(MemoryImage(newCoverArt), context);
+      } catch (_) {}
 
-    setState(() {
-      _isCoverTransitioning = false;
-      _previousCoverArt = null;
-    });
+      if (!mounted) return;
+
+      // 预缓存完成后再更新为新图片，开始过渡
+      setState(() {
+        _currentCoverArt = newCoverArt;
+        _isCoverTransitioning = true;
+      });
+      controller.value = 0.0;
+
+      await controller.forward();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isCoverTransitioning = false;
+        _previousCoverArt = null;
+      });
+    } finally {
+      _isCoverTransitionInProgress = false;
+    }
   }
 
   @override
@@ -487,9 +497,13 @@ class _LyricsPageState extends State<LyricsPage> with TickerProviderStateMixin {
         final colorScheme = theme.colorScheme;
 
         // 检测歌曲变化，触发统一的封面/背景过渡动画
-        if (currentMusic?.id != _previousMusicId && _previousMusicId != null) {
+        if (currentMusic?.id != _previousMusicId && _previousMusicId != null && !_isCoverTransitionInProgress) {
           final settings = context.read<SettingsProvider>();
-          _startCoverTransition(currentMusic?.coverArt, currentMusic?.id, settings.smoothColorTransition);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isCoverTransitionInProgress) {
+              _startCoverTransition(currentMusic?.coverArt, currentMusic?.id, settings.smoothColorTransition);
+            }
+          });
         } else if (_currentCoverArt == null && currentMusic?.coverArt != null) {
           // 首次加载封面
           _currentCoverArt = currentMusic!.coverArt;

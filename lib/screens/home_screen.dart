@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -44,7 +45,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isSidebarExpanded = true;
   int _currentPlayingIndex = 0;
   bool _isPlaying = false;
@@ -59,6 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _contentKey = GlobalKey();
   double _lastGlassOpacity = 0.2;
   ThemeMode _lastThemeMode = ThemeMode.system;
+
+  // 模糊背景过渡动画
+  AnimationController? _blurTransitionController;
+  Animation<double>? _blurTransitionAnimation;
+  bool _blurTransitionInitialized = false;
+  bool _isBlurTransitioning = false;
+  bool _isBlurTransitionInProgress = false;
+  Uint8List? _currentBlurCoverArt;
+  Uint8List? _previousBlurCoverArt;
+  dynamic _previousBlurMusicId;
 
   // 当前页面
   AppPage _currentPage = AppPage.songs;
@@ -99,6 +110,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 添加渲染回调，监听布局变化
     WidgetsBinding.instance.addPersistentFrameCallback(_onFrameCallback);
+
+    // 初始化模糊背景过渡动画
+    _blurTransitionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _blurTransitionController!.value = 1.0;
+    _blurTransitionAnimation = CurvedAnimation(
+      parent: _blurTransitionController!,
+      curve: Curves.easeInOutCubic,
+    );
+    _blurTransitionInitialized = true;
   }
 
   // 帧回调，用于监听布局变化
@@ -122,9 +145,66 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _resizeDebounceTimer?.cancel();
+    _blurTransitionController?.dispose();
     // 移除窗口事件监听器
     windowManager.removeListener(_windowListener);
     super.dispose();
+  }
+
+  /// 模糊背景过渡动画
+  Future<void> _startBlurTransition(Uint8List? newCoverArt, dynamic newMusicId, bool smoothTransition) async {
+    if (!_blurTransitionInitialized) return;
+    if (_previousBlurMusicId == newMusicId) return;
+    if (_isBlurTransitionInProgress) return;
+
+    _isBlurTransitionInProgress = true;
+
+    try {
+      final controller = _blurTransitionController!;
+
+      controller.duration = smoothTransition
+          ? const Duration(milliseconds: 2000)
+          : const Duration(milliseconds: 500);
+
+      // 保存旧封面（此时不更新 _currentBlurCoverArt，避免闪烁）
+      _previousBlurCoverArt = _currentBlurCoverArt;
+      _previousBlurMusicId = newMusicId;
+
+      if (newCoverArt == null) {
+        if (mounted) {
+          setState(() {
+            _currentBlurCoverArt = null;
+            _isBlurTransitioning = false;
+          });
+        }
+        return;
+      }
+
+      // 预缓存新图片（此时子组件仍显示旧图片）
+      try {
+        await precacheImage(MemoryImage(newCoverArt), context);
+      } catch (_) {}
+
+      if (!mounted) return;
+
+      // 预缓存完成后再更新为新图片，开始过渡
+      setState(() {
+        _currentBlurCoverArt = newCoverArt;
+        _isBlurTransitioning = true;
+      });
+      controller.value = 0.0;
+
+      await controller.forward();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isBlurTransitioning = false;
+        _previousBlurCoverArt = null;
+      });
+    } finally {
+      _isBlurTransitionInProgress = false;
+    }
   }
 
   Future<void> _updateWindowSize() async {
@@ -596,6 +676,64 @@ class _HomeScreenState extends State<HomeScreen> {
                         case UIBackgroundType.gradient:
                           return _buildGradientBackground(
                               player, settings, colorScheme);
+                        case UIBackgroundType.blur:
+                          // 检测歌曲变化，触发模糊背景过渡动画
+                          if (player.currentMusic?.id != _previousBlurMusicId && _previousBlurMusicId != null && !_isBlurTransitionInProgress) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted && !_isBlurTransitionInProgress) {
+                                _startBlurTransition(player.currentMusic?.coverArt, player.currentMusic?.id, settings.smoothColorTransition);
+                              }
+                            });
+                          } else if (_currentBlurCoverArt == null && player.currentMusic?.coverArt != null) {
+                            // 首次加载封面
+                            _currentBlurCoverArt = player.currentMusic!.coverArt;
+                            _previousBlurMusicId = player.currentMusic?.id;
+                          }
+                          if (_currentBlurCoverArt != null) {
+                            final fadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(_blurTransitionAnimation ?? const AlwaysStoppedAnimation(1.0));
+                            return Opacity(
+                              opacity: 0.3,
+                              child: SizedBox.expand(
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    // 底层：旧图片（淡出）
+                                    if (_previousBlurCoverArt != null && _isBlurTransitioning)
+                                      FadeTransition(
+                                        opacity: fadeOutAnimation,
+                                        child: ImageFiltered(
+                                          imageFilter: ui.ImageFilter.blur(
+                                            sigmaX: settings.uiBlurAmount,
+                                            sigmaY: settings.uiBlurAmount,
+                                          ),
+                                          child: Image.memory(
+                                            _previousBlurCoverArt!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    // 上层：新图片（淡入）
+                                    FadeTransition(
+                                      opacity: _blurTransitionAnimation ?? const AlwaysStoppedAnimation(1.0),
+                                      child: ImageFiltered(
+                                        imageFilter: ui.ImageFilter.blur(
+                                          sigmaX: settings.uiBlurAmount,
+                                          sigmaY: settings.uiBlurAmount,
+                                        ),
+                                        child: Image.memory(
+                                          _currentBlurCoverArt!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          return Container(
+                            color: colorScheme.surface,
+                          );
                         case UIBackgroundType.customImage:
                           if (settings.uiCustomImagePath.isNotEmpty) {
                             BoxFit boxFit;

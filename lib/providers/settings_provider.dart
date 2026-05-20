@@ -41,6 +41,7 @@ enum UIBackgroundType {
   normal, // 默认背景
   fluid, // 流体背景（当前播放歌曲）
   gradient, // 渐变背景（当前播放歌曲）
+  blur, // 模糊背景（当前播放歌曲封面）
   customImage, // 自定义图片背景
 }
 
@@ -108,6 +109,7 @@ class SettingsProvider with ChangeNotifier {
   bool _syncGradientSettings = false; // 是否同步用户界面和歌曲界面的渐变设置
   GradientType _uiGradientType = GradientType.static; // 用户界面渐变类型
   double _uiGradientSongColorRatio = 0.7; // 用户界面渐变中歌曲主题色占比（0.0-1.0）
+  double _uiBlurAmount = 30.0; // 用户界面模糊背景模糊程度
   bool _smoothColorTransition = true; // 切换歌曲时背景颜色是否平滑过渡
 
   // 字体设置
@@ -237,6 +239,7 @@ class SettingsProvider with ChangeNotifier {
   ImageFitType get uiImageFitType => _uiImageFitType;
   bool get syncBackgroundImages => _syncBackgroundImages;
   bool get syncGradientSettings => _syncGradientSettings;
+  double get uiBlurAmount => _uiBlurAmount;
   GradientType get uiGradientType => _uiGradientType;
   double get uiGradientSongColorRatio => _uiGradientSongColorRatio;
   bool get smoothColorTransition => _smoothColorTransition;
@@ -423,6 +426,8 @@ class SettingsProvider with ChangeNotifier {
     _uiGradientType = GradientType.values[uiGradientTypeIndex];
     _uiGradientSongColorRatio =
         (prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7).toDouble();
+    _uiBlurAmount =
+        (prefs.getDouble('ui_blur_amount') ?? 30.0).toDouble();
     _smoothColorTransition = prefs.getBool('smooth_color_transition') ?? true;
 
     // 加载字体设置
@@ -661,17 +666,19 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setUIBackgroundType(UIBackgroundType value) async {
-    // 当从默认背景切换到流体/渐变背景时，保存当前透明度并设置为0
+    // 当从默认背景切换到流体/渐变/模糊背景时，保存当前透明度并设置为0
     if (_uiBackgroundType == UIBackgroundType.normal &&
         (value == UIBackgroundType.fluid ||
-            value == UIBackgroundType.gradient)) {
+            value == UIBackgroundType.gradient ||
+            value == UIBackgroundType.blur)) {
       _savedNormalWindowOpacity = _windowOpacity;
       _windowOpacity = 0.0;
       await _saveSetting('window_opacity', _windowOpacity);
     }
-    // 当从流体/渐变背景切换回默认背景时，恢复之前保存的透明度
+    // 当从流体/渐变/模糊背景切换回默认背景时，恢复之前保存的透明度
     else if ((_uiBackgroundType == UIBackgroundType.fluid ||
-            _uiBackgroundType == UIBackgroundType.gradient) &&
+            _uiBackgroundType == UIBackgroundType.gradient ||
+            _uiBackgroundType == UIBackgroundType.blur) &&
         value == UIBackgroundType.normal) {
       _windowOpacity = _savedNormalWindowOpacity;
       await _saveSetting('window_opacity', _windowOpacity);
@@ -738,6 +745,12 @@ class SettingsProvider with ChangeNotifier {
       _gradientSongColorRatio = value;
       await _saveSetting('gradient_song_color_ratio', _gradientSongColorRatio);
     }
+    notifyListeners();
+  }
+
+  Future<void> setUIBlurAmount(double value) async {
+    _uiBlurAmount = value.clamp(0.0, 50.0);
+    await _saveSetting('ui_blur_amount', _uiBlurAmount);
     notifyListeners();
   }
 
@@ -1450,6 +1463,8 @@ class SettingsProvider with ChangeNotifier {
     settingsMap['ui_gradient_type'] = prefs.getInt('ui_gradient_type') ?? 0;
     settingsMap['ui_gradient_song_color_ratio'] =
         prefs.getDouble('ui_gradient_song_color_ratio') ?? 0.7;
+    settingsMap['ui_blur_amount'] =
+        prefs.getDouble('ui_blur_amount') ?? 30.0;
 
     // 歌词设置
     settingsMap['lyrics_alignment'] = prefs.getInt('lyrics_alignment') ?? 1;
@@ -1633,6 +1648,9 @@ class SettingsProvider with ChangeNotifier {
     if (settingsMap.containsKey('ui_gradient_song_color_ratio')) {
       await prefs.setDouble('ui_gradient_song_color_ratio',
           settingsMap['ui_gradient_song_color_ratio']);
+    }
+    if (settingsMap.containsKey('ui_blur_amount')) {
+      await prefs.setDouble('ui_blur_amount', settingsMap['ui_blur_amount']);
     }
 
     // 播放器设置
